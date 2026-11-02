@@ -291,15 +291,17 @@ class PdfService {
           pw.Positioned(
             left: width * 0.185,
             top: height * 0.12,
-            width: width * 0.420,
-            child: pw.Text(
-              _safe(invoice.clientName),
-              style: pw.TextStyle(
-                fontSize: 8.5,
-                fontWeight: pw.FontWeight.bold,
-                color: _black,
+            child: pw.SizedBox(
+              width: width * 0.420,
+              child: pw.Text(
+                _safe(invoice.clientName),
+                style: pw.TextStyle(
+                  fontSize: 8.5,
+                  fontWeight: pw.FontWeight.bold,
+                  color: _black,
+                ),
+                maxLines: 1,
               ),
-              maxLines: 1,
             ),
           ),
           // Bill To: line 1 right (line is at y/331 = 0.293)
@@ -385,46 +387,52 @@ class PdfService {
           pw.Positioned(
             left: width * 0.028,
             top: height * 0.63,
-            width: width * 0.335,
-            child: pw.Text(
-              _safe(invoice.model),
-              style: pw.TextStyle(
-                fontSize: 8.5,
-                fontWeight: pw.FontWeight.bold,
-                color: _black,
-              ),
-              maxLines: 1,
-            ),
-          ),
-          // Engine Running Hours (line is at y/388 = 0.786)
-          pw.Positioned(
-            left: width * 0.420,
-            top: height * 0.63,
-            width: width * 0.228,
-            child: pw.Text(
-              _safe(invoice.runningHour),
-              style: pw.TextStyle(
-                fontSize: 8.5,
-                fontWeight: pw.FontWeight.bold,
-                color: _black,
-              ),
-              maxLines: 1,
-            ),
-          ),
-          // Next Service Date DD
-          pw.Positioned(
-            left: width * 0.742,
-            top: height * 0.63,
-            width: width * 0.053,
-            child: pw.Center(
+            child: pw.SizedBox(
+              width: width * 0.335,
               child: pw.Text(
-                dd,
+                _safe(invoice.model),
                 style: pw.TextStyle(
                   fontSize: 8.5,
                   fontWeight: pw.FontWeight.bold,
                   color: _black,
                 ),
                 maxLines: 1,
+              ),
+            ),
+          ),
+          // Engine Running Hours (line is at y/388 = 0.786)
+          pw.Positioned(
+            left: width * 0.420,
+            top: height * 0.63,
+            child: pw.SizedBox(
+              width: width * 0.228,
+              child: pw.Text(
+                _safe(invoice.runningHour),
+                style: pw.TextStyle(
+                  fontSize: 8.5,
+                  fontWeight: pw.FontWeight.bold,
+                  color: _black,
+                ),
+                maxLines: 1,
+              ),
+            ),
+          ),
+          // Next Service Date DD
+          pw.Positioned(
+            left: width * 0.742,
+            top: height * 0.63,
+            child: pw.SizedBox(
+              width: width * 0.053,
+              child: pw.Center(
+                child: pw.Text(
+                  dd,
+                  style: pw.TextStyle(
+                    fontSize: 8.5,
+                    fontWeight: pw.FontWeight.bold,
+                    color: _black,
+                  ),
+                  maxLines: 1,
+                ),
               ),
             ),
           ),
@@ -432,16 +440,18 @@ class PdfService {
           pw.Positioned(
             left: width * 0.820,
             top: height * 0.63,
-            width: width * 0.053,
-            child: pw.Center(
-              child: pw.Text(
-                mm,
-                style: pw.TextStyle(
-                  fontSize: 8.5,
-                  fontWeight: pw.FontWeight.bold,
-                  color: _black,
+            child: pw.SizedBox(
+              width: width * 0.053,
+              child: pw.Center(
+                child: pw.Text(
+                  mm,
+                  style: pw.TextStyle(
+                    fontSize: 8.5,
+                    fontWeight: pw.FontWeight.bold,
+                    color: _black,
+                  ),
+                  maxLines: 1,
                 ),
-                maxLines: 1,
               ),
             ),
           ),
@@ -449,16 +459,18 @@ class PdfService {
           pw.Positioned(
             left: width * 0.896,
             top: height * 0.63,
-            width: width * 0.078,
-            child: pw.Center(
-              child: pw.Text(
-                yyyy,
-                style: pw.TextStyle(
-                  fontSize: 8.5,
-                  fontWeight: pw.FontWeight.bold,
-                  color: _black,
+            child: pw.SizedBox(
+              width: width * 0.078,
+              child: pw.Center(
+                child: pw.Text(
+                  yyyy,
+                  style: pw.TextStyle(
+                    fontSize: 8.5,
+                    fontWeight: pw.FontWeight.bold,
+                    color: _black,
+                  ),
+                  maxLines: 1,
                 ),
-                maxLines: 1,
               ),
             ),
           ),
