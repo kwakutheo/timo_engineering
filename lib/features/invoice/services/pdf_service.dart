@@ -1062,7 +1062,8 @@ class PdfService {
     await Printing.layoutPdf(
       onLayout: (_) async => pdf.save(),
       name: '${invoice.invoiceNumber}.pdf',
-      usePrinterSettings: true,
+      format: PdfPageFormat.a4,
+      usePrinterSettings: false,
     );
   }
 

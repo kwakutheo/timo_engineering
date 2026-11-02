@@ -47,7 +47,4 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/headline_(logo).png
-    - assets/foot note.png
-    - assets/new_logo(header).png
-    - assets/new_logo(footer).png
+    - assets/
