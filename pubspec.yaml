@@ -1,0 +1,53 @@
+name: timo_enginerring
+description: "Invoice app for Timo's Engineering Services"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # State Management
+  flutter_riverpod: ^2.6.1
+
+  # PDF Generation & Printing
+  pdf: ^3.11.3
+  printing: ^5.13.2
+
+  # Local Database
+  sqflite: ^2.3.3+1
+  sqflite_common_ffi: ^2.3.4+4
+
+  # File System
+  path_provider: ^2.1.5
+  path: ^1.9.1
+
+  # Utilities
+  intl: ^0.19.0
+  uuid: ^4.5.1
+  share_plus: ^10.1.4
+  file_picker: ^11.0.2
+  file_selector: ^1.1.0
+  flutter_secure_storage: ^10.0.0
+  cryptography: ^2.9.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/headline_(logo).png
+    - assets/foot note.png
+    - assets/new_logo(header).png
+    - assets/new_logo(footer).png
