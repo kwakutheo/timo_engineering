@@ -186,7 +186,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         action: SnackBarAction(
           label: 'UNDO',
-          textColor: AppColors.accentPink,
+          textColor: AppColors.primaryYellow,
           onPressed: () {
             notifier.insertItem(index, deletedItem);
             setState(() {
@@ -499,7 +499,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
       title: Text(isNew ? 'New Invoice' : 'Edit Invoice'),
       flexibleSpace: Container(
         decoration: const BoxDecoration(
-          gradient: AppColors.primaryGradient,
+          gradient: AppColors.blackGradient,
         ),
       ),
       actions: [
@@ -650,7 +650,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     return Container(
       decoration: const BoxDecoration(
         border: Border.symmetric(
-          horizontal: BorderSide(color: AppColors.accentPink, width: 1.5),
+          horizontal: BorderSide(color: AppColors.primaryYellow, width: 1.5),
         ),
       ),
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -784,7 +784,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                             icon: const Icon(Icons.contacts_outlined, size: 16),
                             label: const Text('Select', style: TextStyle(fontSize: 12)),
                             style: TextButton.styleFrom(
-                              foregroundColor: AppColors.primaryBlue,
+                              foregroundColor: AppColors.primaryBlack,
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
                               minimumSize: const Size(0, 30),
                             ),
@@ -876,8 +876,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                     icon: const Icon(Icons.contacts_outlined, size: 16),
                     label: const Text('Select Contact', style: TextStyle(fontSize: 12)),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primaryBlue,
-                      side: const BorderSide(color: AppColors.primaryBlue, width: 0.8),
+                      foregroundColor: AppColors.primaryBlack,
+                      side: const BorderSide(color: AppColors.primaryBlack, width: 0.8),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
@@ -977,7 +977,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                       style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.primaryBlue)),
+                          color: AppColors.primaryBlack)),
                   const SizedBox(height: 4),
                   InkWell(
                     onTap: _pickNextServiceDate,
@@ -1034,7 +1034,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                       style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.primaryBlue)),
+                          color: AppColors.primaryBlack)),
                   const SizedBox(height: 4),
                   InkWell(
                     onTap: _pickNextServiceDate,
@@ -1078,7 +1078,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
           // Table header
           Container(
             decoration: const BoxDecoration(
-              gradient: AppColors.primaryGradient,
+              gradient: AppColors.blackGradient,
               borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -1146,11 +1146,11 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
             child: OutlinedButton.icon(
               onPressed: _addRow,
               icon: const Icon(Icons.add_circle_outline,
-                  color: AppColors.primaryBlue),
+                  color: AppColors.primaryBlack),
               label: const Text('Add Item',
-                  style: TextStyle(color: AppColors.primaryBlue)),
+                  style: TextStyle(color: AppColors.primaryBlack)),
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: AppColors.primaryBlue),
+                side: const BorderSide(color: AppColors.primaryBlack),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8)),
               ),
@@ -1188,7 +1188,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
-                      color: AppColors.primaryBlue,
+                      color: AppColors.primaryBlack,
                     ),
                   ),
                 ),
@@ -1228,7 +1228,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
               '${index + 1}',
               textAlign: TextAlign.center,
               style: const TextStyle(
-                  fontWeight: FontWeight.w600, color: AppColors.primaryBlue),
+                  fontWeight: FontWeight.w600, color: AppColors.primaryBlack),
             ),
           ),
 
@@ -1305,7 +1305,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
               textAlign: TextAlign.right,
               style: const TextStyle(
                   fontWeight: FontWeight.w600,
-                  color: AppColors.primaryBlue,
+                  color: AppColors.primaryBlack,
                   fontSize: 13),
             ),
           ),
@@ -1315,7 +1315,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
             width: 32,
             child: IconButton(
               icon: const Icon(Icons.remove_circle_outline,
-                  color: AppColors.accentPink, size: 20),
+                  color: AppColors.errorRed, size: 20),
               tooltip: 'Remove row',
               onPressed:
                   _rowCtrls.length > 1 ? () => _removeRow(index) : null,
@@ -1352,10 +1352,10 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
         // Add item button
         OutlinedButton.icon(
           onPressed: _addRow,
-          icon: const Icon(Icons.add_circle_outline, color: AppColors.primaryBlue, size: 20),
-          label: const Text('Add Item', style: TextStyle(color: AppColors.primaryBlue, fontWeight: FontWeight.w600)),
+          icon: const Icon(Icons.add_circle_outline, color: AppColors.primaryBlack, size: 20),
+          label: const Text('Add Item', style: TextStyle(color: AppColors.primaryBlack, fontWeight: FontWeight.w600)),
           style: OutlinedButton.styleFrom(
-            side: const BorderSide(color: AppColors.primaryBlue),
+            side: const BorderSide(color: AppColors.primaryBlack),
             padding: const EdgeInsets.symmetric(vertical: 12),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
@@ -1387,7 +1387,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                 style: const TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 14,
-                  color: AppColors.primaryBlue,
+                  color: AppColors.primaryBlack,
                 ),
               ),
             ],
@@ -1422,7 +1422,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
         border: Border.all(color: AppColors.divider),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryBlue.withValues(alpha: 0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -1434,7 +1434,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: AppColors.primaryBlue.withValues(alpha: 0.06),
+              color: AppColors.primaryYellow.withValues(alpha: 0.2),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
             ),
             child: Row(
@@ -1443,7 +1443,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                   width: 26,
                   height: 26,
                   decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
+                    gradient: AppColors.blackGradient,
                     borderRadius: BorderRadius.circular(7),
                   ),
                   alignment: Alignment.center,
@@ -1550,7 +1550,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryBlue.withValues(alpha: 0.08),
+                    color: AppColors.primaryYellow.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Column(
@@ -1568,7 +1568,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                         CurrencyFormatter.formatRaw(total),
                         style: const TextStyle(
                           fontWeight: FontWeight.w700,
-                          color: AppColors.primaryBlue,
+                          color: AppColors.primaryBlack,
                           fontSize: 13,
                         ),
                       ),
@@ -1591,11 +1591,11 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
-          gradient: AppColors.primaryGradient,
+          gradient: AppColors.blackGradient,
           borderRadius: BorderRadius.circular(10),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primaryBlue.withValues(alpha: 0.25),
+              color: Colors.black.withValues(alpha: 0.25),
               blurRadius: 8,
               offset: const Offset(0, 3),
             ),
@@ -1714,7 +1714,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                   Container(
                     height: 48,
                     decoration: BoxDecoration(
-                      border: Border.all(color: AppColors.borderBlue),
+                      border: Border.all(color: AppColors.borderYellow),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     alignment: Alignment.centerLeft,
@@ -1766,9 +1766,9 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
       String label, TextEditingController ctrl, IconData icon) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.lightBlue.withValues(alpha: 0.10),
-        border: const Border(
-          top: BorderSide(color: AppColors.borderBlue, width: 0.5),
+        color: AppColors.yellowLight.withValues(alpha: 0.5),
+        border: Border(
+          top: BorderSide(color: AppColors.borderYellow.withValues(alpha: 0.5), width: 0.5),
         ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -1777,7 +1777,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
         children: [
           SizedBox(
             width: 32,
-            child: Icon(icon, size: 16, color: AppColors.primaryBlue),
+            child: Icon(icon, size: 16, color: AppColors.primaryBlack),
           ),
           Expanded(
             child: Padding(
@@ -1833,7 +1833,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
               textAlign: TextAlign.right,
               style: const TextStyle(
                 fontWeight: FontWeight.w600,
-                color: AppColors.primaryBlue,
+                color: AppColors.primaryBlack,
                 fontSize: 13,
               ),
             ),
@@ -1850,14 +1850,14 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.lightBlue.withValues(alpha: 0.18),
+        color: AppColors.yellowLight.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-            color: AppColors.borderBlue.withValues(alpha: 0.3)),
+            color: AppColors.borderYellow.withValues(alpha: 0.5)),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: AppColors.primaryBlue),
+          Icon(icon, size: 18, color: AppColors.primaryBlack),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -1888,13 +1888,13 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide(
                       color:
-                          AppColors.borderBlue.withValues(alpha: 0.4)),
+                          AppColors.borderYellow.withValues(alpha: 0.5)),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide(
                       color:
-                          AppColors.borderBlue.withValues(alpha: 0.4)),
+                          AppColors.borderYellow.withValues(alpha: 0.5)),
                 ),
               ),
               onChanged: (_) {
@@ -1930,7 +1930,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
       decoration: const BoxDecoration(
-        gradient: AppColors.primaryGradient,
+        gradient: AppColors.blackGradient,
         borderRadius: BorderRadius.all(Radius.circular(6)),
       ),
       child: Text(
@@ -1959,7 +1959,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
             style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: AppColors.primaryBlue)),
+                color: AppColors.primaryBlack)),
         const SizedBox(height: 4),
         TextField(
           controller: ctrl,
@@ -1980,14 +1980,14 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
             style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: AppColors.primaryBlue)),
+                color: AppColors.primaryBlack)),
         const SizedBox(height: 4),
         Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            color: AppColors.lightBlue.withValues(alpha: 0.4),
-            border: Border.all(color: AppColors.borderBlue.withValues(alpha: 0.5)),
+            color: AppColors.yellowLight.withValues(alpha: 0.6),
+            border: Border.all(color: AppColors.borderYellow.withValues(alpha: 0.5)),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
@@ -1995,7 +1995,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
             style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: AppColors.primaryBlue),
+                color: AppColors.primaryBlack),
           ),
         ),
       ],

@@ -156,7 +156,7 @@ class ClientPickerDialog extends ConsumerWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: AppColors.primaryBlue.withValues(alpha: 0.1),
+                    color: AppColors.primaryYellow.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
                   child: Center(
@@ -165,7 +165,7 @@ class ClientPickerDialog extends ConsumerWidget {
                           ? client.name.substring(0, 1).toUpperCase()
                           : '?',
                       style: const TextStyle(
-                        color: AppColors.primaryBlue,
+                        color: AppColors.primaryBlack,
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
                       ),
@@ -222,7 +222,7 @@ class ClientPickerDialog extends ConsumerWidget {
                       value: 'edit',
                       child: Row(
                         children: [
-                          Icon(Icons.edit_outlined, size: 20, color: AppColors.primaryBlue),
+                          Icon(Icons.edit_outlined, size: 20, color: AppColors.primaryBlack),
                           SizedBox(width: 12),
                           Text('Edit Client'),
                         ],
@@ -328,7 +328,7 @@ class ClientPickerDialog extends ConsumerWidget {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryBlue,
+              backgroundColor: AppColors.primaryBlack,
               foregroundColor: Colors.white,
             ),
             onPressed: () {

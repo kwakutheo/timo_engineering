@@ -18,7 +18,7 @@ class InvoiceSearchBar extends ConsumerWidget {
           hintText: 'Search by client name or invoice number…',
           prefixIcon: const Icon(
             Icons.search,
-            color: AppColors.primaryBlue,
+            color: AppColors.primaryBlack,
             size: 22,
           ),
           suffixIcon: query.isNotEmpty
@@ -40,7 +40,7 @@ class InvoiceSearchBar extends ConsumerWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.primaryBlue),
+            borderSide: const BorderSide(color: AppColors.primaryYellow, width: 1.5),
           ),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

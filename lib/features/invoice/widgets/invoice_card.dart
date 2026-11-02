@@ -43,7 +43,7 @@ class InvoiceCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primaryBlue.withValues(alpha: 0.07),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -56,7 +56,7 @@ class InvoiceCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: const BoxDecoration(
-                  gradient: AppColors.primaryGradient,
+                  gradient: AppColors.blackGradient,
                   borderRadius:
                       BorderRadius.vertical(top: Radius.circular(14)),
                 ),
@@ -122,7 +122,7 @@ class InvoiceCard extends StatelessWidget {
                           style: const TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w800,
-                            color: AppColors.primaryBlue,
+                            color: AppColors.primaryBlack,
                           ),
                         ),
                       ],
@@ -158,14 +158,14 @@ class InvoiceCard extends StatelessWidget {
                           _ActionButton(
                             icon: Icons.edit_outlined,
                             label: 'Edit',
-                            color: AppColors.primaryBlue,
+                            color: AppColors.primaryBlack,
                             onTap: onEdit,
                           ),
                           const SizedBox(width: 8),
                           _ActionButton(
                             icon: Icons.copy_outlined,
                             label: 'Copy',
-                            color: AppColors.primaryBlue,
+                            color: AppColors.primaryBlack,
                             onTap: onCopy,
                           ),
                           const SizedBox(width: 8),
@@ -179,14 +179,14 @@ class InvoiceCard extends StatelessWidget {
                           _ActionButton(
                             icon: Icons.download_outlined,
                             label: 'Save',
-                            color: AppColors.primaryBlue,
+                            color: AppColors.primaryBlack,
                             onTap: onSave,
                           ),
                           const SizedBox(width: 8),
                           _ActionButton(
                             icon: Icons.share_outlined,
                             label: 'Share',
-                            color: AppColors.accentPink,
+                            color: AppColors.yellowDark,
                             onTap: onShare,
                           ),
                         ],

@@ -8,9 +8,9 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.primaryBlue,
-        primary: AppColors.primaryBlue,
-        secondary: AppColors.accentPink,
+        seedColor: AppColors.primaryYellow,
+        primary: AppColors.primaryBlack,
+        secondary: AppColors.primaryYellow,
         surface: Colors.white,
         brightness: Brightness.light,
       ),
@@ -18,7 +18,7 @@ class AppTheme {
       appBarTheme: const AppBarTheme(
         elevation: 0,
         scrolledUnderElevation: 0,
-        backgroundColor: AppColors.primaryBlue,
+        backgroundColor: AppColors.primaryBlack,
         foregroundColor: Colors.white,
         centerTitle: false,
         titleTextStyle: TextStyle(
@@ -31,7 +31,7 @@ class AppTheme {
       ),
       cardTheme: const CardThemeData(
         elevation: 3,
-        shadowColor: Color(0x1A1565C0),
+        shadowColor: Color(0x14000000),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(14)),
         ),
@@ -42,15 +42,15 @@ class AppTheme {
         fillColor: Colors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(8)),
-          borderSide: BorderSide(color: AppColors.borderBlue, width: 1.0),
+          borderSide: BorderSide(color: AppColors.borderGrey, width: 1.0),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(8)),
-          borderSide: BorderSide(color: Color(0xFFBDD7F7), width: 1.0),
+          borderSide: BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(8)),
-          borderSide: BorderSide(color: AppColors.primaryBlue, width: 2.0),
+          borderSide: BorderSide(color: AppColors.primaryYellow, width: 2.0),
         ),
         isDense: true,
         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -59,7 +59,7 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primaryBlue,
+          backgroundColor: AppColors.primaryBlack,
           foregroundColor: Colors.white,
           elevation: 2,
           shape: const RoundedRectangleBorder(
@@ -87,8 +87,8 @@ class AppTheme {
         ),
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: AppColors.accentPink,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.primaryYellow,
+        foregroundColor: AppColors.primaryBlack,
         elevation: 6,
         shape: CircleBorder(),
       ),

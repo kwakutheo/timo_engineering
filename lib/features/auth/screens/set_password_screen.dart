@@ -108,7 +108,7 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen>
     return PopScope(
       canPop: false,
       child: Scaffold(
-        backgroundColor: AppColors.primaryBlueDark,
+        backgroundColor: AppColors.primaryBlack,
         resizeToAvoidBottomInset: true,
         body: SafeArea(
           child: Center(
@@ -356,7 +356,7 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen>
               },
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.white,
-          foregroundColor: AppColors.primaryBlueDark,
+          foregroundColor: AppColors.primaryBlack,
           disabledBackgroundColor: Colors.white12,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -365,7 +365,7 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen>
         child: _isSaving
             ? const SizedBox(
                 width: 20, height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryBlueDark),
+                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryBlack),
               )
             : Text(
                 _step == _SetStep.create ? 'Continue' : 'Set Password',

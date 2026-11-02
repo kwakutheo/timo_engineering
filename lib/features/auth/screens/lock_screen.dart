@@ -154,7 +154,7 @@ class _LockScreenState extends ConsumerState<LockScreen>
     return PopScope(
       canPop: false,
       child: Scaffold(
-        backgroundColor: AppColors.primaryBlueDark,
+        backgroundColor: AppColors.primaryBlack,
         resizeToAvoidBottomInset: true,
         body: FadeTransition(
           opacity: _fadeController,
@@ -301,7 +301,7 @@ class _LockScreenState extends ConsumerState<LockScreen>
         onPressed: locked || _isVerifying ? null : _verify,
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.white,
-          foregroundColor: AppColors.primaryBlueDark,
+          foregroundColor: AppColors.primaryBlack,
           disabledBackgroundColor: Colors.white12,
           disabledForegroundColor: Colors.white30,
           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -314,7 +314,7 @@ class _LockScreenState extends ConsumerState<LockScreen>
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
-                    strokeWidth: 2, color: AppColors.primaryBlueDark),
+                    strokeWidth: 2, color: AppColors.primaryBlack),
               )
             : Text(
                 locked
@@ -344,7 +344,7 @@ class _LockScreenState extends ConsumerState<LockScreen>
       barrierDismissible: true,
       builder: (context) => StatefulBuilder(
         builder: (context, setStateBuilder) => AlertDialog(
-          backgroundColor: AppColors.primaryBlueDark,
+          backgroundColor: AppColors.primaryBlack,
           title: const Text('Reset Password',
               style: TextStyle(color: Colors.white)),
           content: Column(

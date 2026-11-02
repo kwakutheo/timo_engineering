@@ -15,11 +15,11 @@ class HomeEmptyState extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: AppColors.primaryBlue.withValues(alpha: 0.08),
+              color: AppColors.primaryYellow.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.receipt_long_outlined,
-                size: 60, color: AppColors.primaryBlue),
+                size: 60, color: AppColors.yellowDark),
           ),
           const SizedBox(height: 20),
           const Text(
@@ -41,8 +41,8 @@ class HomeEmptyState extends StatelessWidget {
             icon: const Icon(Icons.add),
             label: const Text('Create First Invoice'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.accentPink,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.primaryYellow,
+              foregroundColor: AppColors.primaryBlack,
               padding:
                   const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
               shape: RoundedRectangleBorder(

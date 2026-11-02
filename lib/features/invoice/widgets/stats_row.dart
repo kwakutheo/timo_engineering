@@ -20,7 +20,7 @@ class StatsRow extends StatelessWidget {
         icon: Icons.receipt_long_outlined,
         label: 'Total Invoices',
         value: '${invoices.length}',
-        color: AppColors.primaryBlue,
+        color: AppColors.primaryBlack,
       ),
       _StatCardData(
         icon: Icons.local_shipping_outlined,
@@ -32,7 +32,7 @@ class StatsRow extends StatelessWidget {
         icon: Icons.monetization_on_outlined,
         label: 'Total Revenue',
         value: CurrencyFormatter.format(total),
-        color: AppColors.accentPink,
+        color: AppColors.yellowDark,
       ),
     ];
 

@@ -30,14 +30,14 @@ class HomeScreen extends ConsumerWidget {
         ],
         body: allAsync.when(
           loading: () => const Center(
-            child: CircularProgressIndicator(color: AppColors.primaryBlue),
+            child: CircularProgressIndicator(color: AppColors.primaryYellow),
           ),
           error: (e, _) => _errorView(ref, e.toString()),
           data: (allInvoices) {
             final filtered = filteredAsync.valueOrNull ?? allInvoices;
 
             return RefreshIndicator(
-              color: AppColors.primaryBlue,
+              color: AppColors.primaryBlack,
               onRefresh: () async => ref.invalidate(allInvoicesProvider),
               child: CustomScrollView(
                 slivers: [
@@ -88,26 +88,26 @@ class HomeScreen extends ConsumerWidget {
       floatingActionButton: isMobile
           ? FloatingActionButton(
               onPressed: () => _createNew(context, ref),
-              backgroundColor: AppColors.accentPink,
+              backgroundColor: AppColors.primaryYellow,
               elevation: 6,
               shape: const CircleBorder(),
               tooltip: 'New Invoice',
-              child: const Icon(Icons.add, color: Colors.white, size: 28),
+              child: const Icon(Icons.add, color: AppColors.primaryBlack, size: 28),
             )
           : FloatingActionButton.extended(
               onPressed: () => _createNew(context, ref),
               mouseCursor: SystemMouseCursors.click,
               shape: const StadiumBorder(),
-              icon: const Icon(Icons.add, color: Colors.white),
+              icon: const Icon(Icons.add, color: AppColors.primaryBlack),
               label: const Text(
                 'New Invoice',
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 14,
-                  color: Colors.white,
+                  color: AppColors.primaryBlack,
                 ),
               ),
-              backgroundColor: AppColors.accentPink,
+              backgroundColor: AppColors.primaryYellow,
               elevation: 6,
             ),
     );
@@ -126,7 +126,7 @@ class HomeScreen extends ConsumerWidget {
       floating: false,
       pinned: true,
       elevation: 0,
-      backgroundColor: AppColors.primaryBlue,
+      backgroundColor: AppColors.primaryBlack,
       flexibleSpace: FlexibleSpaceBar(
         titlePadding: const EdgeInsets.only(left: 20, bottom: 14),
         title: Column(
@@ -153,7 +153,7 @@ class HomeScreen extends ConsumerWidget {
           ],
         ),
         background: Container(
-          decoration: const BoxDecoration(gradient: AppColors.primaryGradient),
+          decoration: const BoxDecoration(gradient: AppColors.blackGradient),
           child: Stack(
             children: [
               // Decorative circles
@@ -210,7 +210,7 @@ class HomeScreen extends ConsumerWidget {
               value: 'change_pin',
               child: ListTile(
                 leading: Icon(Icons.lock_reset_outlined,
-                    color: AppColors.primaryBlue),
+                    color: AppColors.primaryBlack),
                 title: Text('Change password'),
                 contentPadding: EdgeInsets.zero,
               ),
@@ -295,7 +295,7 @@ class HomeScreen extends ConsumerWidget {
       SnackBar(
         content: Text(msg, style: const TextStyle(color: Colors.white)),
         backgroundColor:
-            isError ? AppColors.errorRed : AppColors.primaryBlue,
+            isError ? AppColors.errorRed : AppColors.primaryBlack,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
       ),

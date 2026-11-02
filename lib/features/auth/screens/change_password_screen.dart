@@ -156,7 +156,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primaryBlueDark,
+      backgroundColor: AppColors.primaryBlack,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -369,7 +369,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen>
         onPressed: _isBusy ? null : _handleAction,
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.white,
-          foregroundColor: AppColors.primaryBlueDark,
+          foregroundColor: AppColors.primaryBlack,
           disabledBackgroundColor: Colors.white12,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -378,7 +378,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen>
         child: _isBusy
             ? const SizedBox(
                 width: 20, height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryBlueDark),
+                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryBlack),
               )
             : Text(
                 _buttonLabel,
