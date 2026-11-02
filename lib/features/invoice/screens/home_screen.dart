@@ -186,7 +186,7 @@ class HomeScreen extends ConsumerWidget {
                 right: 16,
                 top: logoTop,
                 child: Image.asset(
-                  'assets/headline_(logo).png',
+                  'assets/timo_icon.png',
                   height: logoHeight,
                   fit: BoxFit.contain,
                 ),

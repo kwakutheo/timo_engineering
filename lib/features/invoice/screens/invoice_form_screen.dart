@@ -626,7 +626,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
       child: Image.asset(
-        'assets/headline_(logo).png',
+        'assets/full_header.png',
         fit: BoxFit.fitWidth,
         width: double.infinity,
       ),
@@ -637,7 +637,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
       child: Image.asset(
-        'assets/foot note.png',
+        'assets/full_footer.png',
         fit: BoxFit.fitWidth,
         width: double.infinity,
       ),

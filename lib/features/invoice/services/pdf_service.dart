@@ -1,131 +1,115 @@
 import 'dart:io';
-import 'package:share_plus/share_plus.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:share_plus/share_plus.dart';
+import '../../../core/utils/currency_formatter.dart';
 import '../../../data/datasources/storage_service.dart';
 import '../../../data/models/invoice.dart';
-import '../../../core/utils/currency_formatter.dart';
 
 class PdfService {
   PdfService._();
 
   // ── Colours ───────────────────────────────────────────────────────────────
 
-  /// Exact yellow from the design (#FFCC00 / gold-yellow)
+  /// Exact gold-yellow from the Timo's Engineering design (#FFCC00)
   static const _yellow = PdfColor.fromInt(0xFFFFCC00);
   static const _black = PdfColors.black;
   static const _white = PdfColors.white;
 
-  /// Very light grey for the remarks/totals box borders
-  static const _borderGrey = PdfColor.fromInt(0xFFBBBBBB);
+  /// Borders for totals boxes and inner lines
+  static const _borderGrey = PdfColor.fromInt(0xFFCCCCCC);
 
-  /// Near-black for the INVOICE banner background
-  static const _nearBlack = PdfColor.fromInt(0xFF1A1A1A);
-
-  /// Medium grey for italic / secondary text
-  static const _medGrey = PdfColor.fromInt(0xFF555555);
+  /// Faint notebook lines inside the Remarks box
+  static const _lineGrey = PdfColor.fromInt(0xFFE2E2E2);
 
   // ── Text Styles ───────────────────────────────────────────────────────────
 
-  static final _companyNameStyle = pw.TextStyle(
-    fontSize: 22,
+  static final _tableHeaderStyle = pw.TextStyle(
+    fontSize: 8.5,
     fontWeight: pw.FontWeight.bold,
     color: _black,
   );
-  static final _companyServiceStyle = pw.TextStyle(
-    fontSize: 15,
-    fontWeight: pw.FontWeight.bold,
-    color: _yellow,
+
+  static const _tableCellStyle = pw.TextStyle(
+    fontSize: 8.5,
+    color: _black,
   );
-  static final _taglineStyle = pw.TextStyle(
+
+  static final _totalLabelStyle = pw.TextStyle(
+    fontSize: 8,
+    fontWeight: pw.FontWeight.bold,
+    color: _black,
+  );
+
+  static final _grandTotalValueStyle = pw.TextStyle(
+    fontSize: 8.5,
+    fontWeight: pw.FontWeight.bold,
+    color: _black,
+  );
+
+  static final _noVatStyle = pw.TextStyle(
     fontSize: 7.5,
     fontStyle: pw.FontStyle.italic,
     color: _black,
   );
-  static final _invoiceBannerStyle = pw.TextStyle(
-    fontSize: 36,
-    fontWeight: pw.FontWeight.bold,
-    color: _white,
-  );
-  static final _bannerFieldLabelStyle = pw.TextStyle(
-    fontSize: 9,
-    fontWeight: pw.FontWeight.bold,
-    color: _black,
-  );
-  static final _sectionBarStyle = pw.TextStyle(
-    fontSize: 10,
-    fontWeight: pw.FontWeight.bold,
-    color: _black,
-  );
+
   static final _fieldLabelStyle = pw.TextStyle(
     fontSize: 8.5,
     fontWeight: pw.FontWeight.bold,
     color: _black,
   );
-  static const _fieldValueStyle = pw.TextStyle(fontSize: 8.5);
-  static final _tableHeaderStyle = pw.TextStyle(
-    fontSize: 9,
-    fontWeight: pw.FontWeight.bold,
-    color: _black,
-  );
-  static const _tableCellStyle = pw.TextStyle(fontSize: 8.5);
-  static final _totalLabelStyle = pw.TextStyle(
-    fontSize: 8.5,
-    fontWeight: pw.FontWeight.bold,
-    color: _black,
-  );
-  static final _grandTotalStyle = pw.TextStyle(
-    fontSize: 8.5,
-    fontWeight: pw.FontWeight.bold,
-    color: _black,
-  );
-  static final _noVatStyle = pw.TextStyle(
-    fontSize: 7.5,
-    fontStyle: pw.FontStyle.italic,
-    color: _medGrey,
-  );
-  static final _footerThankYouStyle = pw.TextStyle(
+
+  static final _sectionTitleStyle = pw.TextStyle(
     fontSize: 9.5,
-    fontStyle: pw.FontStyle.italic,
-    color: _black,
-  );
-  static final _contactPhoneStyle = pw.TextStyle(
-    fontSize: 14,
     fontWeight: pw.FontWeight.bold,
     color: _black,
   );
-  static final _contactLabelStyle = pw.TextStyle(
-    fontSize: 7.5,
-    fontWeight: pw.FontWeight.bold,
-    color: _black,
-  );
-  static const _contactValueStyle = pw.TextStyle(fontSize: 7.5);
 
   // ── Image Cache ───────────────────────────────────────────────────────────
 
-  static pw.MemoryImage? _headerLogoCache;
-  static pw.MemoryImage? _footerLogoCache;
+  static pw.MemoryImage? _headerCache;
+  static pw.MemoryImage? _invoiceCache;
+  static pw.MemoryImage? _customerCache;
+  static pw.MemoryImage? _generatorCache;
+  static pw.MemoryImage? _footerCache;
 
-  static Future<pw.MemoryImage> _loadHeaderLogo() async {
-    _headerLogoCache ??= pw.MemoryImage(
-      (await rootBundle.load('assets/new_logo(header).png'))
-          .buffer
-          .asUint8List(),
+  static Future<pw.MemoryImage> _loadHeader() async {
+    _headerCache ??= pw.MemoryImage(
+      (await rootBundle.load('assets/full_header.png')).buffer.asUint8List(),
     );
-    return _headerLogoCache!;
+    return _headerCache!;
   }
 
-  static Future<pw.MemoryImage> _loadFooterLogo() async {
-    _footerLogoCache ??= pw.MemoryImage(
-      (await rootBundle.load('assets/new_logo(footer).png'))
-          .buffer
-          .asUint8List(),
+  static Future<pw.MemoryImage> _loadInvoice() async {
+    _invoiceCache ??= pw.MemoryImage(
+      (await rootBundle.load('assets/invoice.png')).buffer.asUint8List(),
     );
-    return _footerLogoCache!;
+    return _invoiceCache!;
+  }
+
+  static Future<pw.MemoryImage> _loadCustomer() async {
+    _customerCache ??= pw.MemoryImage(
+      (await rootBundle.load('assets/customer_details.png')).buffer.asUint8List(),
+    );
+    return _customerCache!;
+  }
+
+  static Future<pw.MemoryImage> _loadGenerator() async {
+    _generatorCache ??= pw.MemoryImage(
+      (await rootBundle.load('assets/generator_details.png')).buffer.asUint8List(),
+    );
+    return _generatorCache!;
+  }
+
+  static Future<pw.MemoryImage> _loadFooter() async {
+    _footerCache ??= pw.MemoryImage(
+      (await rootBundle.load('assets/full_footer.png')).buffer.asUint8List(),
+    );
+    return _footerCache!;
   }
 
   // ── Formatting Helpers ────────────────────────────────────────────────────
@@ -148,47 +132,75 @@ class PdfService {
     final pdf = pw.Document();
     final dateFmt = DateFormat('dd/MM/yyyy');
 
-    final headerLogo = await _loadHeaderLogo();
-    final footerLogo = await _loadFooterLogo();
+    // Preload all 5 high-resolution graphic assets
+    final headerImg = await _loadHeader();
+    final invoiceImg = await _loadInvoice();
+    final customerImg = await _loadCustomer();
+    final generatorImg = await _loadGenerator();
+    final footerImg = await _loadFooter();
+
+    const pageWidth = 595.28; // Standard A4 width in pt
+    const contentWidth = 574.0; // Content width with 10.64pt margins on each side
+    const hMargin = (pageWidth - contentWidth) / 2;
 
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.fromLTRB(20, 20, 20, 20),
+        margin: pw.EdgeInsets.zero,
         build: (ctx) => pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.stretch,
           children: [
-            // ── 1. Company Header ──────────────────────────────────────────
-            _buildCompanyHeader(headerLogo),
-            pw.SizedBox(height: 6),
+            // ── 1. Full-bleed Company Header ───────────────────────────────
+            pw.Image(
+              headerImg,
+              width: pageWidth,
+              height: pageWidth / 3.9461, // Aspect ratio of full_header.png (2636x668)
+              fit: pw.BoxFit.fill,
+            ),
 
-            // ── 2. INVOICE Banner ─────────────────────────────────────────
-            _buildInvoiceBanner(invoice, dateFmt.format(invoice.date)),
-            pw.SizedBox(height: 6),
+            // ── Body Elements with Horizontal Margins ──────────────────────
+            pw.Padding(
+              padding: const pw.EdgeInsets.symmetric(horizontal: hMargin),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+                children: [
+                  pw.SizedBox(height: 5),
 
-            // ── 3. Customer Details ───────────────────────────────────────
-            _buildCustomerSection(invoice),
-            pw.SizedBox(height: 6),
+                  // ── 2. INVOICE Banner ────────────────────────────────────
+                  _buildInvoiceBanner(
+                    invoiceImg,
+                    invoice,
+                    dateFmt.format(invoice.date),
+                    contentWidth,
+                  ),
+                  pw.SizedBox(height: 5),
 
-            // ── 4. Generator Details ──────────────────────────────────────
-            _buildGeneratorDetails(invoice),
-            pw.SizedBox(height: 6),
+                  // ── 3. Customer Details ──────────────────────────────────
+                  _buildCustomerSection(customerImg, invoice, contentWidth),
+                  pw.SizedBox(height: 5),
 
-            // ── 5. Items Table ────────────────────────────────────────────
-            _buildItemsTable(invoice),
-            pw.SizedBox(height: 6),
+                  // ── 4. Generator Details ─────────────────────────────────
+                  _buildGeneratorDetails(generatorImg, invoice, contentWidth),
+                  pw.SizedBox(height: 5),
 
-            // ── 6. Report/Remarks + Totals ────────────────────────────────
-            _buildRemarksAndTotals(invoice),
-            pw.SizedBox(height: 8),
+                  // ── 5. Items Table ───────────────────────────────────────
+                  _buildItemsTable(invoice, contentWidth),
+                  pw.SizedBox(height: 5),
 
-            // ── 7. Signature Section ──────────────────────────────────────
-            _buildSignatureSection(invoice),
+                  // ── 6. Report/Remarks + Totals ───────────────────────────
+                  _buildRemarksAndTotals(invoice, contentWidth),
+                  pw.SizedBox(height: 6),
+
+                  // ── 7. Signature Section ─────────────────────────────────
+                  _buildSignatureSection(invoice, contentWidth),
+                ],
+              ),
+            ),
 
             pw.Spacer(),
 
-            // ── 8. Footer ─────────────────────────────────────────────────
-            _buildFooter(footerLogo),
+            // ── 8. Full-bleed Footer ───────────────────────────────────────
+            _buildFooter(footerImg, pageWidth),
           ],
         ),
       ),
@@ -197,205 +209,256 @@ class PdfService {
     return pdf;
   }
 
-  // ── 1. Company Header ─────────────────────────────────────────────────────
-  //
-  // Layout (left → right):
-  //   [TE circle logo] | [Company name + SERVICE + tagline] | [vertical line] | [Phone / Email / Bank]
-
-  static pw.Widget _buildCompanyHeader(pw.MemoryImage logo) {
-    return pw.Row(
-      crossAxisAlignment: pw.CrossAxisAlignment.center,
-      children: [
-        // TE logo
-        pw.SizedBox(
-          width: 78,
-          height: 78,
-          child: pw.Image(logo, fit: pw.BoxFit.contain),
-        ),
-        pw.SizedBox(width: 10),
-
-        // Company name block
-        pw.Expanded(
-          child: pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            mainAxisAlignment: pw.MainAxisAlignment.center,
-            children: [
-              pw.Text("TIMO'S ENGINEERING", style: _companyNameStyle),
-              // "=== SERVICE ===" row
-              pw.Row(
-                children: [
-                  pw.Container(width: 36, height: 1.8, color: _yellow),
-                  pw.SizedBox(width: 5),
-                  pw.Text('SERVICE', style: _companyServiceStyle),
-                  pw.SizedBox(width: 5),
-                  pw.Container(width: 36, height: 1.8, color: _yellow),
-                ],
-              ),
-              pw.SizedBox(height: 3),
-              pw.Text(
-                'Powering Your World, One Generator at a Time.',
-                style: _taglineStyle,
-              ),
-            ],
-          ),
-        ),
-
-        // Vertical divider
-        pw.Container(
-          width: 0.8,
-          height: 78,
-          color: _borderGrey,
-          margin: const pw.EdgeInsets.symmetric(horizontal: 10),
-        ),
-
-        // Contact panel
-        pw.SizedBox(
-          width: 168,
-          child: pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            mainAxisAlignment: pw.MainAxisAlignment.center,
-            children: [
-              // Phone
-              pw.Row(
-                crossAxisAlignment: pw.CrossAxisAlignment.center,
-                children: [
-                  _circleIcon('T'), // telephone placeholder circle
-                  pw.SizedBox(width: 5),
-                  pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Text('Phone:', style: _contactLabelStyle),
-                      pw.Text('0593199191', style: _contactPhoneStyle),
-                    ],
-                  ),
-                ],
-              ),
-              pw.SizedBox(height: 3),
-              // Email
-              pw.Row(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  _circleIcon('E'),
-                  pw.SizedBox(width: 5),
-                  pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Text('Email:', style: _contactLabelStyle),
-                      pw.Text(
-                        "timo'sengineeringservices@gmail.com",
-                        style: _contactValueStyle,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              pw.SizedBox(height: 3),
-              // Bank Details
-              pw.Row(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  _circleIcon('B'),
-                  pw.SizedBox(width: 5),
-                  pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Text('Bank Details:', style: _contactLabelStyle),
-                      pw.Text('Bank:        GCB', style: _contactValueStyle),
-                      pw.Text('Name:       Bright Atiemo Amoani',
-                          style: _contactValueStyle),
-                      pw.Text('Account No.: 6191010129078',
-                          style: _contactValueStyle),
-                      pw.Text('Branch:      Ahinsan',
-                          style: _contactValueStyle),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Small circle badge used as icon placeholder (T=phone, E=email, B=bank)
-  /// since emoji glyphs are unreliable in PDF rendering.
-  static pw.Widget _circleIcon(String letter) {
-    return pw.Container(
-      width: 13,
-      height: 13,
-      decoration: const pw.BoxDecoration(
-        shape: pw.BoxShape.circle,
-        color: _yellow,
-      ),
-      alignment: pw.Alignment.center,
-      child: pw.Text(
-        letter,
-        style: pw.TextStyle(
-          fontSize: 6,
-          fontWeight: pw.FontWeight.bold,
-          color: _black,
-        ),
-      ),
-    );
-  }
-
   // ── 2. INVOICE Banner ─────────────────────────────────────────────────────
-  //
-  // Left black box: "INVOICE" bold white text, with a yellow diagonal wedge
-  // on the right edge bleeding into the right yellow panel.
-  // Right yellow panel: Invoice No. and Date fields.
 
-  static pw.Widget _buildInvoiceBanner(Invoice invoice, String dateStr) {
-    const bannerHeight = 52.0;
-    const blackWidth = 230.0;
+  static pw.Widget _buildInvoiceBanner(
+    pw.MemoryImage bannerImg,
+    Invoice invoice,
+    String dateStr,
+    double width,
+  ) {
+    // invoice.png aspect ratio: 2581 / 245 = 10.5347
+    final height = width / 10.5347;
 
     return pw.SizedBox(
-      height: bannerHeight,
-      child: pw.Row(
-        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+      width: width,
+      height: height,
+      child: pw.Stack(
         children: [
-          // Black "INVOICE" panel
-          pw.Stack(
-            children: [
-              pw.Container(
-                width: blackWidth,
-                color: _nearBlack,
-              ),
-              // Yellow diagonal slash on right — approximated as a right-aligned
-              // yellow strip; true skew not natively supported in pw.Stack
-              pw.Positioned(
-                right: 0,
-                top: 0,
-                bottom: 0,
-                child: pw.Container(width: 22, color: _yellow),
-              ),
-              // INVOICE text centred in the black area
-              pw.Positioned.fill(
-                child: pw.Padding(
-                  padding: const pw.EdgeInsets.only(right: 22),
-                  child: pw.Center(
-                    child: pw.Text('INVOICE', style: _invoiceBannerStyle),
-                  ),
-                ),
-              ),
-            ],
+          pw.Image(
+            bannerImg,
+            width: width,
+            height: height,
+            fit: pw.BoxFit.fill,
           ),
+          // Invoice No overlay (line is at y/245 = 0.355 in invoice.png)
+          pw.Positioned(
+            left: width * 0.730,
+            top: height * 0.14,
+            right: width * 0.025,
+            child: pw.Text(
+              _safe(invoice.invoiceNumber),
+              style: pw.TextStyle(
+                fontSize: 8.5,
+                fontWeight: pw.FontWeight.bold,
+                color: _black,
+              ),
+              maxLines: 1,
+            ),
+          ),
+          // Date overlay (line is at y/245 = 0.800 in invoice.png)
+          pw.Positioned(
+            left: width * 0.655,
+            top: height * 0.58,
+            right: width * 0.025,
+            child: pw.Text(
+              dateStr,
+              style: pw.TextStyle(
+                fontSize: 8.5,
+                fontWeight: pw.FontWeight.bold,
+                color: _black,
+              ),
+              maxLines: 1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-          // Yellow right panel: Invoice No & Date
-          pw.Expanded(
-            child: pw.Container(
-              color: _yellow,
-              padding: const pw.EdgeInsets.symmetric(
-                  horizontal: 14, vertical: 8),
-              child: pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                mainAxisAlignment: pw.MainAxisAlignment.center,
-                children: [
-                  _bannerField('Invoice No.:', _safe(invoice.invoiceNumber)),
-                  pw.SizedBox(height: 8),
-                  _bannerField('Date:', dateStr),
-                ],
+  // ── 3. Customer Details ───────────────────────────────────────────────────
+
+  static pw.Widget _buildCustomerSection(
+    pw.MemoryImage customerImg,
+    Invoice invoice,
+    double width,
+  ) {
+    // customer_details.png aspect ratio: 2590 / 331 = 7.8248
+    final height = width / 7.8248;
+
+    return pw.SizedBox(
+      width: width,
+      height: height,
+      child: pw.Stack(
+        children: [
+          pw.Image(
+            customerImg,
+            width: width,
+            height: height,
+            fit: pw.BoxFit.fill,
+          ),
+          // Customer Name: line 1 left (line is at y/331 = 0.293)
+          pw.Positioned(
+            left: width * 0.185,
+            top: height * 0.12,
+            width: width * 0.420,
+            child: pw.Text(
+              _safe(invoice.clientName),
+              style: pw.TextStyle(
+                fontSize: 8.5,
+                fontWeight: pw.FontWeight.bold,
+                color: _black,
+              ),
+              maxLines: 1,
+            ),
+          ),
+          // Bill To: line 1 right (line is at y/331 = 0.293)
+          pw.Positioned(
+            left: width * 0.715,
+            top: height * 0.12,
+            right: width * 0.025,
+            child: pw.Text(
+              _safe(invoice.billTo),
+              style: pw.TextStyle(
+                fontSize: 8.5,
+                fontWeight: pw.FontWeight.bold,
+                color: _black,
+              ),
+              maxLines: 1,
+            ),
+          ),
+          // Customer Address: line 2 (line is at y/331 = 0.574)
+          pw.Positioned(
+            left: width * 0.205,
+            top: height * 0.41,
+            right: width * 0.025,
+            child: pw.Text(
+              _safe(invoice.address),
+              style: const pw.TextStyle(
+                fontSize: 8.5,
+                color: _black,
+              ),
+              maxLines: 1,
+            ),
+          ),
+          // Customer Phone: line 3 (line is at y/331 = 0.852)
+          pw.Positioned(
+            left: width * 0.205,
+            top: height * 0.69,
+            right: width * 0.025,
+            child: pw.Text(
+              _safe(invoice.phone),
+              style: pw.TextStyle(
+                fontSize: 8.5,
+                fontWeight: pw.FontWeight.bold,
+                color: _black,
+              ),
+              maxLines: 1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── 4. Generator Details ──────────────────────────────────────────────────
+
+  static pw.Widget _buildGeneratorDetails(
+    pw.MemoryImage generatorImg,
+    Invoice invoice,
+    double width,
+  ) {
+    // generator_details.png aspect ratio: 2590 / 388 = 6.6753
+    final height = width / 6.6753;
+
+    String dd = '';
+    String mm = '';
+    String yyyy = '';
+    if (invoice.nextServiceDate != null) {
+      dd = invoice.nextServiceDate!.day.toString().padLeft(2, '0');
+      mm = invoice.nextServiceDate!.month.toString().padLeft(2, '0');
+      yyyy = invoice.nextServiceDate!.year.toString();
+    }
+
+    return pw.SizedBox(
+      width: width,
+      height: height,
+      child: pw.Stack(
+        children: [
+          pw.Image(
+            generatorImg,
+            width: width,
+            height: height,
+            fit: pw.BoxFit.fill,
+          ),
+          // Generator Model / Make (line is at y/388 = 0.786)
+          pw.Positioned(
+            left: width * 0.028,
+            top: height * 0.63,
+            width: width * 0.335,
+            child: pw.Text(
+              _safe(invoice.model),
+              style: pw.TextStyle(
+                fontSize: 8.5,
+                fontWeight: pw.FontWeight.bold,
+                color: _black,
+              ),
+              maxLines: 1,
+            ),
+          ),
+          // Engine Running Hours (line is at y/388 = 0.786)
+          pw.Positioned(
+            left: width * 0.420,
+            top: height * 0.63,
+            width: width * 0.228,
+            child: pw.Text(
+              _safe(invoice.runningHour),
+              style: pw.TextStyle(
+                fontSize: 8.5,
+                fontWeight: pw.FontWeight.bold,
+                color: _black,
+              ),
+              maxLines: 1,
+            ),
+          ),
+          // Next Service Date DD
+          pw.Positioned(
+            left: width * 0.742,
+            top: height * 0.63,
+            width: width * 0.053,
+            child: pw.Center(
+              child: pw.Text(
+                dd,
+                style: pw.TextStyle(
+                  fontSize: 8.5,
+                  fontWeight: pw.FontWeight.bold,
+                  color: _black,
+                ),
+                maxLines: 1,
+              ),
+            ),
+          ),
+          // Next Service Date MM
+          pw.Positioned(
+            left: width * 0.820,
+            top: height * 0.63,
+            width: width * 0.053,
+            child: pw.Center(
+              child: pw.Text(
+                mm,
+                style: pw.TextStyle(
+                  fontSize: 8.5,
+                  fontWeight: pw.FontWeight.bold,
+                  color: _black,
+                ),
+                maxLines: 1,
+              ),
+            ),
+          ),
+          // Next Service Date YYYY
+          pw.Positioned(
+            left: width * 0.896,
+            top: height * 0.63,
+            width: width * 0.078,
+            child: pw.Center(
+              child: pw.Text(
+                yyyy,
+                style: pw.TextStyle(
+                  fontSize: 8.5,
+                  fontWeight: pw.FontWeight.bold,
+                  color: _black,
+                ),
+                maxLines: 1,
               ),
             ),
           ),
@@ -404,11 +467,428 @@ class PdfService {
     );
   }
 
-  static pw.Widget _bannerField(String label, String value) {
+  // ── 5. Items Table ────────────────────────────────────────────────────────
+
+  static pw.Widget _buildItemsTable(Invoice invoice, double width) {
+    const minRows = 6;
+    const col1Width = 280.0;
+    const col2Width = 74.0;
+    const col3Width = 110.0;
+    const col4Width = 110.0; // sum = 574.0
+
+    // Keep table perfectly sized for A4
+    final rowHeight = invoice.items.length <= minRows
+        ? 22.0
+        : (132.0 / invoice.items.length).clamp(14.0, 22.0);
+
+    // Header row
+    final headerRow = pw.Container(
+      height: 22,
+      decoration: const pw.BoxDecoration(
+        color: _yellow,
+        border: pw.Border(
+          bottom: pw.BorderSide(color: _black, width: 1.0),
+        ),
+      ),
+      child: pw.Row(
+        children: [
+          pw.Container(
+            width: col1Width,
+            padding: const pw.EdgeInsets.symmetric(horizontal: 8),
+            alignment: pw.Alignment.centerLeft,
+            child: pw.Text(
+              'Description of Goods / Services',
+              style: _tableHeaderStyle,
+            ),
+          ),
+          pw.Container(width: 1.0, color: _black),
+          pw.Container(
+            width: col2Width - 1.0,
+            alignment: pw.Alignment.center,
+            child: pw.Text('Qty', style: _tableHeaderStyle),
+          ),
+          pw.Container(width: 1.0, color: _black),
+          pw.Container(
+            width: col3Width - 1.0,
+            alignment: pw.Alignment.center,
+            child: pw.Text('Unit Price (GH\u20b5)', style: _tableHeaderStyle),
+          ),
+          pw.Container(width: 1.0, color: _black),
+          pw.Container(
+            width: col4Width - 1.0,
+            alignment: pw.Alignment.center,
+            child: pw.Text('Amount (GH\u20b5)', style: _tableHeaderStyle),
+          ),
+        ],
+      ),
+    );
+
+    final rows = <pw.Widget>[headerRow];
+
+    for (int i = 0; i < invoice.items.length; i++) {
+      final item = invoice.items[i];
+      final isLast = (i == invoice.items.length - 1) && (invoice.items.length >= minRows);
+      rows.add(_tableItemRow(
+        col1Width: col1Width,
+        col2Width: col2Width,
+        col3Width: col3Width,
+        col4Width: col4Width,
+        height: rowHeight,
+        description: item.description,
+        qty: item.quantity > 0 ? item.quantity.toStringAsFixed(0) : '',
+        price: _formatMoneyOrBlank(item.price),
+        amount: _formatMoneyOrBlank(item.total),
+        showBottomBorder: !isLast,
+      ));
+    }
+
+    final needed = (minRows - invoice.items.length).clamp(0, minRows);
+    for (int i = 0; i < needed; i++) {
+      final isLast = (i == needed - 1);
+      rows.add(_tableItemRow(
+        col1Width: col1Width,
+        col2Width: col2Width,
+        col3Width: col3Width,
+        col4Width: col4Width,
+        height: rowHeight,
+        description: '',
+        qty: '',
+        price: '',
+        amount: '',
+        showBottomBorder: !isLast,
+      ));
+    }
+
+    return pw.Container(
+      width: width,
+      decoration: pw.BoxDecoration(
+        color: _white,
+        border: pw.Border.all(color: _black, width: 1.0),
+      ),
+      child: pw.Column(children: rows),
+    );
+  }
+
+  static pw.Widget _tableItemRow({
+    required double col1Width,
+    required double col2Width,
+    required double col3Width,
+    required double col4Width,
+    required double height,
+    required String description,
+    required String qty,
+    required String price,
+    required String amount,
+    required bool showBottomBorder,
+  }) {
+    return pw.Container(
+      height: height,
+      decoration: pw.BoxDecoration(
+        border: showBottomBorder
+            ? const pw.Border(
+                bottom: pw.BorderSide(color: _black, width: 0.5),
+              )
+            : null,
+      ),
+      child: pw.Row(
+        children: [
+          pw.Container(
+            width: col1Width,
+            padding: const pw.EdgeInsets.symmetric(horizontal: 8),
+            alignment: pw.Alignment.centerLeft,
+            child: pw.Text(description, style: _tableCellStyle, maxLines: 1),
+          ),
+          pw.Container(width: 1.0, color: _black),
+          pw.Container(
+            width: col2Width - 1.0,
+            alignment: pw.Alignment.center,
+            child: pw.Text(qty, style: _tableCellStyle, maxLines: 1),
+          ),
+          pw.Container(width: 1.0, color: _black),
+          pw.Container(
+            width: col3Width - 1.0,
+            alignment: pw.Alignment.center,
+            child: pw.Text(price, style: _tableCellStyle, maxLines: 1),
+          ),
+          pw.Container(width: 1.0, color: _black),
+          pw.Container(
+            width: col4Width - 1.0,
+            alignment: pw.Alignment.center,
+            child: pw.Text(amount, style: _tableCellStyle, maxLines: 1),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── 6. Report/Remarks + Totals ────────────────────────────────────────────
+
+  static pw.Widget _buildRemarksAndTotals(Invoice invoice, double width) {
+    const boxHeight = 160.0;
+    const leftWidth = 325.0;
+    const rightWidth = 241.0; // 325 + 8 + 241 = 574.0
+
+    return pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        _buildRemarksBox(_safe(invoice.jobDescription), leftWidth, boxHeight),
+        pw.SizedBox(width: 8),
+        _buildTotalsBox(invoice, rightWidth, boxHeight),
+      ],
+    );
+  }
+
+  static pw.Widget _buildRemarksBox(String remarks, double width, double height) {
+    const lineCount = 6;
+    const headerHeight = 22.0;
+
+    return pw.Container(
+      width: width,
+      height: height,
+      decoration: pw.BoxDecoration(
+        color: _white,
+        border: pw.Border.all(color: _yellow, width: 1.5),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+        children: [
+          // Yellow header bar
+          pw.Container(
+            height: headerHeight,
+            decoration: const pw.BoxDecoration(
+              color: _yellow,
+              borderRadius: pw.BorderRadius.only(
+                topLeft: pw.Radius.circular(2.5),
+                topRight: pw.Radius.circular(2.5),
+              ),
+            ),
+            padding: const pw.EdgeInsets.symmetric(horizontal: 8),
+            alignment: pw.Alignment.centerLeft,
+            child: pw.Row(
+              children: [
+                _buildClipboardIcon(),
+                pw.SizedBox(width: 6),
+                pw.Text('Report / Remarks', style: _sectionTitleStyle),
+              ],
+            ),
+          ),
+          // Lined body area with dynamic remarks text
+          pw.Expanded(
+            child: pw.Stack(
+              children: [
+                // Ruled notebook lines
+                pw.Column(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
+                  children: List.generate(
+                    lineCount - 1,
+                    (_) => pw.Container(
+                      height: 0.5,
+                      color: _lineGrey,
+                      margin: const pw.EdgeInsets.symmetric(horizontal: 8),
+                    ),
+                  ),
+                ),
+                // Text overlay
+                pw.Padding(
+                  padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  child: pw.Text(
+                    remarks,
+                    style: const pw.TextStyle(
+                      fontSize: 8.5,
+                      color: _black,
+                      lineSpacing: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static pw.Widget _buildClipboardIcon() {
+    return pw.Container(
+      width: 12,
+      height: 14,
+      decoration: pw.BoxDecoration(
+        color: _yellow,
+        border: pw.Border.all(color: _black, width: 1.2),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(1.5)),
+      ),
+      child: pw.Column(
+        mainAxisAlignment: pw.MainAxisAlignment.center,
+        children: [
+          pw.Container(width: 6, height: 1.0, color: _black),
+          pw.SizedBox(height: 1.5),
+          pw.Container(width: 6, height: 1.0, color: _black),
+          pw.SizedBox(height: 1.5),
+          pw.Container(width: 4, height: 1.0, color: _black),
+        ],
+      ),
+    );
+  }
+
+  static pw.Widget _buildTotalsBox(Invoice invoice, double width, double height) {
+    return pw.Container(
+      width: width,
+      height: height,
+      decoration: pw.BoxDecoration(
+        color: _white,
+        border: pw.Border.all(color: _yellow, width: 1.5),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+      ),
+      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+      child: pw.Column(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          _totalRow(
+            'Subtotal (GH\u20b5)',
+            _formatMoney(invoice.itemsSubTotal),
+          ),
+          _totalRow(
+            'Transportation (GH\u20b5)',
+            _formatMoneyOrBlank(invoice.transportationAmount),
+          ),
+          _totalRow(
+            'Labour (GH\u20b5)',
+            _formatMoneyOrBlank(invoice.labourAmount),
+          ),
+          _totalRow(
+            'Other Charges (GH\u20b5)',
+            _formatMoneyOrBlank(invoice.otherChargesAmount),
+          ),
+          // Yellow highlighted row for TOTAL AMOUNT DUE
+          pw.Container(
+            height: 24,
+            decoration: const pw.BoxDecoration(
+              color: _yellow,
+              borderRadius: pw.BorderRadius.all(pw.Radius.circular(3)),
+            ),
+            padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            child: pw.Row(
+              children: [
+                pw.Expanded(
+                  child: pw.Text(
+                    'TOTAL AMOUNT DUE (GH\u20b5)',
+                    style: pw.TextStyle(
+                      fontSize: 8,
+                      fontWeight: pw.FontWeight.bold,
+                      color: _black,
+                    ),
+                  ),
+                ),
+                pw.Container(
+                  width: 76,
+                  height: 18,
+                  decoration: pw.BoxDecoration(
+                    color: _white,
+                    border: pw.Border.all(color: _borderGrey, width: 0.8),
+                    borderRadius: const pw.BorderRadius.all(pw.Radius.circular(2)),
+                  ),
+                  alignment: pw.Alignment.center,
+                  child: pw.Text(
+                    _formatMoney(invoice.grandTotal),
+                    style: _grandTotalValueStyle,
+                    textAlign: pw.TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // No VAT Included banner
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.center,
+            children: [
+              pw.Container(width: 32, height: 1.0, color: _yellow),
+              pw.SizedBox(width: 6),
+              pw.Text('No VAT Included', style: _noVatStyle),
+              pw.SizedBox(width: 6),
+              pw.Container(width: 32, height: 1.0, color: _yellow),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  static pw.Widget _totalRow(String label, String value) {
     return pw.Row(
       children: [
-        pw.Text(label, style: _bannerFieldLabelStyle),
-        pw.SizedBox(width: 8),
+        pw.Expanded(
+          child: pw.Text(label, style: _totalLabelStyle),
+        ),
+        pw.Container(
+          width: 76,
+          height: 18,
+          decoration: pw.BoxDecoration(
+            color: _white,
+            border: pw.Border.all(color: _borderGrey, width: 0.8),
+            borderRadius: const pw.BorderRadius.all(pw.Radius.circular(2)),
+          ),
+          alignment: pw.Alignment.center,
+          child: pw.Text(
+            value,
+            style: pw.TextStyle(
+              fontSize: 8,
+              fontWeight: pw.FontWeight.bold,
+              color: _black,
+            ),
+            textAlign: pw.TextAlign.center,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── 7. Signature Section ──────────────────────────────────────────────────
+
+  static pw.Widget _buildSignatureSection(Invoice invoice, double width) {
+    return pw.SizedBox(
+      width: width,
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          // Left: Prepared By
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                _sigLine('Prepared By:', ''),
+                pw.SizedBox(height: 6),
+                _sigLine('Name:', _safe(invoice.managerName)),
+                pw.SizedBox(height: 6),
+                _sigLine('Signature:', ''),
+              ],
+            ),
+          ),
+          pw.SizedBox(width: 34),
+          // Right: Customer Signature
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                _sigLine('Customer Signature:', ''),
+                pw.SizedBox(height: 6),
+                _sigLine('Name:', ''),
+                pw.SizedBox(height: 6),
+                _sigLine('Date:', ''),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static pw.Widget _sigLine(String label, String value) {
+    return pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.end,
+      children: [
+        pw.Text(label, style: _fieldLabelStyle),
+        pw.SizedBox(width: 6),
         pw.Expanded(
           child: pw.Container(
             height: 13,
@@ -419,562 +899,14 @@ class PdfService {
             ),
             child: pw.Align(
               alignment: pw.Alignment.centerLeft,
-              child: pw.Text(value,
-                  style: pw.TextStyle(
-                    fontSize: 8.5,
-                    fontWeight: pw.FontWeight.bold,
-                  )),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ── 3. Customer Details ───────────────────────────────────────────────────
-  //
-  // Rounded-corner bordered box.
-  // Left ~60%: Customer Name / Address / Phone (each with underline field)
-  // Right ~40%: Bill To (single underline field)
-
-  static pw.Widget _buildCustomerSection(Invoice invoice) {
-    return pw.Container(
-      decoration: pw.BoxDecoration(
-        border: pw.Border.all(color: _borderGrey, width: 0.8),
-        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(3)),
-      ),
-      padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      child: pw.Row(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          // Left column
-          pw.Expanded(
-            flex: 6,
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                _underlineField('Customer Name:', _safe(invoice.clientName)),
-                pw.SizedBox(height: 5),
-                _underlineField('Customer Address:', _safe(invoice.address)),
-                pw.SizedBox(height: 5),
-                _underlineField('Customer Phone:', _safe(invoice.phone)),
-              ],
-            ),
-          ),
-          pw.SizedBox(width: 16),
-          // Right column
-          pw.Expanded(
-            flex: 4,
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                _underlineField('Bill To:', _safe(invoice.billTo)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  static pw.Widget _underlineField(String label, String value) {
-    return pw.Row(
-      crossAxisAlignment: pw.CrossAxisAlignment.end,
-      children: [
-        pw.Text(label, style: _fieldLabelStyle),
-        pw.SizedBox(width: 5),
-        pw.Expanded(
-          child: pw.Container(
-            height: 13,
-            decoration: const pw.BoxDecoration(
-              border: pw.Border(
-                bottom: pw.BorderSide(color: _black, width: 0.5),
-              ),
-            ),
-            child: pw.Align(
-              alignment: pw.Alignment.centerLeft,
-              child: pw.Text(value, style: _fieldValueStyle),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ── 4. Generator Details ──────────────────────────────────────────────────
-  //
-  // Yellow section header bar (no emoji — uses text label).
-  // Three columns separated by vertical lines:
-  //   Generator Model / Make | Engine Running Hours (+ "hrs") | Next Service Date (DD/MM/YYYY)
-
-  static pw.Widget _buildGeneratorDetails(Invoice invoice) {
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-      children: [
-        // Yellow header bar
-        pw.Container(
-          color: _yellow,
-          padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-          child: pw.Text('  Generator Details', style: _sectionBarStyle),
-        ),
-
-        // Detail columns
-        pw.Container(
-          decoration: pw.BoxDecoration(
-            border: pw.Border.all(color: _borderGrey, width: 0.8),
-          ),
-          child: pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              // Column 1: Generator Model / Make
-              pw.Expanded(
-                child: pw.Padding(
-                  padding: const pw.EdgeInsets.all(8),
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Text('Generator Model / Make:',
-                          style: _fieldLabelStyle),
-                      pw.SizedBox(height: 4),
-                      pw.Container(
-                        height: 14,
-                        decoration: const pw.BoxDecoration(
-                          border: pw.Border(
-                            bottom:
-                                pw.BorderSide(color: _black, width: 0.5),
-                          ),
-                        ),
-                        child: pw.Align(
-                          alignment: pw.Alignment.centerLeft,
-                          child: pw.Text(_safe(invoice.model),
-                              style: _fieldValueStyle),
-                        ),
-                      ),
-                    ],
-                  ),
+              child: pw.Text(
+                value,
+                style: pw.TextStyle(
+                  fontSize: 8.5,
+                  fontWeight: pw.FontWeight.bold,
+                  color: _black,
                 ),
               ),
-
-              // Vertical divider
-              pw.Container(width: 0.8, color: _borderGrey),
-
-              // Column 2: Engine Running Hours
-              pw.Expanded(
-                child: pw.Padding(
-                  padding: const pw.EdgeInsets.all(8),
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Text('Engine Running Hours:',
-                          style: _fieldLabelStyle),
-                      pw.SizedBox(height: 4),
-                      pw.Row(
-                        crossAxisAlignment: pw.CrossAxisAlignment.end,
-                        children: [
-                          pw.Expanded(
-                            child: pw.Container(
-                              height: 14,
-                              decoration: const pw.BoxDecoration(
-                                border: pw.Border(
-                                  bottom: pw.BorderSide(
-                                      color: _black, width: 0.5),
-                                ),
-                              ),
-                              child: pw.Align(
-                                alignment: pw.Alignment.centerLeft,
-                                child: pw.Text(_safe(invoice.runningHour),
-                                    style: _fieldValueStyle),
-                              ),
-                            ),
-                          ),
-                          pw.SizedBox(width: 4),
-                          pw.Text('hrs',
-                              style:
-                                  const pw.TextStyle(fontSize: 8)),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Vertical divider
-              pw.Container(width: 0.8, color: _borderGrey),
-
-              // Column 3: Next Service Date
-              pw.Expanded(
-                child: pw.Padding(
-                  padding: const pw.EdgeInsets.all(8),
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Text('Next Service Date:',
-                          style: _fieldLabelStyle),
-                      pw.SizedBox(height: 4),
-                      pw.Row(
-                        mainAxisAlignment: pw.MainAxisAlignment.start,
-                        crossAxisAlignment: pw.CrossAxisAlignment.end,
-                        children: [
-                          _serviceDateBox(
-                              invoice.nextServiceDate != null
-                                  ? invoice.nextServiceDate!.day
-                                      .toString()
-                                      .padLeft(2, '0')
-                                  : '',
-                              'DD'),
-                          pw.Text(' / ',
-                              style: const pw.TextStyle(fontSize: 8)),
-                          _serviceDateBox(
-                              invoice.nextServiceDate != null
-                                  ? invoice.nextServiceDate!.month
-                                      .toString()
-                                      .padLeft(2, '0')
-                                  : '',
-                              'MM'),
-                          pw.Text(' / ',
-                              style: const pw.TextStyle(fontSize: 8)),
-                          _serviceDateBox(
-                              invoice.nextServiceDate != null
-                                  ? invoice.nextServiceDate!.year
-                                      .toString()
-                                  : '',
-                              'YYYY'),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  static pw.Widget _serviceDateBox(String value, String sub) {
-    final isYear = sub == 'YYYY';
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.center,
-      children: [
-        pw.Container(
-          width: isYear ? 32 : 20,
-          height: 14,
-          decoration: const pw.BoxDecoration(
-            border: pw.Border(
-              bottom: pw.BorderSide(color: _black, width: 0.5),
-            ),
-          ),
-          alignment: pw.Alignment.centerLeft,
-          child: pw.Text(value,
-              style: const pw.TextStyle(fontSize: 8)),
-        ),
-        pw.Text(sub,
-            style: const pw.TextStyle(fontSize: 5.5, color: _medGrey)),
-      ],
-    );
-  }
-
-  // ── 5. Items Table ────────────────────────────────────────────────────────
-  //
-  // Yellow header row.
-  // All data rows: white background, thin bottom border only.
-  // 4 columns: Description (wide) | Qty | Unit Price (GH₵) | Amount (GH₵)
-  // Minimum 7 blank rows shown.
-
-  static pw.Widget _buildItemsTable(Invoice invoice) {
-    const minRows = 7;
-
-    // Header
-    final header = pw.Container(
-      color: _yellow,
-      child: pw.Row(
-        children: [
-          _tCell('Description of Goods / Services', 0,
-              style: _tableHeaderStyle,
-              expand: true,
-              center: false,
-              padV: 6),
-          _tCell('Qty', 42,
-              style: _tableHeaderStyle, center: true, padV: 6),
-          _tCell('Unit Price (GH\u20b5)', 82,
-              style: _tableHeaderStyle, center: true, padV: 6),
-          _tCell('Amount (GH\u20b5)', 82,
-              style: _tableHeaderStyle, center: true, padV: 6),
-        ],
-      ),
-    );
-
-    final rows = <pw.Widget>[header];
-
-    for (int i = 0; i < invoice.items.length; i++) {
-      final item = invoice.items[i];
-      rows.add(_dataRow(
-        description: item.description,
-        qty: item.quantity > 0 ? item.quantity.toStringAsFixed(0) : '',
-        price: _formatMoneyOrBlank(item.price),
-        amount: _formatMoneyOrBlank(item.total),
-      ));
-    }
-
-    final needed = (minRows - invoice.items.length).clamp(0, minRows);
-    for (int i = 0; i < needed; i++) {
-      rows.add(_dataRow(description: '', qty: '', price: '', amount: ''));
-    }
-
-    return pw.Container(
-      decoration: pw.BoxDecoration(
-        border: pw.Border.all(color: _borderGrey, width: 0.8),
-      ),
-      child: pw.Column(children: rows),
-    );
-  }
-
-  static pw.Widget _dataRow({
-    required String description,
-    required String qty,
-    required String price,
-    required String amount,
-  }) {
-    return pw.Container(
-      decoration: const pw.BoxDecoration(
-        color: _white,
-        border: pw.Border(
-          bottom: pw.BorderSide(color: _borderGrey, width: 0.4),
-        ),
-      ),
-      child: pw.Row(
-        children: [
-          _tCell(description, 0,
-              style: _tableCellStyle, expand: true, center: false),
-          _tCell(qty, 42, style: _tableCellStyle, center: true),
-          _tCell(price, 82, style: _tableCellStyle, center: true),
-          _tCell(amount, 82, style: _tableCellStyle, center: true),
-        ],
-      ),
-    );
-  }
-
-  static pw.Widget _tCell(
-    String text,
-    double width, {
-    pw.TextStyle? style,
-    bool center = false,
-    bool expand = false,
-    double padV = 5,
-  }) {
-    final content = pw.Padding(
-      padding: pw.EdgeInsets.symmetric(horizontal: 6, vertical: padV),
-      child: pw.Text(
-        text,
-        style: style ?? _tableCellStyle,
-        textAlign: center ? pw.TextAlign.center : pw.TextAlign.left,
-      ),
-    );
-    if (expand) return pw.Expanded(child: content);
-    return pw.SizedBox(width: width, child: content);
-  }
-
-  // ── 6. Report/Remarks + Totals ────────────────────────────────────────────
-  //
-  // Left (~55%): Yellow "Report / Remarks" header bar + white lined area.
-  // Right (~45%): Totals box — 4 rows (Subtotal/Transportation/Labour/Other)
-  //   each with a right-side value box (white, black border).
-  //   Then a full-width yellow "TOTAL AMOUNT DUE" row with value box.
-  //   Then italic "No VAT Included" centred below.
-
-  static pw.Widget _buildRemarksAndTotals(Invoice invoice) {
-    return pw.Row(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        // Report / Remarks
-        pw.Expanded(
-          flex: 55,
-          child: pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-            children: [
-              // Yellow header
-              pw.Container(
-                color: _yellow,
-                padding: const pw.EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 5),
-                child:
-                    pw.Text('  Report / Remarks', style: _sectionBarStyle),
-              ),
-              // Lined text area
-              pw.Container(
-                height: 108,
-                decoration: pw.BoxDecoration(
-                  border: pw.Border.all(color: _borderGrey, width: 0.8),
-                ),
-                padding: const pw.EdgeInsets.all(6),
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-                  children: [
-                    pw.Text(
-                      _safe(invoice.jobDescription),
-                      style: _tableCellStyle,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        pw.SizedBox(width: 8),
-
-        // Totals box
-        pw.Expanded(
-          flex: 45,
-          child: pw.Container(
-            decoration: pw.BoxDecoration(
-              border: pw.Border.all(color: _borderGrey, width: 0.8),
-            ),
-            child: pw.Column(
-              children: [
-                _totalRow('Subtotal (GH\u20b5)',
-                    _formatMoney(invoice.itemsSubTotal)),
-                _totalRow('Transportation (GH\u20b5)',
-                    _formatMoneyOrBlank(invoice.transportationAmount)),
-                _totalRow('Labour (GH\u20b5)',
-                    _formatMoneyOrBlank(invoice.labourAmount)),
-                _totalRow('Other Charges (GH\u20b5)',
-                    _formatMoneyOrBlank(invoice.otherChargesAmount)),
-
-                // TOTAL AMOUNT DUE — yellow highlighted row
-                pw.Container(
-                  color: _yellow,
-                  padding: const pw.EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 6),
-                  child: pw.Row(
-                    children: [
-                      pw.Expanded(
-                        child: pw.Text('TOTAL AMOUNT DUE (GH\u20b5)',
-                            style: _grandTotalStyle),
-                      ),
-                      pw.Container(
-                        width: 68,
-                        height: 16,
-                        decoration: pw.BoxDecoration(
-                          color: _white,
-                          border: pw.Border.all(
-                              color: _black, width: 0.6),
-                        ),
-                        alignment: pw.Alignment.center,
-                        child: pw.Text(
-                          _formatMoney(invoice.grandTotal),
-                          style: _grandTotalStyle,
-                          textAlign: pw.TextAlign.center,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // No VAT Included
-                pw.Container(
-                  padding:
-                      const pw.EdgeInsets.symmetric(vertical: 4),
-                  child: pw.Center(
-                    child: pw.Text('No VAT Included', style: _noVatStyle),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  static pw.Widget _totalRow(String label, String value) {
-    return pw.Container(
-      decoration: const pw.BoxDecoration(
-        border: pw.Border(
-          bottom: pw.BorderSide(color: _borderGrey, width: 0.5),
-        ),
-      ),
-      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-      child: pw.Row(
-        children: [
-          pw.Expanded(
-            child: pw.Text(label, style: _totalLabelStyle),
-          ),
-          pw.Container(
-            width: 68,
-            height: 14,
-            decoration: pw.BoxDecoration(
-              border: pw.Border.all(color: _borderGrey, width: 0.5),
-            ),
-            alignment: pw.Alignment.center,
-            child: pw.Text(value,
-                style: _tableCellStyle,
-                textAlign: pw.TextAlign.center),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── 7. Signature Section ──────────────────────────────────────────────────
-  //
-  // Two columns:
-  //   Left:  Prepared By / Name / Signature  (each with underline)
-  //   Right: Customer Signature / Name / Date (each with underline)
-
-  static pw.Widget _buildSignatureSection(Invoice invoice) {
-    return pw.Row(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        // Left: Prepared By
-        pw.Expanded(
-          child: pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              _sigLine('Prepared By:', ''),
-              pw.SizedBox(height: 5),
-              _sigLine('Name:', _safe(invoice.managerName)),
-              pw.SizedBox(height: 5),
-              _sigLine('Signature:', ''),
-            ],
-          ),
-        ),
-        pw.SizedBox(width: 24),
-        // Right: Customer Signature
-        pw.Expanded(
-          child: pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              _sigLine('Customer Signature:', ''),
-              pw.SizedBox(height: 5),
-              _sigLine('Name:', ''),
-              pw.SizedBox(height: 5),
-              _sigLine('Date:', ''),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  static pw.Widget _sigLine(String label, String value) {
-    return pw.Row(
-      crossAxisAlignment: pw.CrossAxisAlignment.end,
-      children: [
-        pw.Text(label, style: _fieldLabelStyle),
-        pw.SizedBox(width: 5),
-        pw.Expanded(
-          child: pw.Container(
-            height: 13,
-            decoration: const pw.BoxDecoration(
-              border: pw.Border(
-                bottom: pw.BorderSide(color: _black, width: 0.5),
-              ),
-            ),
-            child: pw.Align(
-              alignment: pw.Alignment.centerLeft,
-              child: pw.Text(value, style: _fieldValueStyle),
             ),
           ),
         ),
@@ -983,74 +915,16 @@ class PdfService {
   }
 
   // ── 8. Footer ─────────────────────────────────────────────────────────────
-  //
-  // Structure (top → bottom):
-  //   1. Thick yellow top bar (full width)
-  //   2. Row: [yellow short line] [italic thank-you text] [yellow short line] ... [gear icon bottom-right]
-  //   3. Near-black bottom bar with black wave/curve suggestion at bottom-left
 
-  static pw.Widget _buildFooter(pw.MemoryImage footerLogo) {
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-      children: [
-        // Thick yellow top bar
-        pw.Container(height: 6, color: _yellow),
-        pw.SizedBox(height: 5),
+  static pw.Widget _buildFooter(pw.MemoryImage footerImg, double width) {
+    // full_footer.png aspect ratio: 2965 / 368 = 8.057
+    final height = width / 8.057;
 
-        // Thank-you row + gear icon
-        pw.Row(
-          crossAxisAlignment: pw.CrossAxisAlignment.center,
-          children: [
-            // Left yellow line
-            pw.Container(width: 50, height: 1.2, color: _yellow),
-            pw.SizedBox(width: 6),
-            pw.Expanded(
-              child: pw.Center(
-                child: pw.Text(
-                  "Thank you for choosing Timo's Engineering Service.",
-                  style: _footerThankYouStyle,
-                  textAlign: pw.TextAlign.center,
-                ),
-              ),
-            ),
-            pw.SizedBox(width: 6),
-            // Right yellow line
-            pw.Container(width: 50, height: 1.2, color: _yellow),
-            pw.SizedBox(width: 8),
-            // Gear/lightning logo — bottom-right
-            pw.SizedBox(
-              width: 30,
-              height: 30,
-              child: pw.Image(footerLogo, fit: pw.BoxFit.contain),
-            ),
-          ],
-        ),
-        pw.SizedBox(height: 4),
-
-        // Near-black bottom bar (with a subtle yellow arc hint at bottom-left
-        // achieved by layering a yellow container clipped behind the black bar)
-        pw.Stack(
-          children: [
-            pw.Container(
-              height: 16,
-              color: _nearBlack,
-            ),
-            // Yellow wave suggestion: a yellow circle peeking from bottom-left
-            pw.Positioned(
-              left: -10,
-              bottom: 0,
-              child: pw.Container(
-                width: 60,
-                height: 30,
-                decoration: const pw.BoxDecoration(
-                  shape: pw.BoxShape.circle,
-                  color: _yellow,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
+    return pw.Image(
+      footerImg,
+      width: width,
+      height: height,
+      fit: pw.BoxFit.fill,
     );
   }
 
