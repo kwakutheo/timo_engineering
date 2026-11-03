@@ -20,6 +20,8 @@ class Invoice {
   double labourAmount;
   double otherChargesAmount;
   final DateTime createdAt;
+  DateTime? updatedAt;
+  bool isDeleted;
 
   Invoice({
     String? id,
@@ -39,11 +41,14 @@ class Invoice {
     this.labourAmount = 0.0,
     this.otherChargesAmount = 0.0,
     DateTime? createdAt,
+    DateTime? updatedAt,
+    this.isDeleted = false,
   })  : id = id ?? const Uuid().v4(),
         invoiceNumber = invoiceNumber ?? InvoiceNumberGen.generate(),
         date = date ?? DateTime.now(),
         items = items ?? [InvoiceItem()],
-        createdAt = createdAt ?? DateTime.now();
+        createdAt = createdAt ?? DateTime.now(),
+        updatedAt = updatedAt ?? (createdAt ?? DateTime.now());
 
   double get itemsSubTotal => items.fold(0.0, (sum, item) => sum + item.total);
   double get grandTotal =>
@@ -65,6 +70,8 @@ class Invoice {
     double? transportationAmount,
     double? labourAmount,
     double? otherChargesAmount,
+    DateTime? updatedAt,
+    bool? isDeleted,
   }) =>
       Invoice(
         id: id,
@@ -86,6 +93,8 @@ class Invoice {
         labourAmount: labourAmount ?? this.labourAmount,
         otherChargesAmount: otherChargesAmount ?? this.otherChargesAmount,
         createdAt: createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+        isDeleted: isDeleted ?? this.isDeleted,
       );
 
   Map<String, dynamic> toMap() => {
@@ -105,7 +114,9 @@ class Invoice {
         'labour_amount': labourAmount,
         'other_charges_amount': otherChargesAmount,
         'grand_total': grandTotal,
-        'created_at': createdAt.toIso8601String(),
+        'created_at': createdAt.toUtc().toIso8601String(),
+        'updated_at': (updatedAt ?? DateTime.now()).toUtc().toIso8601String(),
+        'is_deleted': isDeleted ? 1 : 0,
       };
 
   factory Invoice.fromMap(Map<String, dynamic> map, List<InvoiceItem> items) =>
@@ -131,6 +142,10 @@ class Invoice {
         otherChargesAmount:
             (map['other_charges_amount'] as num?)?.toDouble() ?? 0.0,
         createdAt: DateTime.parse(map['created_at'] as String),
+        updatedAt: map['updated_at'] != null
+            ? DateTime.tryParse(map['updated_at'].toString())
+            : null,
+        isDeleted: map['is_deleted'] == 1 || map['is_deleted'] == true,
       );
 
   factory Invoice.duplicate(Invoice source) => Invoice(

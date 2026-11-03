@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../data/datasources/sync_service.dart';
 import '../../../data/models/invoice.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/screens/change_password_screen.dart';
@@ -13,11 +16,41 @@ import '../widgets/search_bar_widget.dart';
 import '../widgets/stats_row.dart';
 import 'invoice_form_screen.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  StreamSubscription<void>? _syncSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Auto-refresh UI whenever background sync finishes
+    _syncSubscription = SyncService.instance.onSyncCompleted.listen((_) {
+      if (mounted) {
+        ref.invalidate(allInvoicesProvider);
+      }
+    });
+
+    // Trigger initial background sync on startup
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      SyncService.instance.sync();
+    });
+  }
+
+  @override
+  void dispose() {
+    _syncSubscription?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final allAsync = ref.watch(allInvoicesProvider);
     final filteredAsync = ref.watch(filteredInvoicesProvider);
     final isMobile = MediaQuery.sizeOf(context).width < 600;
@@ -26,19 +59,22 @@ class HomeScreen extends ConsumerWidget {
       backgroundColor: AppColors.scaffoldBg,
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) => [
-          _buildSliverAppBar(context, ref, isMobile),
+          _buildSliverAppBar(context, isMobile),
         ],
         body: allAsync.when(
           loading: () => const Center(
             child: CircularProgressIndicator(color: AppColors.primaryYellow),
           ),
-          error: (e, _) => _errorView(ref, e.toString()),
+          error: (e, _) => _errorView(e.toString()),
           data: (allInvoices) {
             final filtered = filteredAsync.valueOrNull ?? allInvoices;
 
             return RefreshIndicator(
               color: AppColors.primaryBlack,
-              onRefresh: () async => ref.invalidate(allInvoicesProvider),
+              onRefresh: () async {
+                ref.invalidate(allInvoicesProvider);
+                await SyncService.instance.sync();
+              },
               child: CustomScrollView(
                 slivers: [
                   // Search bar
@@ -52,7 +88,7 @@ class HomeScreen extends ConsumerWidget {
                   if (filtered.isEmpty)
                     SliverFillRemaining(
                       child: HomeEmptyState(
-                        onCreateNew: () => _createNew(context, ref),
+                        onCreateNew: () => _createNew(context),
                       ),
                     )
                   else
@@ -63,13 +99,13 @@ class HomeScreen extends ConsumerWidget {
                         delegate: SliverChildBuilderDelegate(
                           (ctx, i) => InvoiceCard(
                             invoice: filtered[i],
-                            onEdit: () => _openEdit(context, ref, filtered[i]),
-                            onCopy: () => _duplicate(context, ref, filtered[i]),
+                            onEdit: () => _openEdit(context, filtered[i]),
+                            onCopy: () => _duplicate(context, filtered[i]),
                             onPrint: () => _print(context, filtered[i]),
                             onSave: () => _savePdf(context, filtered[i]),
                             onShare: () => _share(context, filtered[i]),
                             onDelete: () =>
-                                _deleteInvoice(context, ref, filtered[i]),
+                                _deleteInvoice(context, filtered[i]),
                             onConfirmDismiss: () =>
                                 _confirmDelete(context, filtered[i]),
                           ),
@@ -86,7 +122,7 @@ class HomeScreen extends ConsumerWidget {
       // Mobile: icon-only FAB; Desktop: extended FAB
       floatingActionButton: isMobile
           ? FloatingActionButton(
-              onPressed: () => _createNew(context, ref),
+              onPressed: () => _createNew(context),
               backgroundColor: AppColors.primaryYellow,
               elevation: 6,
               shape: const CircleBorder(),
@@ -95,7 +131,7 @@ class HomeScreen extends ConsumerWidget {
                   color: AppColors.primaryBlack, size: 28),
             )
           : FloatingActionButton.extended(
-              onPressed: () => _createNew(context, ref),
+              onPressed: () => _createNew(context),
               mouseCursor: SystemMouseCursors.click,
               shape: const StadiumBorder(),
               icon: const Icon(Icons.add, color: AppColors.primaryBlack),
@@ -115,8 +151,7 @@ class HomeScreen extends ConsumerWidget {
 
   // ── Sliver App Bar ──────────────────────────────────────────────────────
 
-  Widget _buildSliverAppBar(
-      BuildContext context, WidgetRef ref, bool isMobile) {
+  Widget _buildSliverAppBar(BuildContext context, bool isMobile) {
     final expandedHeight = isMobile ? 110.0 : 160.0;
     final logoHeight = isMobile ? 56.0 : 90.0;
     final logoTop = isMobile ? 14.0 : 28.0;
@@ -196,15 +231,19 @@ class HomeScreen extends ConsumerWidget {
         ),
       ),
       actions: [
+        _buildSyncButton(context),
         IconButton(
           tooltip: 'Refresh',
           icon: const Icon(Icons.refresh_rounded, color: Colors.white),
-          onPressed: () => ref.invalidate(allInvoicesProvider),
+          onPressed: () {
+            ref.invalidate(allInvoicesProvider);
+            SyncService.instance.sync();
+          },
         ),
         PopupMenuButton<String>(
           icon: const Icon(Icons.security_outlined, color: Colors.white),
           tooltip: 'Security',
-          onSelected: (value) => _onSecurityAction(context, ref, value),
+          onSelected: (value) => _onSecurityAction(context, value),
           itemBuilder: (_) => [
             const PopupMenuItem(
               value: 'change_pin',
@@ -229,9 +268,90 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildSyncButton(BuildContext context) {
+    return ValueListenableBuilder<SyncStatus>(
+      valueListenable: SyncService.instance.status,
+      builder: (context, status, _) {
+        Widget icon;
+        String tooltip;
+
+        switch (status) {
+          case SyncStatus.syncing:
+            icon = const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.primaryYellow,
+              ),
+            );
+            tooltip = 'Syncing with cloud...';
+            break;
+          case SyncStatus.success:
+            icon = const Icon(Icons.cloud_done_rounded,
+                color: AppColors.success, size: 22);
+            tooltip = 'Cloud synced';
+            break;
+          case SyncStatus.offline:
+            icon = const Icon(Icons.cloud_off_rounded,
+                color: Colors.white54, size: 22);
+            tooltip = 'Offline - will sync when connected';
+            break;
+          case SyncStatus.error:
+            icon = const Icon(Icons.sync_problem_rounded,
+                color: AppColors.errorRed, size: 22);
+            tooltip = 'Sync issue (tap to retry)';
+            break;
+          case SyncStatus.idle:
+            icon = const Icon(Icons.cloud_sync_outlined,
+                color: Colors.white, size: 22);
+            tooltip = 'Sync with cloud';
+            break;
+        }
+
+        return IconButton(
+          icon: icon,
+          tooltip: tooltip,
+          onPressed: () async {
+            final scaffold = ScaffoldMessenger.of(context);
+            scaffold.hideCurrentSnackBar();
+            scaffold.showSnackBar(
+              const SnackBar(
+                content:
+                    Text('Synchronizing invoices and clients with cloud...'),
+                duration: Duration(seconds: 2),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+            final ok = await SyncService.instance.sync(force: true);
+            if (mounted) {
+              final lastTime = SyncService.instance.lastSyncTime.value;
+              final timeStr = lastTime != null
+                  ? DateFormat('h:mm a').format(lastTime.toLocal())
+                  : 'Just now';
+              scaffold.hideCurrentSnackBar();
+              scaffold.showSnackBar(
+                SnackBar(
+                  content: Text(ok
+                      ? 'Sync complete ($timeStr)'
+                      : (SyncService.instance.lastErrorMessage.value ??
+                          'Could not reach cloud. Offline mode active.')),
+                  backgroundColor:
+                      ok ? AppColors.success : AppColors.yellowDark,
+                  duration: const Duration(seconds: 3),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+          },
+        );
+      },
+    );
+  }
+
   // ── Error view ────────────────────────────────────────────────────────
 
-  Widget _errorView(WidgetRef ref, String msg) {
+  Widget _errorView(String msg) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -253,7 +373,7 @@ class HomeScreen extends ConsumerWidget {
 
   // ── Actions ───────────────────────────────────────────────────────────
 
-  void _onSecurityAction(BuildContext context, WidgetRef ref, String action) {
+  void _onSecurityAction(BuildContext context, String action) {
     if (action == 'change_pin') {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const ChangePasswordScreen()),
@@ -263,23 +383,21 @@ class HomeScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _createNew(BuildContext context, WidgetRef ref) async {
+  Future<void> _createNew(BuildContext context) async {
     await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const InvoiceFormScreen()),
     );
     ref.invalidate(allInvoicesProvider);
   }
 
-  Future<void> _openEdit(
-      BuildContext context, WidgetRef ref, Invoice invoice) async {
+  Future<void> _openEdit(BuildContext context, Invoice invoice) async {
     await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => InvoiceFormScreen(existing: invoice)),
     );
     ref.invalidate(allInvoicesProvider);
   }
 
-  Future<void> _duplicate(
-      BuildContext context, WidgetRef ref, Invoice invoice) async {
+  Future<void> _duplicate(BuildContext context, Invoice invoice) async {
     await Navigator.of(context).push(
       MaterialPageRoute(
           builder: (_) => InvoiceFormScreen(duplicateFrom: invoice)),
@@ -473,11 +591,11 @@ class HomeScreen extends ConsumerWidget {
     return result ?? false;
   }
 
-  Future<void> _deleteInvoice(
-      BuildContext context, WidgetRef ref, Invoice invoice) async {
+  Future<void> _deleteInvoice(BuildContext context, Invoice invoice) async {
     final repo = ref.read(invoiceRepositoryProvider);
     await repo.delete(invoice.id);
     ref.invalidate(allInvoicesProvider);
+    unawaited(SyncService.instance.sync());
 
     if (!context.mounted) return;
     final scaffold = ScaffoldMessenger.of(context);
@@ -496,6 +614,7 @@ class HomeScreen extends ConsumerWidget {
           onPressed: () async {
             await repo.save(invoice);
             ref.invalidate(allInvoicesProvider);
+            unawaited(SyncService.instance.sync());
           },
         ),
       ),

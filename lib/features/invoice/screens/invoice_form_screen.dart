@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../../data/datasources/sync_service.dart';
 import '../../../data/models/invoice.dart';
 import '../../../data/models/invoice_item.dart';
 import '../../../data/models/client.dart';
@@ -263,6 +265,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
       await ref.read(invoiceFormProvider.notifier).save();
       ref.invalidate(allInvoicesProvider);
       _lastSavedInvoice = ref.read(invoiceFormProvider);
+      unawaited(SyncService.instance.sync());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           _snackBar('Invoice saved successfully!', AppColors.success),
@@ -657,12 +660,14 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     if (client != null) {
       setState(() {
         _clientName.text = client.name;
+        _billTo.text = client.billTo;
         _address.text = client.address;
         _phone.text = client.phone;
       });
 
       final notifier = ref.read(invoiceFormProvider.notifier);
       notifier.updateClientName(client.name);
+      notifier.updateBillTo(client.billTo);
       notifier.updateAddress(client.address);
       notifier.updatePhone(client.phone);
     }
@@ -682,35 +687,78 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     }
 
     final existingClients = await ref.read(allClientsProvider.future);
-    final nameExists =
-        existingClients.any((c) => c.name.toLowerCase() == name.toLowerCase());
+    final matchIndex = existingClients
+        .indexWhere((c) => c.name.toLowerCase() == name.toLowerCase());
+    final existingClient =
+        matchIndex != -1 ? existingClients[matchIndex] : null;
 
-    if (nameExists && mounted) {
-      final confirm = await showDialog<bool>(
+    if (existingClient != null && mounted) {
+      final action = await showDialog<_ContactConflictAction>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Contact Already Exists'),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          actionsOverflowButtonSpacing: 8,
+          title: const Text('Contact Already Exists',
+              style: TextStyle(fontWeight: FontWeight.w700)),
           content: Text(
-              '"$name" is already in your contacts.\n\nDo you still want to save this as a new contact?'),
+            '"$name" is already in your contacts.\n\n'
+            'Would you like to update the existing contact details, or save this as a new contact?',
+          ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
+              onPressed: () =>
+                  Navigator.of(ctx).pop(_ContactConflictAction.cancel),
               child: const Text('CANCEL',
                   style: TextStyle(color: AppColors.textDark)),
+            ),
+            OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primaryBlack,
+                side:
+                    const BorderSide(color: AppColors.primaryBlack, width: 0.8),
+              ),
+              onPressed: () =>
+                  Navigator.of(ctx).pop(_ContactConflictAction.saveAsNew),
+              child: const Text('SAVE AS NEW'),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.success,
                 foregroundColor: Colors.white,
               ),
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('SAVE ANYWAY'),
+              onPressed: () =>
+                  Navigator.of(ctx).pop(_ContactConflictAction.updateExisting),
+              child: const Text('UPDATE EXISTING'),
             ),
           ],
         ),
       );
 
-      if (confirm != true) {
+      if (action == null || action == _ContactConflictAction.cancel) {
+        return;
+      }
+
+      if (action == _ContactConflictAction.updateExisting) {
+        final updatedClient = existingClient.copyWith(
+          name: name,
+          billTo: _billTo.text.trim(),
+          address: _address.text.trim(),
+          phone: _phone.text.trim(),
+        );
+        await ref.read(clientRepositoryProvider).update(updatedClient);
+        ref.invalidate(allClientsProvider);
+        unawaited(SyncService.instance.sync());
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Updated contact "$name".',
+                  style: const TextStyle(color: Colors.white)),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
         return;
       }
     }
@@ -718,6 +766,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     final newClient = Client(
       id: const Uuid().v4(),
       name: name,
+      billTo: _billTo.text.trim(),
       address: _address.text.trim(),
       phone: _phone.text.trim(),
       createdAt: DateTime.now(),
@@ -725,6 +774,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
 
     await ref.read(clientRepositoryProvider).save(newClient);
     ref.invalidate(allClientsProvider);
+    unawaited(SyncService.instance.sync());
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -742,100 +792,103 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     return _clientJobCardDesktop(invoice);
   }
 
-  // ── DESKTOP: Client + Job Nature side-by-side (original) ──────────────────
+  // ── DESKTOP: Client Details ──────────────────────────────────────────────
   Widget _clientJobCardDesktop(Invoice invoice) {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(14),
-        child: Row(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Left: Client Details
-            Expanded(
-              flex: 55,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(child: _sectionHeader("CLIENT'S DETAILS")),
-                      Row(
-                        children: [
-                          TextButton.icon(
-                            icon: const Icon(Icons.contacts_outlined, size: 16),
-                            label: const Text('Select',
-                                style: TextStyle(fontSize: 12)),
-                            style: TextButton.styleFrom(
-                              foregroundColor: AppColors.primaryBlack,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 0),
-                              minimumSize: const Size(0, 30),
-                            ),
-                            onPressed: _selectClient,
-                          ),
-                          TextButton.icon(
-                            icon:
-                                const Icon(Icons.person_add_outlined, size: 16),
-                            label: const Text('Save',
-                                style: TextStyle(fontSize: 12)),
-                            style: TextButton.styleFrom(
-                              foregroundColor: AppColors.success,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 0),
-                              minimumSize: const Size(0, 30),
-                            ),
-                            onPressed: _saveClientAsContact,
-                          ),
-                        ],
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(child: _sectionHeader("CLIENT'S DETAILS")),
+                Row(
+                  children: [
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.contacts_outlined, size: 16),
+                      label: const Text('Select Contact',
+                          style: TextStyle(fontSize: 12)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primaryBlack,
+                        side: const BorderSide(
+                            color: AppColors.primaryBlack, width: 0.8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  _formField('Name', _clientName,
+                      onPressed: _selectClient,
+                    ),
+                    const SizedBox(width: 8),
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.person_add_outlined, size: 16),
+                      label: const Text('Save Contact',
+                          style: TextStyle(fontSize: 12)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.success,
+                        side: const BorderSide(
+                            color: AppColors.success, width: 0.8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                      ),
+                      onPressed: _saveClientAsContact,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _formField('Name', _clientName,
                       onChanged: (v) => ref
                           .read(invoiceFormProvider.notifier)
                           .updateClientName(v)),
-                  const SizedBox(height: 8),
-                  _formField('Address', _address,
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: _formField('Bill To', _billTo,
+                      onChanged: (v) => ref
+                          .read(invoiceFormProvider.notifier)
+                          .updateBillTo(v)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 5,
+                  child: _formField('Address', _address,
                       onChanged: (v) => ref
                           .read(invoiceFormProvider.notifier)
                           .updateAddress(v)),
-                  const SizedBox(height: 8),
-                  _formField('Telephone', _phone,
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  flex: 3,
+                  child: _formField('Telephone', _phone,
                       keyboardType: TextInputType.phone,
                       inputFormatters: [_GhanaPhoneValidator(context)],
                       onChanged: (v) => ref
                           .read(invoiceFormProvider.notifier)
                           .updatePhone(v)),
-                  const SizedBox(height: 8),
-                  _readOnlyField('Invoice Number', invoice.invoiceNumber),
-                ],
-              ),
-            ),
-
-            const SizedBox(width: 16),
-
-            // Right: Bill To
-            Expanded(
-              flex: 45,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _sectionHeader('BILL TO'),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _billTo,
-                    maxLines: 3,
-                    decoration: const InputDecoration(
-                      hintText: 'Who is this invoice billed to?',
-                    ),
-                    onChanged: (v) =>
-                        ref.read(invoiceFormProvider.notifier).updateBillTo(v),
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  flex: 3,
+                  child:
+                      _readOnlyField('Invoice Number', invoice.invoiceNumber),
+                ),
+              ],
             ),
           ],
         ),
@@ -843,7 +896,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     );
   }
 
-  // ── MOBILE: Client + Job Nature stacked vertically ────────────────────────
+  // ── MOBILE: Client Details stacked vertically ─────────────────────────────
   Widget _clientJobCardMobile(Invoice invoice) {
     return Card(
       margin: EdgeInsets.zero,
@@ -899,6 +952,10 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                 onChanged: (v) =>
                     ref.read(invoiceFormProvider.notifier).updateClientName(v)),
             const SizedBox(height: 10),
+            _formField('Bill To', _billTo,
+                onChanged: (v) =>
+                    ref.read(invoiceFormProvider.notifier).updateBillTo(v)),
+            const SizedBox(height: 10),
             _formField('Address', _address,
                 onChanged: (v) =>
                     ref.read(invoiceFormProvider.notifier).updateAddress(v)),
@@ -910,25 +967,6 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                     ref.read(invoiceFormProvider.notifier).updatePhone(v)),
             const SizedBox(height: 10),
             _readOnlyField('Invoice Number', invoice.invoiceNumber),
-
-            // Separator
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 14),
-              child: Divider(color: AppColors.divider, height: 1),
-            ),
-
-            // Bill To
-            _sectionHeader('BILL TO'),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: _billTo,
-              maxLines: 3,
-              decoration: const InputDecoration(
-                hintText: 'Who is this invoice billed to?',
-              ),
-              onChanged: (v) =>
-                  ref.read(invoiceFormProvider.notifier).updateBillTo(v),
-            ),
           ],
         ),
       ),
@@ -2171,3 +2209,5 @@ class _GhanaPhoneValidator extends TextInputFormatter {
     });
   }
 }
+
+enum _ContactConflictAction { cancel, saveAsNew, updateExisting }

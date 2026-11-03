@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../data/datasources/sync_service.dart';
 import '../../../data/models/client.dart';
 import '../controllers/client_controller.dart';
 
@@ -184,8 +186,19 @@ class ClientPickerDialog extends ConsumerWidget {
                           fontSize: 16,
                         ),
                       ),
-                      if (client.phone.isNotEmpty || client.address.isNotEmpty)
+                      if (client.phone.isNotEmpty || client.address.isNotEmpty || client.billTo.isNotEmpty)
                         const SizedBox(height: 4),
+                      if (client.billTo.isNotEmpty)
+                        Text(
+                          'Bill to: ${client.billTo}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppColors.textGrey,
+                            fontSize: 13,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
                       if (client.phone.isNotEmpty)
                         Text(
                           client.phone,
@@ -222,7 +235,8 @@ class ClientPickerDialog extends ConsumerWidget {
                       value: 'edit',
                       child: Row(
                         children: [
-                          Icon(Icons.edit_outlined, size: 20, color: AppColors.primaryBlack),
+                          Icon(Icons.edit_outlined,
+                              size: 20, color: AppColors.primaryBlack),
                           SizedBox(width: 12),
                           Text('Edit Client'),
                         ],
@@ -232,9 +246,11 @@ class ClientPickerDialog extends ConsumerWidget {
                       value: 'delete',
                       child: Row(
                         children: [
-                          Icon(Icons.delete_outline, size: 20, color: AppColors.errorRed),
+                          Icon(Icons.delete_outline,
+                              size: 20, color: AppColors.errorRed),
                           SizedBox(width: 12),
-                          Text('Delete', style: TextStyle(color: AppColors.errorRed)),
+                          Text('Delete',
+                              style: TextStyle(color: AppColors.errorRed)),
                         ],
                       ),
                     ),
@@ -248,7 +264,8 @@ class ClientPickerDialog extends ConsumerWidget {
     );
   }
 
-  Future<void> _deleteClient(BuildContext context, WidgetRef ref, Client client) async {
+  Future<void> _deleteClient(
+      BuildContext context, WidgetRef ref, Client client) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -257,7 +274,8 @@ class ClientPickerDialog extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('CANCEL', style: TextStyle(color: AppColors.textDark)),
+            child:
+                const Text('CANCEL', style: TextStyle(color: AppColors.textDark)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -274,10 +292,13 @@ class ClientPickerDialog extends ConsumerWidget {
     if (confirmed == true) {
       await ref.read(clientRepositoryProvider).delete(client.id);
       ref.invalidate(allClientsProvider);
+      unawaited(SyncService.instance.sync());
+
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${client.name} deleted', style: const TextStyle(color: Colors.white)),
+            content: Text('${client.name} deleted',
+                style: const TextStyle(color: Colors.white)),
             backgroundColor: AppColors.errorRed,
             duration: const Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
@@ -287,8 +308,10 @@ class ClientPickerDialog extends ConsumerWidget {
     }
   }
 
-  Future<void> _editClient(BuildContext context, WidgetRef ref, Client client) async {
+  Future<void> _editClient(
+      BuildContext context, WidgetRef ref, Client client) async {
     final nameCtrl = TextEditingController(text: client.name);
+    final billToCtrl = TextEditingController(text: client.billTo);
     final phoneCtrl = TextEditingController(text: client.phone);
     final addressCtrl = TextEditingController(text: client.address);
     final formKey = GlobalKey<FormState>();
@@ -305,7 +328,13 @@ class ClientPickerDialog extends ConsumerWidget {
               TextFormField(
                 controller: nameCtrl,
                 decoration: const InputDecoration(labelText: 'Name'),
-                validator: (val) => val == null || val.trim().isEmpty ? 'Name required' : null,
+                validator: (val) =>
+                    val == null || val.trim().isEmpty ? 'Name required' : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: billToCtrl,
+                decoration: const InputDecoration(labelText: 'Bill To'),
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -324,7 +353,8 @@ class ClientPickerDialog extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('CANCEL', style: TextStyle(color: AppColors.textDark)),
+            child:
+                const Text('CANCEL', style: TextStyle(color: AppColors.textDark)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -345,16 +375,19 @@ class ClientPickerDialog extends ConsumerWidget {
     if (updated == true) {
       final updatedClient = client.copyWith(
         name: nameCtrl.text.trim(),
+        billTo: billToCtrl.text.trim(),
         phone: phoneCtrl.text.trim(),
         address: addressCtrl.text.trim(),
       );
       await ref.read(clientRepositoryProvider).update(updatedClient);
       ref.invalidate(allClientsProvider);
-      
+      unawaited(SyncService.instance.sync());
+
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-           SnackBar(
-            content: Text('${updatedClient.name} updated', style: const TextStyle(color: Colors.white)),
+          SnackBar(
+            content: Text('${updatedClient.name} updated',
+                style: const TextStyle(color: Colors.white)),
             backgroundColor: AppColors.success,
             duration: const Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,

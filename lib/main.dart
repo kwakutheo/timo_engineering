@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/theme/app_theme.dart';
 import 'data/datasources/local_db.dart';
 import 'data/datasources/storage_service.dart';
+import 'data/datasources/sync_service.dart';
 import 'features/auth/services/auth_service.dart';
 import 'features/auth/widgets/app_lock_wrapper.dart';
 import 'features/invoice/screens/home_screen.dart';
@@ -21,6 +23,19 @@ void main() async {
   // 3. Tell LocalDb where its file lives.
   LocalDb.setDatabasePath(StorageService.instance.databasePath);
   await AuthService.instance.setPassword('theo');
+
+  // 4. Initialise Supabase for multi-device cloud sync (safe offline)
+  try {
+    await Supabase.initialize(
+      url: SyncService.supabaseUrl,
+      publishableKey: SyncService.supabasePublishableKey,
+    );
+  } catch (e) {
+    debugPrint('Supabase init notice (offline safe): $e');
+  }
+
+  // 5. Initialise SyncService
+  await SyncService.instance.init();
 
   runApp(
     const ProviderScope(
