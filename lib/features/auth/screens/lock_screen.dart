@@ -147,14 +147,12 @@ class _LockScreenState extends ConsumerState<LockScreen>
     return '${seconds}s';
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
       child: Scaffold(
-        backgroundColor: AppColors.primaryYellow,
+        backgroundColor: AppColors.yellowLight,
         resizeToAvoidBottomInset: true,
         body: FadeTransition(
           opacity: _fadeController,
@@ -168,7 +166,7 @@ class _LockScreenState extends ConsumerState<LockScreen>
                     constraints: const BoxConstraints(maxWidth: 420),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: AppColors.primaryBlack,
+                        color: AppColors.primaryYellow,
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
@@ -226,7 +224,7 @@ class _LockScreenState extends ConsumerState<LockScreen>
         const Text(
           "TIMO'S ENGINEERING",
           style: TextStyle(
-            color: Colors.white,
+            color: Colors.black,
             fontSize: 20,
             fontWeight: FontWeight.w900,
             letterSpacing: 1.2,
@@ -239,7 +237,7 @@ class _LockScreenState extends ConsumerState<LockScreen>
               : 'Enter your password to continue',
           textAlign: TextAlign.center,
           style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.6), fontSize: 13),
+              color: Colors.black.withValues(alpha: 0.6), fontSize: 13),
         ),
       ],
     );
@@ -256,29 +254,31 @@ class _LockScreenState extends ConsumerState<LockScreen>
         autocorrect: false,
         enableSuggestions: false,
         style: const TextStyle(
-            color: Colors.white, fontSize: 16, letterSpacing: 2),
-        cursorColor: Colors.white70,
+            color: Colors.black, fontSize: 16, letterSpacing: 2),
+        cursorColor: const Color.fromARGB(221, 52, 51, 51),
         textInputAction: TextInputAction.done,
         onSubmitted: (_) => _verify(),
         decoration: InputDecoration(
           hintText: 'Password',
           hintStyle: TextStyle(
-              color: Colors.white.withValues(alpha: 0.35), letterSpacing: 0),
+              color:
+                  const Color.fromARGB(255, 56, 56, 56).withValues(alpha: 0.35),
+              letterSpacing: 0),
           filled: true,
           fillColor: Colors.white.withValues(alpha: 0.1),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+            borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.2)),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+            borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.2)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: Colors.white54, width: 1.5),
+            borderSide: const BorderSide(color: Colors.black, width: 1.5),
           ),
           disabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
@@ -289,7 +289,7 @@ class _LockScreenState extends ConsumerState<LockScreen>
               _obscure
                   ? Icons.visibility_outlined
                   : Icons.visibility_off_outlined,
-              color: Colors.white38,
+              color: Colors.black,
             ),
             onPressed: () => setState(() => _obscure = !_obscure),
           ),
@@ -349,8 +349,8 @@ class _LockScreenState extends ConsumerState<LockScreen>
   Widget _buildForgotButton() {
     return TextButton(
       onPressed: _showForgotDialog,
-      child: const Text('Forgot Password?',
-          style: TextStyle(color: Colors.white54)),
+      child:
+          const Text('Forgot Password?', style: TextStyle(color: Colors.black)),
     );
   }
 

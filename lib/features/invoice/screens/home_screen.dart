@@ -9,6 +9,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../../auth/screens/change_password_screen.dart';
 import '../../auth/services/auth_service.dart';
 import '../controllers/invoice_controller.dart';
+import '../controllers/client_controller.dart';
 import '../services/pdf_service.dart';
 import '../widgets/home_empty_state.dart';
 import '../widgets/invoice_card.dart';
@@ -34,6 +35,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     _syncSubscription = SyncService.instance.onSyncCompleted.listen((_) {
       if (mounted) {
         ref.invalidate(allInvoicesProvider);
+        ref.invalidate(allClientsProvider);
       }
     });
 

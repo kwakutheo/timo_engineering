@@ -102,19 +102,35 @@ class SyncService {
           await localDb.getRawInvoicesModifiedSince(previousSyncTime);
       if (localInvoices.isNotEmpty) {
         final sanitizedInvoices = localInvoices.map((row) {
-          final m = Map<String, dynamic>.from(row);
-          m['is_deleted'] = (m['is_deleted'] == 1 || m['is_deleted'] == true);
-          if (m['next_service_date'] != null &&
-              m['next_service_date'].toString().trim().isEmpty) {
-            m['next_service_date'] = null;
-          }
-          m['transportation_amount'] =
-              (m['transportation_amount'] as num?)?.toDouble() ?? 0.0;
-          m['labour_amount'] = (m['labour_amount'] as num?)?.toDouble() ?? 0.0;
-          m['other_charges_amount'] =
-              (m['other_charges_amount'] as num?)?.toDouble() ?? 0.0;
-          m['grand_total'] = (m['grand_total'] as num?)?.toDouble() ?? 0.0;
-          return m;
+          final nextDate = row['next_service_date']?.toString().trim();
+          return <String, dynamic>{
+            'id': row['id'],
+            'invoice_number': row['invoice_number'],
+            'client_name': row['client_name'] ?? '',
+            'address': row['address'] ?? '',
+            'phone': row['phone'] ?? '',
+            'bill_to': row['bill_to'] ?? '',
+            'date': row['date'],
+            'running_hour': row['running_hour'] ?? '',
+            'model': row['model'] ?? '',
+            'next_service_date': (nextDate != null && nextDate.isNotEmpty)
+                ? nextDate
+                : null,
+            'job_description': row['job_description'] ?? '',
+            'manager_name': row['manager_name'] ?? '',
+            'transportation_amount':
+                (row['transportation_amount'] as num?)?.toDouble() ?? 0.0,
+            'labour_amount':
+                (row['labour_amount'] as num?)?.toDouble() ?? 0.0,
+            'other_charges_amount':
+                (row['other_charges_amount'] as num?)?.toDouble() ?? 0.0,
+            'grand_total':
+                (row['grand_total'] as num?)?.toDouble() ?? 0.0,
+            'created_at': row['created_at'],
+            'updated_at': row['updated_at'] ?? row['created_at'],
+            'is_deleted':
+                (row['is_deleted'] == 1 || row['is_deleted'] == true),
+          };
         }).toList();
 
         await client.from('invoices').upsert(sanitizedInvoices);
@@ -125,11 +141,16 @@ class SyncService {
           await localDb.getRawInvoiceItemsModifiedSince(previousSyncTime);
       if (localItems.isNotEmpty) {
         final sanitizedItems = localItems.map((row) {
-          final m = Map<String, dynamic>.from(row);
-          m['is_deleted'] = (m['is_deleted'] == 1 || m['is_deleted'] == true);
-          m['quantity'] = (m['quantity'] as num?)?.toDouble() ?? 0.0;
-          m['price'] = (m['price'] as num?)?.toDouble() ?? 0.0;
-          return m;
+          return <String, dynamic>{
+            'id': row['id'],
+            'invoice_id': row['invoice_id'],
+            'description': row['description'] ?? '',
+            'quantity': (row['quantity'] as num?)?.toDouble() ?? 0.0,
+            'price': (row['price'] as num?)?.toDouble() ?? 0.0,
+            'updated_at': row['updated_at'] ?? DateTime.now().toUtc().toIso8601String(),
+            'is_deleted':
+                (row['is_deleted'] == 1 || row['is_deleted'] == true),
+          };
         }).toList();
 
         await client.from('invoice_items').upsert(sanitizedItems);
@@ -140,9 +161,17 @@ class SyncService {
           await localDb.getRawClientsModifiedSince(previousSyncTime);
       if (localClients.isNotEmpty) {
         final sanitizedClients = localClients.map((row) {
-          final m = Map<String, dynamic>.from(row);
-          m['is_deleted'] = (m['is_deleted'] == 1 || m['is_deleted'] == true);
-          return m;
+          return <String, dynamic>{
+            'id': row['id'],
+            'name': row['name'] ?? '',
+            'bill_to': row['bill_to'] ?? '',
+            'address': row['address'] ?? '',
+            'phone': row['phone'] ?? '',
+            'created_at': row['created_at'],
+            'updated_at': row['updated_at'] ?? row['created_at'],
+            'is_deleted':
+                (row['is_deleted'] == 1 || row['is_deleted'] == true),
+          };
         }).toList();
 
         await client.from('clients').upsert(sanitizedClients);
@@ -151,46 +180,44 @@ class SyncService {
       // ─────────────────────────────────────────────────────────────────────
       // PHASE 2: PULL (Supabase Changes -> Local SQLite)
       // ─────────────────────────────────────────────────────────────────────
+      // Subtract a 5-minute safety window to prevent clock skew between devices
+      // from causing missed records.
+      final pullSince =
+          previousSyncTime?.subtract(const Duration(minutes: 5));
 
       // 1. Pull Invoices
       dynamic invoicesQuery = client.from('invoices').select();
-      if (previousSyncTime != null) {
+      if (pullSince != null) {
         invoicesQuery = invoicesQuery.gt(
-            'updated_at', previousSyncTime.toUtc().toIso8601String());
+            'updated_at', pullSince.toUtc().toIso8601String());
       }
       final remoteInvoices = await invoicesQuery as List<dynamic>;
       for (final raw in remoteInvoices) {
         final row = Map<String, dynamic>.from(raw as Map);
-        row['is_deleted'] =
-            (row['is_deleted'] == true || row['is_deleted'] == 1) ? 1 : 0;
         await localDb.upsertSyncedInvoice(row);
       }
 
       // 2. Pull Invoice Items
       dynamic itemsQuery = client.from('invoice_items').select();
-      if (previousSyncTime != null) {
+      if (pullSince != null) {
         itemsQuery = itemsQuery.gt(
-            'updated_at', previousSyncTime.toUtc().toIso8601String());
+            'updated_at', pullSince.toUtc().toIso8601String());
       }
       final remoteItems = await itemsQuery as List<dynamic>;
       for (final raw in remoteItems) {
         final row = Map<String, dynamic>.from(raw as Map);
-        row['is_deleted'] =
-            (row['is_deleted'] == true || row['is_deleted'] == 1) ? 1 : 0;
         await localDb.upsertSyncedInvoiceItem(row);
       }
 
       // 3. Pull Clients
       dynamic clientsQuery = client.from('clients').select();
-      if (previousSyncTime != null) {
+      if (pullSince != null) {
         clientsQuery = clientsQuery.gt(
-            'updated_at', previousSyncTime.toUtc().toIso8601String());
+            'updated_at', pullSince.toUtc().toIso8601String());
       }
       final remoteClients = await clientsQuery as List<dynamic>;
       for (final raw in remoteClients) {
         final row = Map<String, dynamic>.from(raw as Map);
-        row['is_deleted'] =
-            (row['is_deleted'] == true || row['is_deleted'] == 1) ? 1 : 0;
         await localDb.upsertSyncedClient(row);
       }
 

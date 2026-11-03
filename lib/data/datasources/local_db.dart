@@ -411,17 +411,37 @@ class LocalDb {
       }
     }
 
-    final localRow = Map<String, dynamic>.from(row);
-    // Convert boolean is_deleted to integer for SQLite if needed
-    if (localRow['is_deleted'] is bool) {
-      localRow['is_deleted'] = (localRow['is_deleted'] as bool) ? 1 : 0;
-    }
+    final localRow = <String, dynamic>{
+      'id': row['id'],
+      'invoice_number': row['invoice_number'],
+      'client_name': row['client_name'] ?? '',
+      'address': row['address'] ?? '',
+      'phone': row['phone'] ?? '',
+      'bill_to': row['bill_to'] ?? '',
+      'date': row['date'],
+      'running_hour': row['running_hour'] ?? '',
+      'model': row['model'] ?? '',
+      'next_service_date': row['next_service_date'],
+      'job_description': row['job_description'] ?? '',
+      'manager_name': row['manager_name'] ?? '',
+      'transportation_amount':
+          (row['transportation_amount'] as num?)?.toDouble() ?? 0.0,
+      'labour_amount': (row['labour_amount'] as num?)?.toDouble() ?? 0.0,
+      'other_charges_amount':
+          (row['other_charges_amount'] as num?)?.toDouble() ?? 0.0,
+      'grand_total': (row['grand_total'] as num?)?.toDouble() ?? 0.0,
+      'created_at': row['created_at'],
+      'updated_at': row['updated_at'] ?? row['created_at'],
+      'is_deleted':
+          (row['is_deleted'] == true || row['is_deleted'] == 1) ? 1 : 0,
+    };
 
-    await database.insert(
-      'invoices',
-      localRow,
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    if (existing.isNotEmpty) {
+      await database.update('invoices', localRow,
+          where: 'id = ?', whereArgs: [id]);
+    } else {
+      await database.insert('invoices', localRow);
+    }
   }
 
   Future<void> upsertSyncedInvoiceItem(Map<String, dynamic> row) async {
@@ -446,16 +466,23 @@ class LocalDb {
       }
     }
 
-    final localRow = Map<String, dynamic>.from(row);
-    if (localRow['is_deleted'] is bool) {
-      localRow['is_deleted'] = (localRow['is_deleted'] as bool) ? 1 : 0;
-    }
+    final localRow = <String, dynamic>{
+      'id': row['id'],
+      'invoice_id': row['invoice_id'],
+      'description': row['description'] ?? '',
+      'quantity': (row['quantity'] as num?)?.toDouble() ?? 0.0,
+      'price': (row['price'] as num?)?.toDouble() ?? 0.0,
+      'updated_at': row['updated_at'] ?? DateTime.now().toUtc().toIso8601String(),
+      'is_deleted':
+          (row['is_deleted'] == true || row['is_deleted'] == 1) ? 1 : 0,
+    };
 
-    await database.insert(
-      'invoice_items',
-      localRow,
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    if (existing.isNotEmpty) {
+      await database.update('invoice_items', localRow,
+          where: 'id = ?', whereArgs: [id]);
+    } else {
+      await database.insert('invoice_items', localRow);
+    }
   }
 
   Future<void> upsertSyncedClient(Map<String, dynamic> row) async {
@@ -480,15 +507,23 @@ class LocalDb {
       }
     }
 
-    final localRow = Map<String, dynamic>.from(row);
-    if (localRow['is_deleted'] is bool) {
-      localRow['is_deleted'] = (localRow['is_deleted'] as bool) ? 1 : 0;
-    }
+    final localRow = <String, dynamic>{
+      'id': row['id'],
+      'name': row['name'] ?? '',
+      'bill_to': row['bill_to'] ?? '',
+      'address': row['address'] ?? '',
+      'phone': row['phone'] ?? '',
+      'created_at': row['created_at'],
+      'updated_at': row['updated_at'] ?? row['created_at'],
+      'is_deleted':
+          (row['is_deleted'] == true || row['is_deleted'] == 1) ? 1 : 0,
+    };
 
-    await database.insert(
-      'clients',
-      localRow,
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    if (existing.isNotEmpty) {
+      await database.update('clients', localRow,
+          where: 'id = ?', whereArgs: [id]);
+    } else {
+      await database.insert('clients', localRow);
+    }
   }
 }
