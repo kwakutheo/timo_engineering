@@ -510,7 +510,7 @@ class PdfService {
       decoration: const pw.BoxDecoration(
         color: _yellow,
         border: pw.Border(
-          bottom: pw.BorderSide(color: _black, width: 1.0),
+          bottom: pw.BorderSide(color: _yellow, width: 1.0),
         ),
       ),
       child: pw.Row(
@@ -524,19 +524,19 @@ class PdfService {
               style: _tableHeaderStyle,
             ),
           ),
-          pw.Container(width: 1.0, color: _black),
+          pw.Container(width: 1.0, color: _white),
           pw.Container(
             width: col2Width - 1.0,
             alignment: pw.Alignment.center,
             child: pw.Text('Qty', style: _tableHeaderStyle),
           ),
-          pw.Container(width: 1.0, color: _black),
+          pw.Container(width: 1.0, color: _white),
           pw.Container(
             width: col3Width - 1.0,
             alignment: pw.Alignment.center,
             child: pw.Text('Unit Price (GHC)', style: _tableHeaderStyle),
           ),
-          pw.Container(width: 1.0, color: _black),
+          pw.Container(width: 1.0, color: _white),
           pw.Container(
             width: col4Width - 1.0,
             alignment: pw.Alignment.center,
@@ -610,7 +610,7 @@ class PdfService {
       decoration: pw.BoxDecoration(
         border: showBottomBorder
             ? const pw.Border(
-                bottom: pw.BorderSide(color: _black, width: 0.5),
+                bottom: pw.BorderSide(color: _yellow, width: 0.8),
               )
             : null,
       ),
@@ -622,19 +622,19 @@ class PdfService {
             alignment: pw.Alignment.centerLeft,
             child: pw.Text(description, style: _tableCellStyle, maxLines: 1),
           ),
-          pw.Container(width: 1.0, color: _black),
+          pw.Container(width: 1.0, color: _yellow),
           pw.Container(
             width: col2Width - 1.0,
             alignment: pw.Alignment.center,
             child: pw.Text(qty, style: _tableCellStyle, maxLines: 1),
           ),
-          pw.Container(width: 1.0, color: _black),
+          pw.Container(width: 1.0, color: _yellow),
           pw.Container(
             width: col3Width - 1.0,
             alignment: pw.Alignment.center,
             child: pw.Text(price, style: _tableCellStyle, maxLines: 1),
           ),
-          pw.Container(width: 1.0, color: _black),
+          pw.Container(width: 1.0, color: _yellow),
           pw.Container(
             width: col4Width - 1.0,
             alignment: pw.Alignment.center,
