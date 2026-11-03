@@ -64,8 +64,7 @@ class HomeScreen extends ConsumerWidget {
                           (ctx, i) => InvoiceCard(
                             invoice: filtered[i],
                             onEdit: () => _openEdit(context, ref, filtered[i]),
-                            onCopy: () =>
-                                _duplicate(context, ref, filtered[i]),
+                            onCopy: () => _duplicate(context, ref, filtered[i]),
                             onPrint: () => _print(context, filtered[i]),
                             onSave: () => _savePdf(context, filtered[i]),
                             onShare: () => _share(context, filtered[i]),
@@ -92,7 +91,8 @@ class HomeScreen extends ConsumerWidget {
               elevation: 6,
               shape: const CircleBorder(),
               tooltip: 'New Invoice',
-              child: const Icon(Icons.add, color: AppColors.primaryBlack, size: 28),
+              child: const Icon(Icons.add,
+                  color: AppColors.primaryBlack, size: 28),
             )
           : FloatingActionButton.extended(
               onPressed: () => _createNew(context, ref),
@@ -218,8 +218,7 @@ class HomeScreen extends ConsumerWidget {
             const PopupMenuItem(
               value: 'lock_now',
               child: ListTile(
-                leading:
-                    Icon(Icons.lock_outlined, color: AppColors.errorRed),
+                leading: Icon(Icons.lock_outlined, color: AppColors.errorRed),
                 title: Text('Lock Now'),
                 contentPadding: EdgeInsets.zero,
               ),
@@ -274,8 +273,7 @@ class HomeScreen extends ConsumerWidget {
   Future<void> _openEdit(
       BuildContext context, WidgetRef ref, Invoice invoice) async {
     await Navigator.of(context).push(
-      MaterialPageRoute(
-          builder: (_) => InvoiceFormScreen(existing: invoice)),
+      MaterialPageRoute(builder: (_) => InvoiceFormScreen(existing: invoice)),
     );
     ref.invalidate(allInvoicesProvider);
   }
@@ -294,8 +292,7 @@ class HomeScreen extends ConsumerWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg, style: const TextStyle(color: Colors.white)),
-        backgroundColor:
-            isError ? AppColors.errorRed : AppColors.primaryBlack,
+        backgroundColor: isError ? AppColors.errorRed : AppColors.primaryBlack,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
       ),
@@ -308,8 +305,7 @@ class HomeScreen extends ConsumerWidget {
       await PdfService.printPdf(invoice);
     } catch (_) {
       if (!context.mounted) return;
-      _showSnack(context, 'Printing failed. Please try again.',
-          isError: true);
+      _showSnack(context, 'Printing failed. Please try again.', isError: true);
     }
   }
 
@@ -319,8 +315,7 @@ class HomeScreen extends ConsumerWidget {
       await PdfService.share(invoice);
     } catch (_) {
       if (!context.mounted) return;
-      _showSnack(context, 'Sharing failed. Please try again.',
-          isError: true);
+      _showSnack(context, 'Sharing failed. Please try again.', isError: true);
     }
   }
 
@@ -344,8 +339,7 @@ class HomeScreen extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Delete Invoice',
             style: TextStyle(fontWeight: FontWeight.w700)),
         content: Text(
@@ -444,8 +438,7 @@ class HomeScreen extends ConsumerWidget {
                         icon: Icon(obscure
                             ? Icons.visibility_outlined
                             : Icons.visibility_off_outlined),
-                        onPressed: () =>
-                            setState(() => obscure = !obscure),
+                        onPressed: () => setState(() => obscure = !obscure),
                       ),
                     ),
                   ),
@@ -453,8 +446,7 @@ class HomeScreen extends ConsumerWidget {
               ),
               actions: [
                 TextButton(
-                  onPressed:
-                      isBusy ? null : () => Navigator.pop(ctx, false),
+                  onPressed: isBusy ? null : () => Navigator.pop(ctx, false),
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
@@ -497,8 +489,7 @@ class HomeScreen extends ConsumerWidget {
         behavior: SnackBarBehavior.floating,
         backgroundColor: AppColors.errorRed,
         duration: const Duration(seconds: 5),
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         action: SnackBarAction(
           label: 'UNDO',
           textColor: Colors.white,

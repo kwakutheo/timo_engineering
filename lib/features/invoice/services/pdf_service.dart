@@ -23,8 +23,7 @@ class PdfService {
   /// Borders for totals boxes and inner lines
   static const _borderGrey = PdfColor.fromInt(0xFFCCCCCC);
 
-  /// Faint notebook lines inside the Remarks box
-  static const _lineGrey = PdfColor.fromInt(0xFFE2E2E2);
+
 
   // ── Text Styles ───────────────────────────────────────────────────────────
 
@@ -154,7 +153,7 @@ class PdfService {
             pw.Image(
               headerImg,
               width: pageWidth,
-              height: pageWidth / 3.9461, // Aspect ratio of full_header.png (2636x668)
+              height: pageWidth / 3.9072, // Aspect ratio of updated full_header.png (2610x668)
               fit: pw.BoxFit.fill,
             ),
 
@@ -231,34 +230,38 @@ class PdfService {
             height: height,
             fit: pw.BoxFit.fill,
           ),
-          // Invoice No overlay (line is at y/245 = 0.355 in invoice.png)
+          // Invoice No overlay (line y: 87/245 = 0.355 in invoice.png)
           pw.Positioned(
-            left: width * 0.730,
-            top: height * 0.14,
-            right: width * 0.025,
-            child: pw.Text(
-              _safe(invoice.invoiceNumber),
-              style: pw.TextStyle(
-                fontSize: 8.5,
-                fontWeight: pw.FontWeight.bold,
-                color: _black,
+            left: width * 0.740,
+            top: height * 0.15,
+            child: pw.SizedBox(
+              width: width * 0.235,
+              child: pw.Text(
+                _safe(invoice.invoiceNumber),
+                style: pw.TextStyle(
+                  fontSize: 8.5,
+                  fontWeight: pw.FontWeight.bold,
+                  color: _black,
+                ),
+                maxLines: 1,
               ),
-              maxLines: 1,
             ),
           ),
-          // Date overlay (line is at y/245 = 0.800 in invoice.png)
+          // Date overlay (line y: 196/245 = 0.800 in invoice.png)
           pw.Positioned(
-            left: width * 0.655,
-            top: height * 0.58,
-            right: width * 0.025,
-            child: pw.Text(
-              dateStr,
-              style: pw.TextStyle(
-                fontSize: 8.5,
-                fontWeight: pw.FontWeight.bold,
-                color: _black,
+            left: width * 0.665,
+            top: height * 0.59,
+            child: pw.SizedBox(
+              width: width * 0.310,
+              child: pw.Text(
+                dateStr,
+                style: pw.TextStyle(
+                  fontSize: 8.5,
+                  fontWeight: pw.FontWeight.bold,
+                  color: _black,
+                ),
+                maxLines: 1,
               ),
-              maxLines: 1,
             ),
           ),
         ],
@@ -287,12 +290,12 @@ class PdfService {
             height: height,
             fit: pw.BoxFit.fill,
           ),
-          // Customer Name: line 1 left (line is at y/331 = 0.293)
+          // Customer Name (line 1 left, y: 97/331 = 0.293)
           pw.Positioned(
-            left: width * 0.185,
-            top: height * 0.12,
+            left: width * 0.205,
+            top: height * 0.13,
             child: pw.SizedBox(
-              width: width * 0.420,
+              width: width * 0.395,
               child: pw.Text(
                 _safe(invoice.clientName),
                 style: pw.TextStyle(
@@ -304,48 +307,54 @@ class PdfService {
               ),
             ),
           ),
-          // Bill To: line 1 right (line is at y/331 = 0.293)
+          // Bill To (line 1 right, y: 97/331 = 0.293)
           pw.Positioned(
             left: width * 0.715,
-            top: height * 0.12,
-            right: width * 0.025,
-            child: pw.Text(
-              _safe(invoice.billTo),
-              style: pw.TextStyle(
-                fontSize: 8.5,
-                fontWeight: pw.FontWeight.bold,
-                color: _black,
+            top: height * 0.13,
+            child: pw.SizedBox(
+              width: width * 0.260,
+              child: pw.Text(
+                _safe(invoice.billTo),
+                style: pw.TextStyle(
+                  fontSize: 8.5,
+                  fontWeight: pw.FontWeight.bold,
+                  color: _black,
+                ),
+                maxLines: 1,
               ),
-              maxLines: 1,
             ),
           ),
-          // Customer Address: line 2 (line is at y/331 = 0.574)
+          // Customer Address (line 2, y: 190/331 = 0.574)
           pw.Positioned(
             left: width * 0.205,
             top: height * 0.41,
-            right: width * 0.025,
-            child: pw.Text(
-              _safe(invoice.address),
-              style: const pw.TextStyle(
-                fontSize: 8.5,
-                color: _black,
+            child: pw.SizedBox(
+              width: width * 0.770,
+              child: pw.Text(
+                _safe(invoice.address),
+                style: const pw.TextStyle(
+                  fontSize: 8.5,
+                  color: _black,
+                ),
+                maxLines: 1,
               ),
-              maxLines: 1,
             ),
           ),
-          // Customer Phone: line 3 (line is at y/331 = 0.852)
+          // Customer Phone (line 3, y: 282/331 = 0.852)
           pw.Positioned(
             left: width * 0.205,
             top: height * 0.69,
-            right: width * 0.025,
-            child: pw.Text(
-              _safe(invoice.phone),
-              style: pw.TextStyle(
-                fontSize: 8.5,
-                fontWeight: pw.FontWeight.bold,
-                color: _black,
+            child: pw.SizedBox(
+              width: width * 0.770,
+              child: pw.Text(
+                _safe(invoice.phone),
+                style: pw.TextStyle(
+                  fontSize: 8.5,
+                  fontWeight: pw.FontWeight.bold,
+                  color: _black,
+                ),
+                maxLines: 1,
               ),
-              maxLines: 1,
             ),
           ),
         ],
@@ -383,12 +392,12 @@ class PdfService {
             height: height,
             fit: pw.BoxFit.fill,
           ),
-          // Generator Model / Make (line is at y/388 = 0.786)
+          // Generator Model / Make (line y: 306/388 = 0.789, x: 69 to 759)
           pw.Positioned(
-            left: width * 0.028,
-            top: height * 0.63,
+            left: width * 0.030,
+            top: height * 0.64,
             child: pw.SizedBox(
-              width: width * 0.335,
+              width: width * 0.260,
               child: pw.Text(
                 _safe(invoice.model),
                 style: pw.TextStyle(
@@ -400,12 +409,12 @@ class PdfService {
               ),
             ),
           ),
-          // Engine Running Hours (line is at y/388 = 0.786)
+          // Engine Running Hours (line y: 306/388 = 0.789, x: 1061 to 1664)
           pw.Positioned(
-            left: width * 0.420,
-            top: height * 0.63,
+            left: width * 0.415,
+            top: height * 0.64,
             child: pw.SizedBox(
-              width: width * 0.228,
+              width: width * 0.225,
               child: pw.Text(
                 _safe(invoice.runningHour),
                 style: pw.TextStyle(
@@ -417,10 +426,10 @@ class PdfService {
               ),
             ),
           ),
-          // Next Service Date DD
+          // Next Service Date DD (line y: 306/388 = 0.789, x: 1921 to 2059)
           pw.Positioned(
             left: width * 0.742,
-            top: height * 0.63,
+            top: height * 0.64,
             child: pw.SizedBox(
               width: width * 0.053,
               child: pw.Center(
@@ -436,10 +445,10 @@ class PdfService {
               ),
             ),
           ),
-          // Next Service Date MM
+          // Next Service Date MM (line y: 306/388 = 0.789, x: 2121 to 2258)
           pw.Positioned(
-            left: width * 0.820,
-            top: height * 0.63,
+            left: width * 0.819,
+            top: height * 0.64,
             child: pw.SizedBox(
               width: width * 0.053,
               child: pw.Center(
@@ -455,10 +464,10 @@ class PdfService {
               ),
             ),
           ),
-          // Next Service Date YYYY
+          // Next Service Date YYYY (line y: 306/388 = 0.789, x: 2320 to 2522)
           pw.Positioned(
             left: width * 0.896,
-            top: height * 0.63,
+            top: height * 0.64,
             child: pw.SizedBox(
               width: width * 0.078,
               child: pw.Center(
@@ -651,7 +660,6 @@ class PdfService {
   }
 
   static pw.Widget _buildRemarksBox(String remarks, double width, double height) {
-    const lineCount = 6;
     const headerHeight = 22.0;
 
     return pw.Container(
@@ -685,35 +693,19 @@ class PdfService {
               ],
             ),
           ),
-          // Lined body area with dynamic remarks text
+          // Body area with dynamic remarks text
           pw.Expanded(
-            child: pw.Stack(
-              children: [
-                // Ruled notebook lines
-                pw.Column(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
-                  children: List.generate(
-                    lineCount - 1,
-                    (_) => pw.Container(
-                      height: 0.5,
-                      color: _lineGrey,
-                      margin: const pw.EdgeInsets.symmetric(horizontal: 8),
-                    ),
-                  ),
+            child: pw.Container(
+              padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              alignment: pw.Alignment.topLeft,
+              child: pw.Text(
+                remarks,
+                style: const pw.TextStyle(
+                  fontSize: 8.5,
+                  color: _black,
+                  lineSpacing: 1.4,
                 ),
-                // Text overlay
-                pw.Padding(
-                  padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                  child: pw.Text(
-                    remarks,
-                    style: const pw.TextStyle(
-                      fontSize: 8.5,
-                      color: _black,
-                      lineSpacing: 1.4,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ],
