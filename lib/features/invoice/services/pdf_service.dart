@@ -154,7 +154,7 @@ class PdfService {
               headerImg,
               width: pageWidth,
               height: pageWidth /
-                  3.9072, // Aspect ratio of updated full_header.png (2610x668)
+                  3.9174, // Aspect ratio of updated full_header.png (2609x666)
               fit: pw.BoxFit.fill,
             ),
 
@@ -333,8 +333,9 @@ class PdfService {
               width: width * 0.770,
               child: pw.Text(
                 _safe(invoice.address),
-                style: const pw.TextStyle(
+                style: pw.TextStyle(
                   fontSize: 8.5,
+                  fontWeight: pw.FontWeight.bold,
                   color: _black,
                 ),
                 maxLines: 1,
@@ -738,8 +739,7 @@ class PdfService {
               padding: const pw.EdgeInsets.only(bottom: 4.0),
               child: pw.Column(
                 children: List.generate(lineCount, (i) {
-                  final lineText =
-                      i < textLines.length ? textLines[i] : '';
+                  final lineText = i < textLines.length ? textLines[i] : '';
                   return pw.Expanded(
                     child: pw.Container(
                       margin: const pw.EdgeInsets.symmetric(horizontal: 8),

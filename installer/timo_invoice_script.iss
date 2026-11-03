@@ -29,6 +29,7 @@ OutputBaseFilename=timo_setup
 ; ===== ICON =====
 SetupIconFile=D:\source_codes\timo_enginerring\assets\timo_icon.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
+ChangesAssociations=yes
 
 ; ===== SYSTEM SUPPORT =====
 ArchitecturesAllowed=x64compatible
@@ -44,7 +45,11 @@ ShowLanguageDialog=no
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
-Name: "desktopicon"; Description: "Create Desktop Shortcut"; GroupDescription: "Additional Icons"; Flags: unchecked
+Name: "desktopicon"; Description: "Create Desktop Shortcut"; GroupDescription: "Additional Icons"
+
+[InstallDelete]
+Type: files; Name: "{autodesktop}\{#MyAppName}.lnk"
+Type: files; Name: "{autoprograms}\{#MyAppName}.lnk"
 
 [Files]
 ; Main Flutter build (clean & professional approach)
