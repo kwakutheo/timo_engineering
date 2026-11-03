@@ -23,6 +23,9 @@ class PdfService {
   /// Borders for totals boxes and inner lines
   static const _borderGrey = PdfColor.fromInt(0xFFCCCCCC);
 
+  /// Faint notebook lines inside the Remarks box
+  static const _lineGrey = PdfColor.fromInt(0xFFE2E2E2);
+
   // ── Text Styles ───────────────────────────────────────────────────────────
 
   static final _tableHeaderStyle = pw.TextStyle(
@@ -658,9 +661,45 @@ class PdfService {
     );
   }
 
+  static List<String> _splitRemarks(String remarks,
+      {int maxLines = 5, int maxCharsPerLine = 82}) {
+    if (remarks.trim().isEmpty) return [];
+    final paragraphs = remarks.split('\n');
+    final lines = <String>[];
+    for (final p in paragraphs) {
+      final words = p.trim().split(RegExp(r'\s+'));
+      if (words.isEmpty || (words.length == 1 && words[0].isEmpty)) {
+        lines.add('');
+        if (lines.length >= maxLines) break;
+        continue;
+      }
+      var current = '';
+      for (final word in words) {
+        if (word.isEmpty) continue;
+        if (current.isEmpty) {
+          current = word;
+        } else if ((current.length + 1 + word.length) <= maxCharsPerLine) {
+          current += ' $word';
+        } else {
+          lines.add(current);
+          current = word;
+          if (lines.length >= maxLines) break;
+        }
+      }
+      if (current.isNotEmpty && lines.length < maxLines) {
+        lines.add(current);
+      }
+      if (lines.length >= maxLines) break;
+    }
+    return lines;
+  }
+
   static pw.Widget _buildRemarksBox(
       String remarks, double width, double height) {
     const headerHeight = 22.0;
+    const lineCount = 5;
+    final textLines =
+        _splitRemarks(remarks, maxLines: lineCount, maxCharsPerLine: 82);
 
     return pw.Container(
       width: width,
@@ -693,19 +732,35 @@ class PdfService {
               ],
             ),
           ),
-          // Body area with dynamic remarks text
+          // Ruled notebook lines area with text aligned cleanly on grey lines
           pw.Expanded(
-            child: pw.Container(
-              padding:
-                  const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              alignment: pw.Alignment.topLeft,
-              child: pw.Text(
-                remarks,
-                style: const pw.TextStyle(
-                  fontSize: 8.5,
-                  color: _black,
-                  lineSpacing: 1.4,
-                ),
+            child: pw.Padding(
+              padding: const pw.EdgeInsets.only(bottom: 4.0),
+              child: pw.Column(
+                children: List.generate(lineCount, (i) {
+                  final lineText =
+                      i < textLines.length ? textLines[i] : '';
+                  return pw.Expanded(
+                    child: pw.Container(
+                      margin: const pw.EdgeInsets.symmetric(horizontal: 8),
+                      decoration: const pw.BoxDecoration(
+                        border: pw.Border(
+                          bottom: pw.BorderSide(color: _lineGrey, width: 0.6),
+                        ),
+                      ),
+                      alignment: pw.Alignment.bottomLeft,
+                      padding: const pw.EdgeInsets.only(bottom: 2.0),
+                      child: pw.Text(
+                        lineText,
+                        style: const pw.TextStyle(
+                          fontSize: 8.5,
+                          color: _black,
+                        ),
+                        maxLines: 1,
+                      ),
+                    ),
+                  );
+                }),
               ),
             ),
           ),
