@@ -2,7 +2,7 @@ name: timo_enginerring
 description: "Invoice app for Timo's Engineering Services"
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 2.0.0+1
 
 environment:
   sdk: '>=3.0.0 <4.0.0'

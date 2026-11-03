@@ -3,7 +3,7 @@
 ; =========================================================
 
 #define MyAppName "Timo Invoice"
-#define MyAppVersion "1.1.0"
+#define MyAppVersion "2.0.0"
 #define MyAppPublisher "TK Smart Solutions"
 #define MyAppExeName "timo_enginerring.exe"
 
@@ -23,11 +23,11 @@ DisableProgramGroupPage=no
 AllowNoIcons=yes
 
 ; ===== OUTPUT =====
-OutputDir=D:\timo_enginerring\installer
+OutputDir=D:\source_codes\timo_enginerring\installer
 OutputBaseFilename=timo_setup
 
 ; ===== ICON =====
-SetupIconFile=D:\timo_enginerring\assets\timo_icon.ico
+SetupIconFile=D:\source_codes\timo_enginerring\assets\timo_icon.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
 
 ; ===== SYSTEM SUPPORT =====
@@ -48,12 +48,12 @@ Name: "desktopicon"; Description: "Create Desktop Shortcut"; GroupDescription: "
 
 [Files]
 ; Main Flutter build (clean & professional approach)
-Source: "D:\timo_enginerring\build\windows\x64\runner\Release\*"; \
+Source: "D:\source_codes\timo_enginerring\build\windows\x64\runner\Release\*"; \
 DestDir: "{app}"; \
 Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; Ensure icon is inside install folder
-Source: "D:\timo_enginerring\assets\timo_icon.ico"; DestDir: "{app}"; Flags: ignoreversion
+Source: "D:\source_codes\timo_enginerring\assets\timo_icon.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 ; Start Menu
