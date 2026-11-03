@@ -16,6 +16,7 @@ import '../../auth/providers/auth_provider.dart';
 class InvoiceFormScreen extends ConsumerStatefulWidget {
   /// Pass an existing invoice to open in edit mode, null for new.
   final Invoice? existing;
+
   /// Pass an existing invoice to duplicate into a new invoice.
   final Invoice? duplicateFrom;
 
@@ -56,7 +57,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
   @override
   void initState() {
     super.initState();
-    _lastSavedInvoice = widget.existing; // If null (duplicating/new), we want to save all
+    _lastSavedInvoice =
+        widget.existing; // If null (duplicating/new), we want to save all
 
     // Seed the Riverpod state with existing or reset to blank
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -147,7 +149,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('CANCEL', style: TextStyle(color: AppColors.textDark)),
+              child: const Text('CANCEL',
+                  style: TextStyle(color: AppColors.textDark)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -176,10 +179,10 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     if (!mounted) return;
     final scaffold = ScaffoldMessenger.of(context);
 
-    
     final controller = scaffold.showSnackBar(
       SnackBar(
-        content: const Text('Item removed', style: TextStyle(color: Colors.white)),
+        content:
+            const Text('Item removed', style: TextStyle(color: Colors.white)),
         backgroundColor: AppColors.textDark,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 5),
@@ -219,11 +222,14 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
   }
 
   void _syncTransportToState() {
-    ref.read(invoiceFormProvider.notifier)
+    ref
+        .read(invoiceFormProvider.notifier)
         .updateTransportationAmount(double.tryParse(_transportation.text) ?? 0);
-    ref.read(invoiceFormProvider.notifier)
+    ref
+        .read(invoiceFormProvider.notifier)
         .updateLabourAmount(double.tryParse(_labour.text) ?? 0);
-    ref.read(invoiceFormProvider.notifier)
+    ref
+        .read(invoiceFormProvider.notifier)
         .updateOtherChargesAmount(double.tryParse(_otherCharges.text) ?? 0);
   }
 
@@ -247,13 +253,14 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     }
 
     if (errorMessage != null) {
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(errorMessage, style: const TextStyle(color: Colors.white)),
+          content:
+              Text(errorMessage, style: const TextStyle(color: Colors.white)),
           backgroundColor: AppColors.errorRed,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           duration: const Duration(seconds: 3),
         ),
       );
@@ -284,9 +291,9 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
   bool _hasUnsavedChanges() {
     final current = ref.read(invoiceFormProvider);
     final saved = _lastSavedInvoice;
-    
+
     if (saved == null) return true;
-    
+
     if (current.clientName != saved.clientName ||
         current.address != saved.address ||
         current.phone != saved.phone ||
@@ -325,11 +332,13 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Unsaved Changes'),
-        content: const Text('You have unsaved changes. Please save the invoice before performing this action.'),
+        content: const Text(
+            'You have unsaved changes. Please save the invoice before performing this action.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('CANCEL', style: TextStyle(color: AppColors.textDark)),
+            child: const Text('CANCEL',
+                style: TextStyle(color: AppColors.textDark)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -401,15 +410,18 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
           context: context,
           builder: (ctx) => AlertDialog(
             title: const Text('Unsaved Changes'),
-            content: const Text('You have unsaved changes. Do you want to save them before leaving?'),
+            content: const Text(
+                'You have unsaved changes. Do you want to save them before leaving?'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop('discard'),
-                child: const Text('DISCARD', style: TextStyle(color: AppColors.errorRed)),
+                child: const Text('DISCARD',
+                    style: TextStyle(color: AppColors.errorRed)),
               ),
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop('cancel'),
-                child: const Text('CANCEL', style: TextStyle(color: AppColors.textDark)),
+                child: const Text('CANCEL',
+                    style: TextStyle(color: AppColors.textDark)),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -434,60 +446,57 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
       },
       child: Scaffold(
         backgroundColor: AppColors.scaffoldBg,
-      appBar: _buildAppBar(isNew),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(mobile ? 10 : 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // ── Header image ─────────────────────────────────────────────
-            _headerImage(),
+        appBar: _buildAppBar(isNew),
+        body: SingleChildScrollView(
+          padding: EdgeInsets.all(mobile ? 10 : 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ── Header image ─────────────────────────────────────────────
+              _headerImage(),
 
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
 
-            // ── Tagline ──────────────────────────────────────────────────
-            _taglineCard(),
+              const SizedBox(height: 12),
 
-            const SizedBox(height: 12),
+              // ── Client + Job Nature ──────────────────────────────────────
+              _clientJobCard(invoice, mobile),
 
-            // ── Client + Job Nature ──────────────────────────────────────
-            _clientJobCard(invoice, mobile),
+              const SizedBox(height: 12),
 
-            const SizedBox(height: 12),
+              // ── Job Info row ─────────────────────────────────────────────
+              _jobInfoCard(invoice, mobile),
 
-            // ── Job Info row ─────────────────────────────────────────────
-            _jobInfoCard(invoice, mobile),
+              const SizedBox(height: 12),
 
-            const SizedBox(height: 12),
+              // ── Items table ──────────────────────────────────────────────
+              _itemsCard(invoice, mobile),
 
-            // ── Items table ──────────────────────────────────────────────
-            _itemsCard(invoice, mobile),
+              const SizedBox(height: 8),
 
-            const SizedBox(height: 8),
+              // ── Grand Total ──────────────────────────────────────────────
+              _grandTotalRow(invoice),
 
-            // ── Grand Total ──────────────────────────────────────────────
-            _grandTotalRow(invoice),
+              const SizedBox(height: 12),
 
-            const SizedBox(height: 12),
+              // ── Job Description ──────────────────────────────────────────
+              _jobDescriptionCard(),
 
-            // ── Job Description ──────────────────────────────────────────
-            _jobDescriptionCard(),
+              const SizedBox(height: 12),
 
-            const SizedBox(height: 12),
+              // ── Signature ────────────────────────────────────────────────
+              _signatureCard(),
 
-            // ── Signature ────────────────────────────────────────────────
-            _signatureCard(),
+              const SizedBox(height: 16),
 
-            const SizedBox(height: 16),
+              // ── Footer image ─────────────────────────────────────────────
+              _footerImage(),
 
-            // ── Footer image ─────────────────────────────────────────────
-            _footerImage(),
-
-            const SizedBox(height: 80),
-          ],
+              const SizedBox(height: 80),
+            ],
+          ),
         ),
-      ),
-      bottomNavigationBar: _bottomBar(),
+        bottomNavigationBar: _bottomBar(),
       ),
     );
   }
@@ -570,7 +579,6 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
               ),
             ),
             const SizedBox(width: 8),
-
             Expanded(
               flex: 1,
               child: TextButton.icon(
@@ -585,7 +593,6 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                 ),
               ),
             ),
-
           ],
         ),
       ),
@@ -597,11 +604,13 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Cancel Changes'),
-        content: const Text('Are you sure you want to cancel? Any unsaved changes will be lost.'),
+        content: const Text(
+            'Are you sure you want to cancel? Any unsaved changes will be lost.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('NO', style: TextStyle(color: AppColors.textDark)),
+            child:
+                const Text('NO', style: TextStyle(color: AppColors.textDark)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -644,28 +653,6 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     );
   }
 
-  // ── Tagline ───────────────────────────────────────────────────────────────
-
-  Widget _taglineCard() {
-    return Container(
-      decoration: const BoxDecoration(
-        border: Border.symmetric(
-          horizontal: BorderSide(color: AppColors.primaryYellow, width: 1.5),
-        ),
-      ),
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: const Text(
-        'Our Services: Power solutions made easy – we sell generators, fix electrical problems, install changeover switches, and keep your generator running smoothly.',
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: 12,
-          fontStyle: FontStyle.italic,
-          color: AppColors.textDark,
-        ),
-      ),
-    );
-  }
-
   // ── Client + Job Nature ───────────────────────────────────────────────────
 
   Future<void> _selectClient() async {
@@ -695,7 +682,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Client name required to save as contact.', style: TextStyle(color: Colors.white)),
+          content: Text('Client name required to save as contact.',
+              style: TextStyle(color: Colors.white)),
           backgroundColor: AppColors.errorRed,
         ),
       );
@@ -703,18 +691,21 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     }
 
     final existingClients = await ref.read(allClientsProvider.future);
-    final nameExists = existingClients.any((c) => c.name.toLowerCase() == name.toLowerCase());
+    final nameExists =
+        existingClients.any((c) => c.name.toLowerCase() == name.toLowerCase());
 
     if (nameExists && mounted) {
       final confirm = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
           title: const Text('Contact Already Exists'),
-          content: Text('"$name" is already in your contacts.\n\nDo you still want to save this as a new contact?'),
+          content: Text(
+              '"$name" is already in your contacts.\n\nDo you still want to save this as a new contact?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('CANCEL', style: TextStyle(color: AppColors.textDark)),
+              child: const Text('CANCEL',
+                  style: TextStyle(color: AppColors.textDark)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -747,7 +738,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Saved $name to contacts.', style: const TextStyle(color: Colors.white)),
+          content: Text('Saved $name to contacts.',
+              style: const TextStyle(color: Colors.white)),
           backgroundColor: AppColors.success,
         ),
       );
@@ -782,20 +774,25 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                         children: [
                           TextButton.icon(
                             icon: const Icon(Icons.contacts_outlined, size: 16),
-                            label: const Text('Select', style: TextStyle(fontSize: 12)),
+                            label: const Text('Select',
+                                style: TextStyle(fontSize: 12)),
                             style: TextButton.styleFrom(
                               foregroundColor: AppColors.primaryBlack,
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 0),
                               minimumSize: const Size(0, 30),
                             ),
                             onPressed: _selectClient,
                           ),
                           TextButton.icon(
-                            icon: const Icon(Icons.person_add_outlined, size: 16),
-                            label: const Text('Save', style: TextStyle(fontSize: 12)),
+                            icon:
+                                const Icon(Icons.person_add_outlined, size: 16),
+                            label: const Text('Save',
+                                style: TextStyle(fontSize: 12)),
                             style: TextButton.styleFrom(
                               foregroundColor: AppColors.success,
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 0),
                               minimumSize: const Size(0, 30),
                             ),
                             onPressed: _saveClientAsContact,
@@ -843,9 +840,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                     decoration: const InputDecoration(
                       hintText: 'Who is this invoice billed to?',
                     ),
-                    onChanged: (v) => ref
-                        .read(invoiceFormProvider.notifier)
-                        .updateBillTo(v),
+                    onChanged: (v) =>
+                        ref.read(invoiceFormProvider.notifier).updateBillTo(v),
                   ),
                 ],
               ),
@@ -874,12 +870,15 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                 Expanded(
                   child: OutlinedButton.icon(
                     icon: const Icon(Icons.contacts_outlined, size: 16),
-                    label: const Text('Select Contact', style: TextStyle(fontSize: 12)),
+                    label: const Text('Select Contact',
+                        style: TextStyle(fontSize: 12)),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.primaryBlack,
-                      side: const BorderSide(color: AppColors.primaryBlack, width: 0.8),
+                      side: const BorderSide(
+                          color: AppColors.primaryBlack, width: 0.8),
                       padding: const EdgeInsets.symmetric(vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
                     ),
                     onPressed: _selectClient,
                   ),
@@ -888,12 +887,15 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                 Expanded(
                   child: OutlinedButton.icon(
                     icon: const Icon(Icons.person_add_outlined, size: 16),
-                    label: const Text('Save Contact', style: TextStyle(fontSize: 12)),
+                    label: const Text('Save Contact',
+                        style: TextStyle(fontSize: 12)),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.success,
-                      side: const BorderSide(color: AppColors.success, width: 0.8),
+                      side: const BorderSide(
+                          color: AppColors.success, width: 0.8),
                       padding: const EdgeInsets.symmetric(vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
                     ),
                     onPressed: _saveClientAsContact,
                   ),
@@ -903,15 +905,18 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
 
             const SizedBox(height: 12),
             _formField('Name', _clientName,
-                onChanged: (v) => ref.read(invoiceFormProvider.notifier).updateClientName(v)),
+                onChanged: (v) =>
+                    ref.read(invoiceFormProvider.notifier).updateClientName(v)),
             const SizedBox(height: 10),
             _formField('Address', _address,
-                onChanged: (v) => ref.read(invoiceFormProvider.notifier).updateAddress(v)),
+                onChanged: (v) =>
+                    ref.read(invoiceFormProvider.notifier).updateAddress(v)),
             const SizedBox(height: 10),
             _formField('Telephone', _phone,
                 keyboardType: TextInputType.phone,
                 inputFormatters: [_GhanaPhoneValidator(context)],
-                onChanged: (v) => ref.read(invoiceFormProvider.notifier).updatePhone(v)),
+                onChanged: (v) =>
+                    ref.read(invoiceFormProvider.notifier).updatePhone(v)),
             const SizedBox(height: 10),
             _readOnlyField('Invoice Number', invoice.invoiceNumber),
 
@@ -930,7 +935,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
               decoration: const InputDecoration(
                 hintText: 'Who is this invoice billed to?',
               ),
-              onChanged: (v) => ref.read(invoiceFormProvider.notifier).updateBillTo(v),
+              onChanged: (v) =>
+                  ref.read(invoiceFormProvider.notifier).updateBillTo(v),
             ),
           ],
         ),
@@ -965,9 +971,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
               ),
               const SizedBox(height: 10),
               _formField('MODEL / MAKE', _model,
-                  onChanged: (v) => ref
-                      .read(invoiceFormProvider.notifier)
-                      .updateModel(v)),
+                  onChanged: (v) =>
+                      ref.read(invoiceFormProvider.notifier).updateModel(v)),
               const SizedBox(height: 10),
               // Next Service Date
               Column(
@@ -1198,7 +1203,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
           ),
 
           // ── Charges rows ──────────────────────────────────────────────────
-          _chargesRow('Transportation', _transportation, Icons.local_shipping_outlined),
+          _chargesRow(
+              'Transportation', _transportation, Icons.local_shipping_outlined),
           _chargesRow('Labour', _labour, Icons.engineering_outlined),
           _chargesRow('Other Charges', _otherCharges, Icons.receipt_outlined),
         ],
@@ -1317,8 +1323,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
               icon: const Icon(Icons.remove_circle_outline,
                   color: AppColors.errorRed, size: 20),
               tooltip: 'Remove row',
-              onPressed:
-                  _rowCtrls.length > 1 ? () => _removeRow(index) : null,
+              onPressed: _rowCtrls.length > 1 ? () => _removeRow(index) : null,
             ),
           ),
         ],
@@ -1352,12 +1357,16 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
         // Add item button
         OutlinedButton.icon(
           onPressed: _addRow,
-          icon: const Icon(Icons.add_circle_outline, color: AppColors.primaryBlack, size: 20),
-          label: const Text('Add Item', style: TextStyle(color: AppColors.primaryBlack, fontWeight: FontWeight.w600)),
+          icon: const Icon(Icons.add_circle_outline,
+              color: AppColors.primaryBlack, size: 20),
+          label: const Text('Add Item',
+              style: TextStyle(
+                  color: AppColors.primaryBlack, fontWeight: FontWeight.w600)),
           style: OutlinedButton.styleFrom(
             side: const BorderSide(color: AppColors.primaryBlack),
             padding: const EdgeInsets.symmetric(vertical: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         ),
 
@@ -1397,13 +1406,15 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
         const SizedBox(height: 8),
 
         // Transportation
-        _chargesRowMobile('Transportation', _transportation, Icons.local_shipping_outlined),
+        _chargesRowMobile(
+            'Transportation', _transportation, Icons.local_shipping_outlined),
         const SizedBox(height: 6),
         // Labour
         _chargesRowMobile('Labour', _labour, Icons.engineering_outlined),
         const SizedBox(height: 6),
         // Other Charges
-        _chargesRowMobile('Other Charges', _otherCharges, Icons.receipt_outlined),
+        _chargesRowMobile(
+            'Other Charges', _otherCharges, Icons.receipt_outlined),
       ],
     );
   }
@@ -1435,7 +1446,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: AppColors.primaryYellow.withValues(alpha: 0.2),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(12)),
             ),
             child: Row(
               children: [
@@ -1508,7 +1520,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                 Expanded(
                   child: TextField(
                     controller: ctrl.qty,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
                     inputFormatters: [_NumberInputValidator(context)],
                     textAlign: TextAlign.center,
                     decoration: const InputDecoration(
@@ -1529,7 +1542,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                 Expanded(
                   child: TextField(
                     controller: ctrl.price,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
                     inputFormatters: [_NumberInputValidator(context)],
                     textAlign: TextAlign.right,
                     decoration: const InputDecoration(
@@ -1548,7 +1562,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                 const SizedBox(width: 10),
                 // Total
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   decoration: BoxDecoration(
                     color: AppColors.primaryYellow.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
@@ -1627,9 +1642,12 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
               ],
             ),
             // Transportation + Labour + Other Charges lines
-            _totalsSubRow('Transportation:', CurrencyFormatter.format(invoice.transportationAmount)),
-            _totalsSubRow('Labour:', CurrencyFormatter.format(invoice.labourAmount)),
-            _totalsSubRow('Other Charges:', CurrencyFormatter.format(invoice.otherChargesAmount)),
+            _totalsSubRow('Transportation:',
+                CurrencyFormatter.format(invoice.transportationAmount)),
+            _totalsSubRow(
+                'Labour:', CurrencyFormatter.format(invoice.labourAmount)),
+            _totalsSubRow('Other Charges:',
+                CurrencyFormatter.format(invoice.otherChargesAmount)),
             // Divider
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 6),
@@ -1691,7 +1709,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     );
   }
 
-  // ── Signature ─────────────────────────────────────────────────────────────
+  // ── Prepared By ──────────────────────────────────────────────────────────
 
   Widget _signatureCard() {
     return Card(
@@ -1704,28 +1722,44 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _sectionHeader('MANAGER & SIGNATURE'),
+                  _sectionHeader('PREPARED BY'),
                   const SizedBox(height: 10),
                   _formField('Manager Name', _managerName,
                       onChanged: (v) => ref
                           .read(invoiceFormProvider.notifier)
                           .updateManagerName(v)),
                   const SizedBox(height: 8),
-                  Container(
-                    height: 48,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: AppColors.borderYellow),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    alignment: Alignment.centerLeft,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: const Text(
-                      'SIGNATURE',
-                      style: TextStyle(
-                          color: AppColors.textGrey,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500),
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Prepared by',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primaryBlack,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: AppColors.yellowLight,
+                          border: Border.all(color: AppColors.borderYellow),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: const Text(
+                          "Timo's Engineering Service",
+                          style: TextStyle(
+                            color: AppColors.primaryBlack,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -1762,13 +1796,13 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
   }
 
   // ── Charges row – desktop table ───────────────────────────────────────────
-  Widget _chargesRow(
-      String label, TextEditingController ctrl, IconData icon) {
+  Widget _chargesRow(String label, TextEditingController ctrl, IconData icon) {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.yellowLight.withValues(alpha: 0.5),
         border: Border(
-          top: BorderSide(color: AppColors.borderYellow.withValues(alpha: 0.5), width: 0.5),
+          top: BorderSide(
+              color: AppColors.borderYellow.withValues(alpha: 0.5), width: 0.5),
         ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -1828,8 +1862,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
           SizedBox(
             width: 90,
             child: Text(
-              CurrencyFormatter.formatRaw(
-                  double.tryParse(ctrl.text) ?? 0),
+              CurrencyFormatter.formatRaw(double.tryParse(ctrl.text) ?? 0),
               textAlign: TextAlign.right,
               style: const TextStyle(
                 fontWeight: FontWeight.w600,
@@ -1852,8 +1885,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
       decoration: BoxDecoration(
         color: AppColors.yellowLight.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-            color: AppColors.borderYellow.withValues(alpha: 0.5)),
+        border:
+            Border.all(color: AppColors.borderYellow.withValues(alpha: 0.5)),
       ),
       child: Row(
         children: [
@@ -1880,21 +1913,19 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
               decoration: InputDecoration(
                 hintText: '0.00',
                 isDense: true,
-                contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 10),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide(
-                      color:
-                          AppColors.borderYellow.withValues(alpha: 0.5)),
+                      color: AppColors.borderYellow.withValues(alpha: 0.5)),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide(
-                      color:
-                          AppColors.borderYellow.withValues(alpha: 0.5)),
+                      color: AppColors.borderYellow.withValues(alpha: 0.5)),
                 ),
               ),
               onChanged: (_) {
@@ -1919,9 +1950,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     );
     if (picked != null) {
       setState(() => _nextServiceDate = picked);
-      ref
-          .read(invoiceFormProvider.notifier)
-          .updateNextServiceDate(picked);
+      ref.read(invoiceFormProvider.notifier).updateNextServiceDate(picked);
     }
   }
 
@@ -1987,7 +2016,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             color: AppColors.yellowLight.withValues(alpha: 0.6),
-            border: Border.all(color: AppColors.borderYellow.withValues(alpha: 0.5)),
+            border: Border.all(
+                color: AppColors.borderYellow.withValues(alpha: 0.5)),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
@@ -2066,10 +2096,12 @@ class _NumberInputValidator extends TextInputFormatter {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Only numbers and decimals are allowed', style: TextStyle(color: Colors.white)),
+            content: const Text('Only numbers and decimals are allowed',
+                style: TextStyle(color: Colors.white)),
             backgroundColor: AppColors.errorRed,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -2099,7 +2131,7 @@ class _GhanaPhoneValidator extends TextInputFormatter {
     }
 
     String digits = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
-    
+
     if (digits.length > 20) {
       _showAlert('You can only enter up to 2 phone numbers (max 20 digits)');
       return oldValue;
@@ -2111,7 +2143,9 @@ class _GhanaPhoneValidator extends TextInputFormatter {
     }
 
     int digitsBeforeCursor = 0;
-    for (int i = 0; i < newValue.selection.baseOffset && i < newValue.text.length; i++) {
+    for (int i = 0;
+        i < newValue.selection.baseOffset && i < newValue.text.length;
+        i++) {
       if (RegExp(r'[0-9]').hasMatch(newValue.text[i])) {
         digitsBeforeCursor++;
       }
@@ -2137,7 +2171,6 @@ class _GhanaPhoneValidator extends TextInputFormatter {
   }
 
   void _showAlert(String msg) {
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -2145,7 +2178,8 @@ class _GhanaPhoneValidator extends TextInputFormatter {
             content: Text(msg, style: const TextStyle(color: Colors.white)),
             backgroundColor: AppColors.errorRed,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             duration: const Duration(seconds: 2),
           ),
         );

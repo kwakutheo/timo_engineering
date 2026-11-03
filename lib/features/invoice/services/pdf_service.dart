@@ -860,7 +860,7 @@ class PdfService {
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                _sigLine('Prepared By:', ''),
+                _sigLine('Prepared By:', "Timo's Engineering Service"),
                 pw.SizedBox(height: 6),
                 _sigLine('Name:', _safe(invoice.managerName)),
                 pw.SizedBox(height: 6),
