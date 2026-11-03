@@ -43,7 +43,6 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
   // ── Charges controllers ────────────────────────────────────────────────
   late final TextEditingController _transportation;
   late final TextEditingController _labour;
-  late final TextEditingController _otherCharges;
 
   // ── Next service date ─────────────────────────────────────────────────
   DateTime? _nextServiceDate;
@@ -91,11 +90,6 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
           ? src!.labourAmount.toStringAsFixed(2)
           : '',
     );
-    _otherCharges = TextEditingController(
-      text: (src?.otherChargesAmount ?? 0) > 0
-          ? src!.otherChargesAmount.toStringAsFixed(2)
-          : '',
-    );
     _nextServiceDate = src?.nextServiceDate;
 
     final initialItems = src?.items ?? [InvoiceItem()];
@@ -116,7 +110,6 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     _managerName.dispose();
     _transportation.dispose();
     _labour.dispose();
-    _otherCharges.dispose();
     for (final c in _rowCtrls) {
       c.dispose();
     }
@@ -228,9 +221,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     ref
         .read(invoiceFormProvider.notifier)
         .updateLabourAmount(double.tryParse(_labour.text) ?? 0);
-    ref
-        .read(invoiceFormProvider.notifier)
-        .updateOtherChargesAmount(double.tryParse(_otherCharges.text) ?? 0);
+    ref.read(invoiceFormProvider.notifier).updateOtherChargesAmount(0.0);
   }
 
   // ── Save / export ─────────────────────────────────────────────────────────
@@ -1206,7 +1197,6 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
           _chargesRow(
               'Transportation', _transportation, Icons.local_shipping_outlined),
           _chargesRow('Labour', _labour, Icons.engineering_outlined),
-          _chargesRow('Other Charges', _otherCharges, Icons.receipt_outlined),
         ],
       ),
     );
@@ -1411,10 +1401,6 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
         const SizedBox(height: 6),
         // Labour
         _chargesRowMobile('Labour', _labour, Icons.engineering_outlined),
-        const SizedBox(height: 6),
-        // Other Charges
-        _chargesRowMobile(
-            'Other Charges', _otherCharges, Icons.receipt_outlined),
       ],
     );
   }
@@ -1641,13 +1627,11 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                 ),
               ],
             ),
-            // Transportation + Labour + Other Charges lines
+            // Transportation + Labour lines
             _totalsSubRow('Transportation:',
                 CurrencyFormatter.format(invoice.transportationAmount)),
             _totalsSubRow(
                 'Labour:', CurrencyFormatter.format(invoice.labourAmount)),
-            _totalsSubRow('Other Charges:',
-                CurrencyFormatter.format(invoice.otherChargesAmount)),
             // Divider
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 6),

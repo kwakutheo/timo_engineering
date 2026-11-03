@@ -23,8 +23,6 @@ class PdfService {
   /// Borders for totals boxes and inner lines
   static const _borderGrey = PdfColor.fromInt(0xFFCCCCCC);
 
-
-
   // ── Text Styles ───────────────────────────────────────────────────────────
 
   static final _tableHeaderStyle = pw.TextStyle(
@@ -47,12 +45,6 @@ class PdfService {
   static final _grandTotalValueStyle = pw.TextStyle(
     fontSize: 8.5,
     fontWeight: pw.FontWeight.bold,
-    color: _black,
-  );
-
-  static final _noVatStyle = pw.TextStyle(
-    fontSize: 7.5,
-    fontStyle: pw.FontStyle.italic,
     color: _black,
   );
 
@@ -92,14 +84,18 @@ class PdfService {
 
   static Future<pw.MemoryImage> _loadCustomer() async {
     _customerCache ??= pw.MemoryImage(
-      (await rootBundle.load('assets/customer_details.png')).buffer.asUint8List(),
+      (await rootBundle.load('assets/customer_details.png'))
+          .buffer
+          .asUint8List(),
     );
     return _customerCache!;
   }
 
   static Future<pw.MemoryImage> _loadGenerator() async {
     _generatorCache ??= pw.MemoryImage(
-      (await rootBundle.load('assets/generator_details.png')).buffer.asUint8List(),
+      (await rootBundle.load('assets/generator_details.png'))
+          .buffer
+          .asUint8List(),
     );
     return _generatorCache!;
   }
@@ -139,7 +135,8 @@ class PdfService {
     final footerImg = await _loadFooter();
 
     const pageWidth = 595.28; // Standard A4 width in pt
-    const contentWidth = 574.0; // Content width with 10.64pt margins on each side
+    const contentWidth =
+        574.0; // Content width with 10.64pt margins on each side
     const hMargin = (pageWidth - contentWidth) / 2;
 
     pdf.addPage(
@@ -153,7 +150,8 @@ class PdfService {
             pw.Image(
               headerImg,
               width: pageWidth,
-              height: pageWidth / 3.9072, // Aspect ratio of updated full_header.png (2610x668)
+              height: pageWidth /
+                  3.9072, // Aspect ratio of updated full_header.png (2610x668)
               fit: pw.BoxFit.fill,
             ),
 
@@ -491,16 +489,16 @@ class PdfService {
   // ── 5. Items Table ────────────────────────────────────────────────────────
 
   static pw.Widget _buildItemsTable(Invoice invoice, double width) {
-    const minRows = 6;
+    const minRows = 7;
     const col1Width = 280.0;
     const col2Width = 74.0;
     const col3Width = 110.0;
     const col4Width = 110.0; // sum = 574.0
 
-    // Keep table perfectly sized for A4
+    // Keep table perfectly sized for A4 with 7 rows
     final rowHeight = invoice.items.length <= minRows
         ? 22.0
-        : (132.0 / invoice.items.length).clamp(14.0, 22.0);
+        : (154.0 / invoice.items.length).clamp(14.0, 22.0);
 
     // Header row
     final headerRow = pw.Container(
@@ -532,13 +530,13 @@ class PdfService {
           pw.Container(
             width: col3Width - 1.0,
             alignment: pw.Alignment.center,
-            child: pw.Text('Unit Price (GH\u20b5)', style: _tableHeaderStyle),
+            child: pw.Text('Unit Price (GHC)', style: _tableHeaderStyle),
           ),
           pw.Container(width: 1.0, color: _black),
           pw.Container(
             width: col4Width - 1.0,
             alignment: pw.Alignment.center,
-            child: pw.Text('Amount (GH\u20b5)', style: _tableHeaderStyle),
+            child: pw.Text('Amount (GHC)', style: _tableHeaderStyle),
           ),
         ],
       ),
@@ -548,7 +546,8 @@ class PdfService {
 
     for (int i = 0; i < invoice.items.length; i++) {
       final item = invoice.items[i];
-      final isLast = (i == invoice.items.length - 1) && (invoice.items.length >= minRows);
+      final isLast =
+          (i == invoice.items.length - 1) && (invoice.items.length >= minRows);
       rows.add(_tableItemRow(
         col1Width: col1Width,
         col2Width: col2Width,
@@ -584,7 +583,7 @@ class PdfService {
       width: width,
       decoration: pw.BoxDecoration(
         color: _white,
-        border: pw.Border.all(color: _black, width: 1.0),
+        border: pw.Border.all(color: _yellow, width: 1.0),
       ),
       child: pw.Column(children: rows),
     );
@@ -645,7 +644,7 @@ class PdfService {
   // ── 6. Report/Remarks + Totals ────────────────────────────────────────────
 
   static pw.Widget _buildRemarksAndTotals(Invoice invoice, double width) {
-    const boxHeight = 160.0;
+    const boxHeight = 122.0;
     const leftWidth = 325.0;
     const rightWidth = 241.0; // 325 + 8 + 241 = 574.0
 
@@ -659,7 +658,8 @@ class PdfService {
     );
   }
 
-  static pw.Widget _buildRemarksBox(String remarks, double width, double height) {
+  static pw.Widget _buildRemarksBox(
+      String remarks, double width, double height) {
     const headerHeight = 22.0;
 
     return pw.Container(
@@ -696,7 +696,8 @@ class PdfService {
           // Body area with dynamic remarks text
           pw.Expanded(
             child: pw.Container(
-              padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              padding:
+                  const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               alignment: pw.Alignment.topLeft,
               child: pw.Text(
                 remarks,
@@ -735,7 +736,8 @@ class PdfService {
     );
   }
 
-  static pw.Widget _buildTotalsBox(Invoice invoice, double width, double height) {
+  static pw.Widget _buildTotalsBox(
+      Invoice invoice, double width, double height) {
     return pw.Container(
       width: width,
       height: height,
@@ -749,20 +751,16 @@ class PdfService {
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
           _totalRow(
-            'Subtotal (GH\u20b5)',
+            'Subtotal (GHC)',
             _formatMoney(invoice.itemsSubTotal),
           ),
           _totalRow(
-            'Transportation (GH\u20b5)',
+            'Transportation (GHC)',
             _formatMoneyOrBlank(invoice.transportationAmount),
           ),
           _totalRow(
-            'Labour (GH\u20b5)',
+            'Labour (GHC)',
             _formatMoneyOrBlank(invoice.labourAmount),
-          ),
-          _totalRow(
-            'Other Charges (GH\u20b5)',
-            _formatMoneyOrBlank(invoice.otherChargesAmount),
           ),
           // Yellow highlighted row for TOTAL AMOUNT DUE
           pw.Container(
@@ -776,7 +774,7 @@ class PdfService {
               children: [
                 pw.Expanded(
                   child: pw.Text(
-                    'TOTAL AMOUNT DUE (GH\u20b5)',
+                    'TOTAL AMOUNT DUE (GHC)',
                     style: pw.TextStyle(
                       fontSize: 8,
                       fontWeight: pw.FontWeight.bold,
@@ -790,7 +788,8 @@ class PdfService {
                   decoration: pw.BoxDecoration(
                     color: _white,
                     border: pw.Border.all(color: _borderGrey, width: 0.8),
-                    borderRadius: const pw.BorderRadius.all(pw.Radius.circular(2)),
+                    borderRadius:
+                        const pw.BorderRadius.all(pw.Radius.circular(2)),
                   ),
                   alignment: pw.Alignment.center,
                   child: pw.Text(
@@ -801,17 +800,6 @@ class PdfService {
                 ),
               ],
             ),
-          ),
-          // No VAT Included banner
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.center,
-            children: [
-              pw.Container(width: 32, height: 1.0, color: _yellow),
-              pw.SizedBox(width: 6),
-              pw.Text('No VAT Included', style: _noVatStyle),
-              pw.SizedBox(width: 6),
-              pw.Container(width: 32, height: 1.0, color: _yellow),
-            ],
           ),
         ],
       ),
