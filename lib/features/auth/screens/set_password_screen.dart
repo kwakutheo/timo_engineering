@@ -108,41 +108,61 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen>
     return PopScope(
       canPop: false,
       child: Scaffold(
-        backgroundColor: AppColors.primaryBlack,
+        backgroundColor: AppColors.primaryYellow,
         resizeToAvoidBottomInset: true,
         body: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildIcon(),
-                  const SizedBox(height: 32),
-                  _buildTitle(),
-                  const SizedBox(height: 40),
-                  _buildCreateField(),
-                  AnimatedSize(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                    child: _step == _SetStep.confirm
-                        ? Column(
-                            children: [
-                              const SizedBox(height: 16),
-                              _buildConfirmField(),
-                              const SizedBox(height: 16),
-                              _buildHintField(),
-                            ],
-                          )
-                        : const SizedBox.shrink(),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryBlack,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.18),
+                          blurRadius: 32,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 28, vertical: 36),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildIcon(),
+                        const SizedBox(height: 24),
+                        _buildTitle(),
+                        const SizedBox(height: 32),
+                        _buildCreateField(),
+                        AnimatedSize(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                          child: _step == _SetStep.confirm
+                              ? Column(
+                                  children: [
+                                    const SizedBox(height: 16),
+                                    _buildConfirmField(),
+                                    const SizedBox(height: 16),
+                                    _buildHintField(),
+                                  ],
+                                )
+                              : const SizedBox.shrink(),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildStatus(),
+                        const SizedBox(height: 24),
+                        _buildHint(),
+                        const SizedBox(height: 16),
+                        _buildButton(),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  _buildStatus(),
-                  const SizedBox(height: 28),
-                  _buildHint(),
-                  const SizedBox(height: 16),
-                  _buildButton(),
-                ],
+                ),
               ),
             ),
           ),

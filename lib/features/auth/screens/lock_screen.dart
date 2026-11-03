@@ -154,7 +154,7 @@ class _LockScreenState extends ConsumerState<LockScreen>
     return PopScope(
       canPop: false,
       child: Scaffold(
-        backgroundColor: AppColors.primaryBlack,
+        backgroundColor: AppColors.primaryYellow,
         resizeToAvoidBottomInset: true,
         body: FadeTransition(
           opacity: _fadeController,
@@ -162,23 +162,42 @@ class _LockScreenState extends ConsumerState<LockScreen>
             child: Center(
               child: SingleChildScrollView(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildLockIcon(),
-                    const SizedBox(height: 32),
-                    _buildTitle(),
-                    const SizedBox(height: 40),
-                    _buildPasswordField(),
-                    const SizedBox(height: 16),
-                    _buildStatus(),
-                    const SizedBox(height: 28),
-                    _buildUnlockButton(),
-
-                    const SizedBox(height: 16),
-                    _buildForgotButton(),
-                  ],
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 420),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryBlack,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.18),
+                            blurRadius: 32,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 28, vertical: 36),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildLockIcon(),
+                          const SizedBox(height: 24),
+                          _buildTitle(),
+                          const SizedBox(height: 32),
+                          _buildPasswordField(),
+                          const SizedBox(height: 12),
+                          _buildStatus(),
+                          const SizedBox(height: 24),
+                          _buildUnlockButton(),
+                          const SizedBox(height: 12),
+                          _buildForgotButton(),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -190,14 +209,14 @@ class _LockScreenState extends ConsumerState<LockScreen>
 
   Widget _buildLockIcon() {
     return Container(
-      width: 88,
-      height: 88,
+      width: 80,
+      height: 80,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.white.withValues(alpha: 0.1),
+        color: Colors.white.withValues(alpha: 0.08),
         border: Border.all(color: Colors.white24, width: 1.5),
       ),
-      child: const Icon(Icons.lock_outlined, size: 42, color: Colors.white),
+      child: const Icon(Icons.lock_outlined, size: 38, color: Colors.white),
     );
   }
 
