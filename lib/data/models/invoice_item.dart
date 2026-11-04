@@ -50,8 +50,8 @@ class InvoiceItem {
   factory InvoiceItem.fromMap(Map<String, dynamic> map) => InvoiceItem(
         id: map['id'] as String,
         description: map['description'] as String? ?? '',
-        quantity: (map['quantity'] as num).toDouble(),
-        price: (map['price'] as num).toDouble(),
+        quantity: (map['quantity'] as num?)?.toDouble() ?? 0.0,
+        price: (map['price'] as num?)?.toDouble() ?? 0.0,
         updatedAt: map['updated_at'] != null
             ? DateTime.tryParse(map['updated_at'].toString())
             : null,

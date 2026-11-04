@@ -29,6 +29,7 @@ final filteredClientsProvider = Provider<AsyncValue<List<Client>>>((ref) {
     return clients
         .where((c) =>
             c.name.toLowerCase().contains(query) ||
+            c.billTo.toLowerCase().contains(query) ||
             c.phone.toLowerCase().contains(query) ||
             c.address.toLowerCase().contains(query))
         .toList();

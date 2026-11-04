@@ -30,7 +30,9 @@ final filteredInvoicesProvider = Provider<AsyncValue<List<Invoice>>>((ref) {
     return invoices
         .where((inv) =>
             inv.clientName.toLowerCase().contains(query) ||
-            inv.invoiceNumber.toLowerCase().contains(query))
+            inv.invoiceNumber.toLowerCase().contains(query) ||
+            inv.billTo.toLowerCase().contains(query) ||
+            inv.phone.toLowerCase().contains(query))
         .toList();
   });
 });

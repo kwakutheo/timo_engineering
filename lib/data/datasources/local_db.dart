@@ -481,6 +481,15 @@ class LocalDb {
       await database.update('invoice_items', localRow,
           where: 'id = ?', whereArgs: [id]);
     } else {
+      // Guard against foreign key failure if parent invoice doesn't exist locally
+      final parent = await database.query(
+        'invoices',
+        columns: ['id'],
+        where: 'id = ?',
+        whereArgs: [localRow['invoice_id']],
+      );
+      if (parent.isEmpty) return;
+
       await database.insert('invoice_items', localRow);
     }
   }

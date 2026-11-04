@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../providers/auth_provider.dart';
 import '../services/auth_service.dart' show AuthService;
+import 'set_password_screen.dart';
 
 class LockScreen extends ConsumerStatefulWidget {
   const LockScreen({super.key});
@@ -453,9 +454,12 @@ class _LockScreenState extends ConsumerState<LockScreen>
                     // Only wipe auth data (invoices are kept safe!)
                     await AuthService.instance.wipeAuth();
                     if (context.mounted) {
-                      ref.read(authProvider.notifier).resetToSetup();
                       Navigator.of(context).pop(); // pop dialog
-                      Navigator.of(context).pop(); // pop lock screen
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (_) => const SetPasswordScreen(),
+                        ),
+                      );
                     }
                   } else {
                     setStateBuilder(() =>

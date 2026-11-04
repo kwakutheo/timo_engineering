@@ -122,16 +122,17 @@ class Invoice {
   factory Invoice.fromMap(Map<String, dynamic> map, List<InvoiceItem> items) =>
       Invoice(
         id: map['id'] as String,
-        invoiceNumber: map['invoice_number'] as String,
+        invoiceNumber: map['invoice_number'] as String? ?? '',
         clientName: map['client_name'] as String? ?? '',
         address: map['address'] as String? ?? '',
         phone: map['phone'] as String? ?? '',
         billTo: map['bill_to'] as String? ?? '',
-        date: DateTime.parse(map['date'] as String),
+        date: DateTime.tryParse(map['date']?.toString() ?? '') ??
+            DateTime.now(),
         runningHour: map['running_hour'] as String? ?? '',
         model: map['model'] as String? ?? '',
         nextServiceDate: map['next_service_date'] != null
-            ? DateTime.tryParse(map['next_service_date'] as String)
+            ? DateTime.tryParse(map['next_service_date'].toString())
             : null,
         items: items,
         jobDescription: map['job_description'] as String? ?? '',
@@ -141,7 +142,8 @@ class Invoice {
         labourAmount: (map['labour_amount'] as num?)?.toDouble() ?? 0.0,
         otherChargesAmount:
             (map['other_charges_amount'] as num?)?.toDouble() ?? 0.0,
-        createdAt: DateTime.parse(map['created_at'] as String),
+        createdAt: DateTime.tryParse(map['created_at']?.toString() ?? '') ??
+            DateTime.now(),
         updatedAt: map['updated_at'] != null
             ? DateTime.tryParse(map['updated_at'].toString())
             : null,

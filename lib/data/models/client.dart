@@ -55,11 +55,12 @@ class Client {
 
   factory Client.fromMap(Map<String, dynamic> map) => Client(
         id: map['id'] as String,
-        name: map['name'] as String,
+        name: map['name'] as String? ?? '',
         billTo: map['bill_to'] as String? ?? '',
         address: map['address'] as String? ?? '',
         phone: map['phone'] as String? ?? '',
-        createdAt: DateTime.parse(map['created_at'] as String),
+        createdAt: DateTime.tryParse(map['created_at']?.toString() ?? '') ??
+            DateTime.now(),
         updatedAt: map['updated_at'] != null
             ? DateTime.tryParse(map['updated_at'].toString())
             : null,
