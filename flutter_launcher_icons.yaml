@@ -10,5 +10,5 @@ flutter_launcher_icons:
     theme_color: "#FFCC00"
   windows:
     generate: true
-    image_path: "assets/timo_icon.png"
+    image_path: "assets/timo_logo.png"
     icon_size: 48

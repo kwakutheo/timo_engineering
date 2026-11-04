@@ -27,7 +27,7 @@ OutputDir=D:\source_codes\timo_enginerring\installer
 OutputBaseFilename=timo_setup
 
 ; ===== ICON =====
-SetupIconFile=D:\source_codes\timo_enginerring\assets\timo_icon.ico
+SetupIconFile=D:\source_codes\timo_enginerring\assets\timo_logo.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
 ChangesAssociations=yes
 
@@ -58,19 +58,19 @@ DestDir: "{app}"; \
 Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; Ensure icon is inside install folder
-Source: "D:\source_codes\timo_enginerring\assets\timo_icon.ico"; DestDir: "{app}"; Flags: ignoreversion
+Source: "D:\source_codes\timo_enginerring\assets\timo_logo.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 ; Start Menu
 Name: "{autoprograms}\{#MyAppName}"; \
 Filename: "{app}\{#MyAppExeName}"; \
-IconFilename: "{app}\timo_icon.ico"
+IconFilename: "{app}\timo_logo.ico"
 
 ; Desktop shortcut
 Name: "{autodesktop}\{#MyAppName}"; \
 Filename: "{app}\{#MyAppExeName}"; \
 Tasks: desktopicon; \
-IconFilename: "{app}\timo_icon.ico"
+IconFilename: "{app}\timo_logo.ico"
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; \

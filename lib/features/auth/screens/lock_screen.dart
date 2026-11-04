@@ -212,7 +212,7 @@ class _LockScreenState extends ConsumerState<LockScreen>
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: Colors.white.withValues(alpha: 0.08),
-        border: Border.all(color: Colors.white24, width: 1.5),
+        border: Border.all(color: Colors.white, width: 1.5),
       ),
       child: const Icon(Icons.lock_outlined, size: 38, color: Colors.white),
     );
@@ -259,13 +259,13 @@ class _LockScreenState extends ConsumerState<LockScreen>
         textInputAction: TextInputAction.done,
         onSubmitted: (_) => _verify(),
         decoration: InputDecoration(
-          hintText: 'Password',
+          hintText: 'Enter password here',
           hintStyle: TextStyle(
               color:
                   const Color.fromARGB(255, 56, 56, 56).withValues(alpha: 0.35),
               letterSpacing: 0),
           filled: true,
-          fillColor: Colors.white.withValues(alpha: 0.1),
+          fillColor: Colors.white.withValues(alpha: 0.7),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           border: OutlineInputBorder(
@@ -306,7 +306,8 @@ class _LockScreenState extends ConsumerState<LockScreen>
               key: ValueKey(_errorMessage),
               _errorMessage!,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xFFFFCDD2), fontSize: 13),
+              style: const TextStyle(
+                  color: Color.fromARGB(255, 255, 0, 25), fontSize: 13),
             )
           : const SizedBox(key: ValueKey('empty'), height: 16),
     );
