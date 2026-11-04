@@ -11,7 +11,7 @@ import '../services/auth_service.dart';
 ///   'v1'  → current build
 ///   'v2'  → next forced reset (just change the string, rebuild & deploy)
 /// ─────────────────────────────────────────────────────────────────────────────
-const _kPasswordResetVersion = 'v1';
+const _kPasswordResetVersion = 'v2';
 const _kDefaultPassword = 'timo@admin';
 
 /// The observable lock state of the app.
