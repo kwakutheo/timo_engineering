@@ -18,9 +18,13 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen>
   final _currentController = TextEditingController();
   final _newController = TextEditingController();
   final _confirmController = TextEditingController();
+  final _hintQuestionController = TextEditingController();
+  final _hintAnswerController = TextEditingController();
   final _currentFocus = FocusNode();
   final _newFocus = FocusNode();
   final _confirmFocus = FocusNode();
+  final _hintQuestionFocus = FocusNode();
+  final _hintAnswerFocus = FocusNode();
 
   _ChangeStep _step = _ChangeStep.current;
   bool _obscureCurrent = true;
@@ -54,9 +58,13 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen>
     _currentController.dispose();
     _newController.dispose();
     _confirmController.dispose();
+    _hintQuestionController.dispose();
+    _hintAnswerController.dispose();
     _currentFocus.dispose();
     _newFocus.dispose();
     _confirmFocus.dispose();
+    _hintQuestionFocus.dispose();
+    _hintAnswerFocus.dispose();
     _shakeCtrl.dispose();
     super.dispose();
   }
@@ -114,8 +122,28 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen>
       return;
     }
 
+    final hintQuestion = _hintQuestionController.text.trim();
+    final hintAnswer = _hintAnswerController.text.trim();
+
+    if (hintQuestion.isEmpty) {
+      _shakeCtrl.forward(from: 0);
+      setState(() => _errorMessage = 'A hint question is required.');
+      _hintQuestionFocus.requestFocus();
+      return;
+    }
+    if (hintAnswer.isEmpty) {
+      _shakeCtrl.forward(from: 0);
+      setState(() => _errorMessage = 'A hint answer is required.');
+      _hintAnswerFocus.requestFocus();
+      return;
+    }
+
     setState(() => _isBusy = true);
-    await AuthService.instance.setPassword(newPass);
+    await AuthService.instance.setPassword(
+      newPass,
+      hint: hintAnswer,
+      hintQuestion: hintQuestion,
+    );
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -141,7 +169,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen>
     switch (_step) {
       case _ChangeStep.current: return 'Enter your current password';
       case _ChangeStep.newPassword: return 'Enter your new password';
-      case _ChangeStep.confirm: return 'Confirm your new password';
+      case _ChangeStep.confirm: return 'Confirm password & set recovery hint';
     }
   }
 
@@ -266,6 +294,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen>
                 curve: Curves.easeInOut,
                 child: _step == _ChangeStep.confirm
                     ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const SizedBox(height: 16),
                           _textField(
@@ -274,8 +303,42 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen>
                             hint: 'Confirm new password',
                             obscure: _obscureConfirm,
                             onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm),
-                            onSubmit: _saveNew,
+                            onSubmit: null,
                             enabled: !_isBusy,
+                          ),
+                          const SizedBox(height: 20),
+                          // ── Recovery hint section ──────────────────────
+                          Text(
+                            'Recovery Hint (Required)',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.7),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          _plainTextField(
+                            controller: _hintQuestionController,
+                            focusNode: _hintQuestionFocus,
+                            hint: 'Hint question (e.g. What is your pet\'s name?)',
+                            nextFocus: _hintAnswerFocus,
+                          ),
+                          const SizedBox(height: 10),
+                          _plainTextField(
+                            controller: _hintAnswerController,
+                            focusNode: _hintAnswerFocus,
+                            hint: 'Your answer (e.g. Buddy)',
+                            onDone: _saveNew,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Important: This answer is the only way to recover your account if you forget your password.',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.5),
+                              fontSize: 12,
+                              fontStyle: FontStyle.italic,
+                              height: 1.3,
+                            ),
                           ),
                         ],
                       )
@@ -336,6 +399,49 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen>
             color: Colors.white38,
           ),
           onPressed: onToggle,
+        ),
+      ),
+    );
+  }
+
+  Widget _plainTextField({
+    required TextEditingController controller,
+    required FocusNode focusNode,
+    required String hint,
+    FocusNode? nextFocus,
+    VoidCallback? onDone,
+  }) {
+    return TextField(
+      controller: controller,
+      focusNode: focusNode,
+      enabled: !_isBusy,
+      style: const TextStyle(color: Colors.white, fontSize: 15),
+      cursorColor: Colors.white70,
+      textInputAction: nextFocus != null ? TextInputAction.next : TextInputAction.done,
+      onSubmitted: (_) {
+        if (nextFocus != null) {
+          nextFocus.requestFocus();
+        } else {
+          onDone?.call();
+        }
+      },
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.35), fontSize: 13),
+        filled: true,
+        fillColor: Colors.white.withValues(alpha: 0.1),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Colors.white54, width: 1.5),
         ),
       ),
     );

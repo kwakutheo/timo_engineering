@@ -359,75 +359,116 @@ class _LockScreenState extends ConsumerState<LockScreen>
     final hintController = TextEditingController();
     String? localError;
 
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setStateBuilder) => AlertDialog(
-          backgroundColor: AppColors.primaryBlack,
-          title: const Text('Reset Password',
-              style: TextStyle(color: Colors.white)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Enter the recovery hint you provided during registration to reset your password securely.',
-                style: TextStyle(color: Colors.white70, fontSize: 13),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: hintController,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'Recovery Hint Answer',
-                  hintStyle:
-                      TextStyle(color: Colors.white.withValues(alpha: 0.35)),
-                  filled: true,
-                  fillColor: Colors.white.withValues(alpha: 0.1),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
+    // Load the stored hint question before opening the dialog.
+    AuthService.instance.getHintQuestion().then((question) {
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (context) => StatefulBuilder(
+          builder: (context, setStateBuilder) => AlertDialog(
+            backgroundColor: AppColors.primaryBlack,
+            title: const Text('Reset Password',
+                style: TextStyle(color: Colors.white)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Hint question display ──────────────────────────────
+                if (question != null) ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.15)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Your hint question:',
+                          style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.5),
+                              fontSize: 11),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          question,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ] else ...[
+                  const Text(
+                    'Enter the recovery hint answer you provided when setting your password.',
+                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                // ── Hint answer input ──────────────────────────────────
+                TextField(
+                  controller: hintController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'Type your answer here',
+                    hintStyle:
+                        TextStyle(color: Colors.white.withValues(alpha: 0.35)),
+                    filled: true,
+                    fillColor: Colors.white.withValues(alpha: 0.1),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide.none,
+                    ),
                   ),
                 ),
+                if (localError != null) ...[
+                  const SizedBox(height: 12),
+                  Text(localError!,
+                      style: const TextStyle(
+                          color: Color(0xFFFFCDD2), fontSize: 13)),
+                ]
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child:
+                    const Text('Cancel', style: TextStyle(color: Colors.white54)),
               ),
-              if (localError != null) ...[
-                const SizedBox(height: 12),
-                Text(localError!,
-                    style: const TextStyle(
-                        color: Color(0xFFFFCDD2), fontSize: 13)),
-              ]
+              TextButton(
+                onPressed: () async {
+                  final match = await AuthService.instance
+                      .verifyPasswordHint(hintController.text);
+                  if (match) {
+                    // Only wipe auth data (invoices are kept safe!)
+                    await AuthService.instance.wipeAuth();
+                    if (context.mounted) {
+                      ref.read(authProvider.notifier).resetToSetup();
+                      Navigator.of(context).pop(); // pop dialog
+                      Navigator.of(context).pop(); // pop lock screen
+                    }
+                  } else {
+                    setStateBuilder(() =>
+                        localError = 'Incorrect answer. Cannot reset password.');
+                  }
+                },
+                child: const Text('Verify & Reset',
+                    style: TextStyle(color: Colors.white)),
+              ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child:
-                  const Text('Cancel', style: TextStyle(color: Colors.white54)),
-            ),
-            TextButton(
-              onPressed: () async {
-                final match = await AuthService.instance
-                    .verifyPasswordHint(hintController.text);
-                if (match) {
-                  // Only wipe auth data (invoices are kept safe!)
-                  await AuthService.instance.wipeAuth();
-                  if (context.mounted) {
-                    ref.read(authProvider.notifier).resetToSetup();
-                    Navigator.of(context).pop(); // pop dialog
-                    Navigator.of(context).pop(); // pop lock screen
-                  }
-                } else {
-                  setStateBuilder(() =>
-                      localError = 'Incorrect hint. Cannot reset password.');
-                }
-              },
-              child: const Text('Verify & Reset',
-                  style: TextStyle(color: Colors.white)),
-            ),
-          ],
         ),
-      ),
-    );
+      );
+    });
   }
 }

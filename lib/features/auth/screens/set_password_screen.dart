@@ -17,10 +17,12 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen>
     with SingleTickerProviderStateMixin {
   final _createController = TextEditingController();
   final _confirmController = TextEditingController();
-  final _hintController = TextEditingController();
+  final _hintQuestionController = TextEditingController();
+  final _hintAnswerController = TextEditingController();
   final _createFocus = FocusNode();
   final _confirmFocus = FocusNode();
-  final _hintFocus = FocusNode();
+  final _hintQuestionFocus = FocusNode();
+  final _hintAnswerFocus = FocusNode();
 
   _SetStep _step = _SetStep.create;
   bool _obscureCreate = true;
@@ -52,10 +54,12 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen>
   void dispose() {
     _createController.dispose();
     _confirmController.dispose();
-    _hintController.dispose();
+    _hintQuestionController.dispose();
+    _hintAnswerController.dispose();
     _createFocus.dispose();
     _confirmFocus.dispose();
-    _hintFocus.dispose();
+    _hintQuestionFocus.dispose();
+    _hintAnswerFocus.dispose();
     _shakeCtrl.dispose();
     super.dispose();
   }
@@ -87,16 +91,28 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen>
       return;
     }
 
-    final hint = _hintController.text.trim();
-    if (hint.isEmpty) {
+    final hintQuestion = _hintQuestionController.text.trim();
+    final hintAnswer = _hintAnswerController.text.trim();
+
+    if (hintQuestion.isEmpty) {
       _shakeCtrl.forward(from: 0);
-      setState(() => _errorMessage = 'A recovery hint is mandatory.');
-      _hintFocus.requestFocus();
+      setState(() => _errorMessage = 'A hint question is required.');
+      _hintQuestionFocus.requestFocus();
+      return;
+    }
+    if (hintAnswer.isEmpty) {
+      _shakeCtrl.forward(from: 0);
+      setState(() => _errorMessage = 'A hint answer is required.');
+      _hintAnswerFocus.requestFocus();
       return;
     }
 
     setState(() => _isSaving = true);
-    await AuthService.instance.setPassword(password, hint: _hintController.text.trim());
+    await AuthService.instance.setPassword(
+      password,
+      hint: hintAnswer,
+      hintQuestion: hintQuestion,
+    );
     if (mounted) {
       ref.read(authProvider.notifier).onPasswordSet();
       Navigator.of(context).pop();
@@ -147,8 +163,8 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen>
                                   children: [
                                     const SizedBox(height: 16),
                                     _buildConfirmField(),
-                                    const SizedBox(height: 16),
-                                    _buildHintField(),
+                                    const SizedBox(height: 20),
+                                    _buildHintSection(),
                                   ],
                                 )
                               : const SizedBox.shrink(),
@@ -203,7 +219,7 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen>
             key: ValueKey(_step),
             _step == _SetStep.create
                 ? 'Set a password to protect your data'
-                : 'Confirm your password',
+                : 'Confirm your password & set a recovery hint',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 13),
           ),
@@ -236,30 +252,73 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen>
         hint: 'Confirm password',
         obscure: _obscureConfirm,
         onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm),
-        onSubmit: null, // Let user tab to hint field instead of submit
+        onSubmit: null,
         enabled: !_isSaving,
       ),
     );
   }
 
-  Widget _buildHintField() {
+  Widget _buildHintSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Section label
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Text(
+            'Recovery Hint (Required)',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.7),
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        // Hint question field
         TextField(
-          controller: _hintController,
-          focusNode: _hintFocus,
+          controller: _hintQuestionController,
+          focusNode: _hintQuestionFocus,
+          enabled: !_isSaving,
+          style: const TextStyle(color: Colors.white, fontSize: 15),
+          cursorColor: Colors.white70,
+          textInputAction: TextInputAction.next,
+          onSubmitted: (_) => _hintAnswerFocus.requestFocus(),
+          decoration: InputDecoration(
+            hintText: 'Hint question (e.g. What is your pet\'s name?)',
+            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.35), fontSize: 13),
+            filled: true,
+            fillColor: Colors.white.withValues(alpha: 0.1),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: Colors.white54, width: 1.5),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        // Hint answer field
+        TextField(
+          controller: _hintAnswerController,
+          focusNode: _hintAnswerFocus,
           enabled: !_isSaving,
           style: const TextStyle(color: Colors.white, fontSize: 15),
           cursorColor: Colors.white70,
           textInputAction: TextInputAction.done,
           onSubmitted: (_) => _onConfirmSubmit(),
           decoration: InputDecoration(
-            hintText: 'Recovery Hint Answer (Required)',
-            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.35)),
+            hintText: 'Your answer (e.g. Buddy)',
+            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.35), fontSize: 13),
             filled: true,
             fillColor: Colors.white.withValues(alpha: 0.1),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
@@ -278,7 +337,7 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen>
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
           child: Text(
-            'Important: This exact answer is the only way to recover your account without losing your data if you forget your password.',
+            'Important: This answer is the only way to recover your account if you forget your password.',
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.6),
               fontSize: 12,

@@ -11,6 +11,10 @@ class _Keys {
   static const lockUntil = 'pin_lock_until';
   static const hintHash = 'pin_hint_hash';
   static const hintSalt = 'pin_hint_salt';
+  /// The hint question text (stored in plaintext — it's a question, not a secret).
+  static const hintQuestion = 'pin_hint_question';
+  /// Tracks which password-reset version is active on this device.
+  static const passwordResetVersion = 'pin_reset_version';
 }
 
 /// Banned weak passwords.
@@ -94,12 +98,22 @@ class AuthService {
     return h != null && h.isNotEmpty;
   }
 
+  /// Returns the stored password-reset version token, or null if none stored.
+  Future<String?> getPasswordResetVersion() async {
+    return _storage.read(key: _Keys.passwordResetVersion);
+  }
+
+  /// Saves the current password-reset version token to secure storage.
+  Future<void> savePasswordResetVersion(String version) async {
+    await _storage.write(key: _Keys.passwordResetVersion, value: version);
+  }
+
   /// Validate password strength; returns an error message or null if OK.
-  /// Accepts: letters only, digits only, or any combination.
+  /// Accepts: letters, digits, and common symbols (@, _, -, .).
   String? validatePassword(String password) {
     if (password.length < 4) return 'Password must be at least 4 characters.';
-    if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(password)) {
-      return 'Password may only contain letters and numbers.';
+    if (!RegExp(r'^[a-zA-Z0-9@_\-\.]+$').hasMatch(password)) {
+      return 'Password may only contain letters, numbers, and @ _ - . symbols.';
     }
     if (_bannedPasswords.contains(password.toLowerCase())) {
       return 'Password is too common. Please choose a stronger one.';
@@ -112,7 +126,9 @@ class AuthService {
   }
 
   /// Hash and store a new PIN. Resets attempt counter.
-  Future<void> setPassword(String password, {String? hint}) async {
+  /// [hint] is the answer to [hintQuestion]. The question is stored in
+  /// plaintext so it can be shown to the user; only the answer is hashed.
+  Future<void> setPassword(String password, {String? hint, String? hintQuestion}) async {
     final saltBytes = _randomBytes(32);
     final saltB64 = base64.encode(saltBytes);
 
@@ -125,14 +141,18 @@ class AuthService {
     await _storage.write(key: _Keys.hash, value: hashB64);
     await _storage.write(key: _Keys.salt, value: saltB64);
 
-    // Hash the hint using PBKDF2 for security
+    // Store hint question (plaintext) and hash the answer.
     if (hint != null && hint.isNotEmpty) {
       await _hashAndStoreHint(hint);
+      if (hintQuestion != null && hintQuestion.isNotEmpty) {
+        await _storage.write(key: _Keys.hintQuestion, value: hintQuestion.trim());
+      } else {
+        try { await _storage.delete(key: _Keys.hintQuestion); } catch (_) {}
+      }
     } else {
-      try {
-        await _storage.delete(key: _Keys.hintHash);
-        await _storage.delete(key: _Keys.hintSalt);
-      } catch (_) {}
+      try { await _storage.delete(key: _Keys.hintHash); } catch (_) {}
+      try { await _storage.delete(key: _Keys.hintSalt); } catch (_) {}
+      try { await _storage.delete(key: _Keys.hintQuestion); } catch (_) {}
     }
 
     await _storage.write(key: _Keys.attempts, value: '0');
@@ -141,7 +161,13 @@ class AuthService {
     } catch (_) {}
   }
 
-  /// Hash and securely store a password hint.
+  /// Returns the stored hint question text, or null if none was set.
+  Future<String?> getHintQuestion() async {
+    final q = await _storage.read(key: _Keys.hintQuestion);
+    return (q != null && q.isNotEmpty) ? q : null;
+  }
+
+  /// Hash and securely store a password hint answer.
   Future<void> _hashAndStoreHint(String hint) async {
     final hintSaltBytes = _randomBytes(32);
     final hintSaltB64 = base64.encode(hintSaltBytes);
@@ -246,7 +272,7 @@ class AuthService {
     return int.tryParse(a ?? '0') ?? 0;
   }
 
-  /// Verify the password hint securely using hashed comparison.
+  /// Verify the password hint answer securely using hashed comparison.
   /// Supports legacy hints hashed with 200k iterations.
   Future<bool> verifyPasswordHint(String input) async {
     final storedHintHash = await _storage.read(key: _Keys.hintHash);
@@ -276,26 +302,21 @@ class AuthService {
     return legacyHintHash == storedHintHash;
   }
 
-  /// Wipe all auth data (for testing / reset).
+  /// Wipe all auth data (for password reset).
   Future<void> wipeAuth() async {
-    try {
-      await _storage.delete(key: _Keys.hash);
-    } catch (_) {}
-    try {
-      await _storage.delete(key: _Keys.salt);
-    } catch (_) {}
-    try {
-      await _storage.delete(key: _Keys.attempts);
-    } catch (_) {}
-    try {
-      await _storage.delete(key: _Keys.lockUntil);
-    } catch (_) {}
-    try {
-      await _storage.delete(key: _Keys.hintHash);
-    } catch (_) {}
-    try {
-      await _storage.delete(key: _Keys.hintSalt);
-    } catch (_) {}
+    for (final key in [
+      _Keys.hash,
+      _Keys.salt,
+      _Keys.attempts,
+      _Keys.lockUntil,
+      _Keys.hintHash,
+      _Keys.hintSalt,
+      _Keys.hintQuestion,
+      // Note: passwordResetVersion is NOT wiped here — it is managed separately
+      // by savePasswordResetVersion() in auth_provider.dart.
+    ]) {
+      try { await _storage.delete(key: key); } catch (_) {}
+    }
   }
 
 
