@@ -31,9 +31,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> _init() async {
     final hasPin = await _service.hasPassword();
-    state = AuthState(
-      isLocked: hasPin,        // locked if a PIN exists
-      isFirstLaunch: !hasPin,  // setup flow if no PIN yet
+    if (!hasPin) {
+      // Auto-set default password on first install (device-local, never synced).
+      // Each device keeps its own password independently.
+      // The user can change this later via the Change Password screen.
+      await _service.setPassword('timo@admin');
+    }
+    state = const AuthState(
+      isLocked: true,
+      isFirstLaunch: false,
       isLoading: false,
     );
   }
@@ -49,19 +55,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   /// Lock the app immediately.
   void lock() {
-    if (!state.isFirstLaunch) {
-      state = state.copyWith(isLocked: true);
-    }
+    state = state.copyWith(isLocked: true);
   }
 
   /// Called after setting a password for the first time.
   void onPasswordSet() {
-    state = const AuthState(isLocked: false, isFirstLaunch: false, isLoading: false);
+    state = const AuthState(
+        isLocked: false, isFirstLaunch: false, isLoading: false);
   }
 
   /// Called after completely wiping all auth data to return to password creation
   void resetToSetup() {
-    state = const AuthState(isLocked: false, isFirstLaunch: true, isLoading: false);
+    state =
+        const AuthState(isLocked: false, isFirstLaunch: true, isLoading: false);
   }
 }
 

@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import '../screens/lock_screen.dart';
-import '../screens/set_password_screen.dart';
 
 /// Wraps the entire app content to provide:
-/// 1. Show lock/setup screen on startup.
+/// 1. Show lock screen on startup.
+/// 2. Re-lock when the app is re-opened after being locked.
 class AppLockWrapper extends ConsumerStatefulWidget {
   final Widget child;
   const AppLockWrapper({super.key, required this.child});
@@ -20,20 +20,19 @@ class _AppLockWrapperState extends ConsumerState<AppLockWrapper> {
 
   void _showLockIfNeeded() {
     final auth = ref.read(authProvider);
-    if ((auth.isLocked || auth.isFirstLaunch) && !_lockScreenVisible) {
-      _pushLockScreen(auth.isFirstLaunch);
+    if (auth.isLocked && !_lockScreenVisible) {
+      _pushLockScreen();
     }
   }
 
-  Future<void> _pushLockScreen(bool isSetup) async {
+  Future<void> _pushLockScreen() async {
     if (_lockScreenVisible) return;
     _lockScreenVisible = true;
     await Navigator.of(context, rootNavigator: true).push(
       PageRouteBuilder(
         opaque: true,
         barrierDismissible: false,
-        pageBuilder: (_, __, ___) =>
-            isSetup ? const SetPasswordScreen() : const LockScreen(),
+        pageBuilder: (_, __, ___) => const LockScreen(),
         transitionDuration: const Duration(milliseconds: 300),
         transitionsBuilder: (_, anim, __, child) =>
             FadeTransition(opacity: anim, child: child),
@@ -46,8 +45,8 @@ class _AppLockWrapperState extends ConsumerState<AppLockWrapper> {
   Widget build(BuildContext context) {
     final auth = ref.watch(authProvider);
 
-    // Show lock/setup on initial load.
-    if (!auth.isLoading && (auth.isLocked || auth.isFirstLaunch)) {
+    // Show lock screen on initial load or when re-locked.
+    if (!auth.isLoading && auth.isLocked) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _showLockIfNeeded();
       });
