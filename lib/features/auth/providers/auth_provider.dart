@@ -2,17 +2,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/auth_service.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────────
-/// FORCE-RESET CONTROL
+/// AUTHENTICATION MIGRATION CONTROL
 ///
-/// Bump this token whenever you want ALL devices to discard their current
-/// password and revert to [_kDefaultPassword] on the next app launch.
-///
-/// Examples:
-///   'v1'  → current build
-///   'v2'  → next forced reset (just change the string, rebuild & deploy)
+/// Bump this token only when the authentication data format changes. A version
+/// mismatch never creates a known default password; it routes the user through
+/// the password-setup flow instead.
 /// ─────────────────────────────────────────────────────────────────────────────
-const _kPasswordResetVersion = 'v2';
-const _kDefaultPassword = 'timo@admin';
+const _kPasswordResetVersion = 'v3';
 
 /// The observable lock state of the app.
 class AuthState {
@@ -43,27 +39,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final _service = AuthService.instance;
 
   Future<void> _init() async {
-    // ── Check if the stored password-reset version matches the app's current
-    //    version token. If not (e.g. developer bumped _kPasswordResetVersion),
-    //    wipe ALL auth data and re-set the default password. This resets the
-    //    password on every device the moment they open the updated app.
+    // A version mismatch removes only authentication secrets and routes the
+    // user to secure setup. Invoice data is kept in the separate SQLite store.
     final storedVersion = await _service.getPasswordResetVersion();
     if (storedVersion != _kPasswordResetVersion) {
-      // Version mismatch → force reset to default password.
       await _service.wipeAuth();
-      await _service.setPassword(_kDefaultPassword);
       await _service.savePasswordResetVersion(_kPasswordResetVersion);
-    } else {
-      // Version matches → ensure a password exists (handles truly fresh installs).
-      final hasPin = await _service.hasPassword();
-      if (!hasPin) {
-        await _service.setPassword(_kDefaultPassword);
-      }
+      state = const AuthState(
+        isLocked: false,
+        isFirstLaunch: true,
+        isLoading: false,
+      );
+      return;
     }
 
-    state = const AuthState(
-      isLocked: true,
-      isFirstLaunch: false,
+    final hasPassword = await _service.hasPassword();
+    state = AuthState(
+      isLocked: hasPassword,
+      isFirstLaunch: !hasPassword,
       isLoading: false,
     );
   }
@@ -84,12 +77,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   /// Called after setting a password for the first time.
   void onPasswordSet() {
-    state = const AuthState(isLocked: false, isFirstLaunch: false, isLoading: false);
+    state = const AuthState(
+        isLocked: false, isFirstLaunch: false, isLoading: false);
   }
 
   /// Called after completely wiping all auth data to return to password creation.
   void resetToSetup() {
-    state = const AuthState(isLocked: false, isFirstLaunch: true, isLoading: false);
+    state =
+        const AuthState(isLocked: false, isFirstLaunch: true, isLoading: false);
   }
 }
 

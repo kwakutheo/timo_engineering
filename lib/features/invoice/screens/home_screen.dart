@@ -13,6 +13,7 @@ import '../controllers/client_controller.dart';
 import '../services/pdf_service.dart';
 import '../widgets/home_empty_state.dart';
 import '../widgets/invoice_card.dart';
+import '../widgets/pdf_document_choice_dialog.dart';
 import '../widgets/search_bar_widget.dart';
 import '../widgets/stats_row.dart';
 import 'invoice_form_screen.dart';
@@ -420,9 +421,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _print(BuildContext context, Invoice invoice) async {
+    final includeReport = await choosePdfDocumentContents(
+      context,
+      action: 'Print with Report',
+    );
+    if (includeReport == null || !context.mounted) return;
     _showSnack(context, 'Preparing document for printing...');
     try {
-      await PdfService.printPdf(invoice);
+      await PdfService.printPdf(invoice, includeServiceReport: includeReport);
     } catch (_) {
       if (!context.mounted) return;
       _showSnack(context, 'Printing failed. Please try again.', isError: true);
@@ -430,9 +436,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _share(BuildContext context, Invoice invoice) async {
+    final includeReport = await choosePdfDocumentContents(
+      context,
+      action: 'Share with Report',
+    );
+    if (includeReport == null || !context.mounted) return;
     _showSnack(context, 'Preparing document for sharing...');
     try {
-      await PdfService.share(invoice);
+      await PdfService.share(invoice, includeServiceReport: includeReport);
     } catch (_) {
       if (!context.mounted) return;
       _showSnack(context, 'Sharing failed. Please try again.', isError: true);
@@ -440,9 +451,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _savePdf(BuildContext context, Invoice invoice) async {
+    final includeReport = await choosePdfDocumentContents(
+      context,
+      action: 'Save with Report',
+    );
+    if (includeReport == null || !context.mounted) return;
     _showSnack(context, 'Preparing document to save...');
     try {
-      final path = await PdfService.savePdf(invoice);
+      final path = await PdfService.savePdf(invoice,
+          includeServiceReport: includeReport);
       if (!context.mounted) return;
       if (path != null) {
         _showSnack(context, 'Saved to: $path');

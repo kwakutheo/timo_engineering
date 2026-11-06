@@ -13,6 +13,7 @@ import '../controllers/invoice_controller.dart';
 import '../controllers/client_controller.dart';
 import '../services/pdf_service.dart';
 import '../widgets/client_picker_dialog.dart';
+import '../widgets/pdf_document_choice_dialog.dart';
 import '../../auth/providers/auth_provider.dart';
 
 class InvoiceFormScreen extends ConsumerStatefulWidget {
@@ -364,21 +365,40 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
 
   Future<void> _print() async {
     if (!await _promptSaveIfUnsaved()) return;
+    if (!mounted) return;
+    final includeReport = await choosePdfDocumentContents(
+      context,
+      action: 'Print with Report',
+    );
+    if (includeReport == null) return;
     final invoice = ref.read(invoiceFormProvider);
-    await PdfService.printPdf(invoice);
+    await PdfService.printPdf(invoice, includeServiceReport: includeReport);
   }
 
   Future<void> _share() async {
     if (!await _promptSaveIfUnsaved()) return;
+    if (!mounted) return;
+    final includeReport = await choosePdfDocumentContents(
+      context,
+      action: 'Share with Report',
+    );
+    if (includeReport == null) return;
     final invoice = ref.read(invoiceFormProvider);
-    await PdfService.share(invoice);
+    await PdfService.share(invoice, includeServiceReport: includeReport);
   }
 
   Future<void> _savePdf() async {
     if (!await _promptSaveIfUnsaved()) return;
+    if (!mounted) return;
+    final includeReport = await choosePdfDocumentContents(
+      context,
+      action: 'Save with Report',
+    );
+    if (includeReport == null) return;
     try {
       final invoice = ref.read(invoiceFormProvider);
-      final path = await PdfService.savePdf(invoice);
+      final path = await PdfService.savePdf(invoice,
+          includeServiceReport: includeReport);
       if (mounted && path != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           _snackBar('PDF Saved to: $path', AppColors.success),

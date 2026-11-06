@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../constants/recovery_questions.dart';
 import '../providers/auth_provider.dart';
 import '../services/auth_service.dart';
 
@@ -17,12 +18,12 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen>
     with SingleTickerProviderStateMixin {
   final _createController = TextEditingController();
   final _confirmController = TextEditingController();
-  final _hintQuestionController = TextEditingController();
   final _hintAnswerController = TextEditingController();
   final _createFocus = FocusNode();
   final _confirmFocus = FocusNode();
-  final _hintQuestionFocus = FocusNode();
   final _hintAnswerFocus = FocusNode();
+
+  String? _selectedHintQuestion;
 
   _SetStep _step = _SetStep.create;
   bool _obscureCreate = true;
@@ -41,24 +42,33 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen>
       duration: const Duration(milliseconds: 500),
     );
     _shakeAnim = TweenSequence<Offset>([
-      TweenSequenceItem(tween: Tween(begin: Offset.zero, end: const Offset(-0.04, 0)), weight: 1),
-      TweenSequenceItem(tween: Tween(begin: const Offset(-0.04, 0), end: const Offset(0.04, 0)), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: const Offset(0.04, 0), end: const Offset(-0.04, 0)), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: const Offset(-0.04, 0), end: Offset.zero), weight: 1),
+      TweenSequenceItem(
+          tween: Tween(begin: Offset.zero, end: const Offset(-0.04, 0)),
+          weight: 1),
+      TweenSequenceItem(
+          tween:
+              Tween(begin: const Offset(-0.04, 0), end: const Offset(0.04, 0)),
+          weight: 2),
+      TweenSequenceItem(
+          tween:
+              Tween(begin: const Offset(0.04, 0), end: const Offset(-0.04, 0)),
+          weight: 2),
+      TweenSequenceItem(
+          tween: Tween(begin: const Offset(-0.04, 0), end: Offset.zero),
+          weight: 1),
     ]).animate(CurvedAnimation(parent: _shakeCtrl, curve: Curves.easeInOut));
 
-    WidgetsBinding.instance.addPostFrameCallback((_) => _createFocus.requestFocus());
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _createFocus.requestFocus());
   }
 
   @override
   void dispose() {
     _createController.dispose();
     _confirmController.dispose();
-    _hintQuestionController.dispose();
     _hintAnswerController.dispose();
     _createFocus.dispose();
     _confirmFocus.dispose();
-    _hintQuestionFocus.dispose();
     _hintAnswerFocus.dispose();
     _shakeCtrl.dispose();
     super.dispose();
@@ -86,18 +96,18 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen>
     if (password != confirmed) {
       _shakeCtrl.forward(from: 0);
       _confirmController.clear();
-      setState(() => _errorMessage = 'Passwords do not match. Please re-enter.');
+      setState(
+          () => _errorMessage = 'Passwords do not match. Please re-enter.');
       _confirmFocus.requestFocus();
       return;
     }
 
-    final hintQuestion = _hintQuestionController.text.trim();
+    final hintQuestion = _selectedHintQuestion;
     final hintAnswer = _hintAnswerController.text.trim();
 
-    if (hintQuestion.isEmpty) {
+    if (hintQuestion == null) {
       _shakeCtrl.forward(from: 0);
-      setState(() => _errorMessage = 'A hint question is required.');
-      _hintQuestionFocus.requestFocus();
+      setState(() => _errorMessage = 'Please select a recovery question.');
       return;
     }
     if (hintAnswer.isEmpty) {
@@ -221,7 +231,8 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen>
                 ? 'Set a password to protect your data'
                 : 'Confirm your password & set a recovery hint',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 13),
+            style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.6), fontSize: 13),
           ),
         ),
       ],
@@ -274,28 +285,43 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen>
             ),
           ),
         ),
-        // Hint question field
-        TextField(
-          controller: _hintQuestionController,
-          focusNode: _hintQuestionFocus,
-          enabled: !_isSaving,
+        DropdownButtonFormField<String>(
+          initialValue: _selectedHintQuestion,
+          isExpanded: true,
+          dropdownColor: AppColors.primaryBlack,
           style: const TextStyle(color: Colors.white, fontSize: 15),
-          cursorColor: Colors.white70,
-          textInputAction: TextInputAction.next,
-          onSubmitted: (_) => _hintAnswerFocus.requestFocus(),
+          iconEnabledColor: Colors.white70,
+          items: recoveryQuestions
+              .map(
+                (question) => DropdownMenuItem(
+                  value: question,
+                  child: Text(question, overflow: TextOverflow.ellipsis),
+                ),
+              )
+              .toList(),
+          onChanged: _isSaving
+              ? null
+              : (question) {
+                  setState(() => _selectedHintQuestion = question);
+                  _hintAnswerFocus.requestFocus();
+                },
           decoration: InputDecoration(
-            hintText: 'Hint question (e.g. What is your pet\'s name?)',
-            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.35), fontSize: 13),
+            hintText: 'Select a recovery question',
+            hintStyle: TextStyle(
+                color: Colors.white.withValues(alpha: 0.35), fontSize: 13),
             filled: true,
             fillColor: Colors.white.withValues(alpha: 0.1),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+              borderSide:
+                  BorderSide(color: Colors.white.withValues(alpha: 0.2)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+              borderSide:
+                  BorderSide(color: Colors.white.withValues(alpha: 0.2)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
@@ -315,17 +341,21 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen>
           onSubmitted: (_) => _onConfirmSubmit(),
           decoration: InputDecoration(
             hintText: 'Your answer (e.g. Buddy)',
-            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.35), fontSize: 13),
+            hintStyle: TextStyle(
+                color: Colors.white.withValues(alpha: 0.35), fontSize: 13),
             filled: true,
             fillColor: Colors.white.withValues(alpha: 0.1),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+              borderSide:
+                  BorderSide(color: Colors.white.withValues(alpha: 0.2)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+              borderSide:
+                  BorderSide(color: Colors.white.withValues(alpha: 0.2)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
@@ -368,14 +398,16 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen>
       enableSuggestions: false,
       style: const TextStyle(color: Colors.white, fontSize: 15),
       cursorColor: Colors.white70,
-      textInputAction: onSubmit != null ? TextInputAction.done : TextInputAction.next,
+      textInputAction:
+          onSubmit != null ? TextInputAction.done : TextInputAction.next,
       onSubmitted: onSubmit != null ? (_) => onSubmit() : null,
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.35)),
         filled: true,
         fillColor: Colors.white.withValues(alpha: 0.1),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
@@ -416,7 +448,8 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen>
   Widget _buildHint() {
     return Text(
       'Min 4 characters • Letters, numbers, or both',
-      style: TextStyle(color: Colors.white.withValues(alpha: 0.35), fontSize: 12),
+      style:
+          TextStyle(color: Colors.white.withValues(alpha: 0.35), fontSize: 12),
     );
   }
 
@@ -438,17 +471,21 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen>
           foregroundColor: AppColors.primaryBlack,
           disabledBackgroundColor: Colors.white12,
           padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           elevation: 0,
         ),
         child: _isSaving
             ? const SizedBox(
-                width: 20, height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryBlack),
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: AppColors.primaryBlack),
               )
             : Text(
                 _step == _SetStep.create ? 'Continue' : 'Set Password',
-                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                style:
+                    const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
               ),
       ),
     );

@@ -51,4 +51,44 @@ void main() {
     expect(bytes.length, greaterThan(1000));
     expect(doc.document.pdfPageList.pages, hasLength(2));
   });
+
+  test('PdfService.buildPdf can generate an invoice-only document', () async {
+    final doc = await PdfService.buildPdf(
+      Invoice(
+        clientName: 'Invoice Only Client',
+        address: 'Accra, Ghana',
+        phone: '+233 24 123 4567',
+        managerName: 'Service Technician',
+      ),
+      includeServiceReport: false,
+    );
+
+    expect(doc.document.pdfPageList.pages, hasLength(1));
+  });
+
+  test('PdfService.buildPdf paginates long service reports with branding',
+      () async {
+    final longReport = List.filled(
+      24,
+      'Completed generator inspection, cleaned components, verified operating readings, and recorded the technical finding.',
+    ).join(' ');
+
+    final doc = await PdfService.buildPdf(
+      Invoice(
+        invoiceNumber: 'TI-2026-LONG',
+        clientName: 'Long Report Client',
+        address: 'Accra, Ghana',
+        phone: '+233 24 123 4567',
+        jobDescription: longReport,
+        observations: longReport,
+        recommendations: longReport,
+        managerName: 'Service Technician',
+        items: [
+          InvoiceItem(description: 'Service consumable', quantity: 1, price: 1),
+        ],
+      ),
+    );
+
+    expect(doc.document.pdfPageList.pages.length, greaterThan(2));
+  });
 }

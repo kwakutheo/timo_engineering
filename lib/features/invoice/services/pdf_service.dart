@@ -123,7 +123,10 @@ class PdfService {
 
   // ── Public API ────────────────────────────────────────────────────────────
 
-  static Future<pw.Document> buildPdf(Invoice invoice) async {
+  static Future<pw.Document> buildPdf(
+    Invoice invoice, {
+    bool includeServiceReport = true,
+  }) async {
     final pdf = pw.Document();
     final dateFmt = DateFormat('dd/MM/yyyy');
 
@@ -204,22 +207,34 @@ class PdfService {
       ),
     );
 
-    // The report is deliberately a separate page so the financial invoice
-    // remains clean while the service record has room for useful detail.
-    pdf.addPage(
-      pw.Page(
-        pageFormat: PdfPageFormat.a4,
-        margin: pw.EdgeInsets.zero,
-        build: (ctx) => _buildServiceReportPage(
-          invoice: invoice,
-          dateFmt: dateFmt,
-          headerImg: headerImg,
-          footerImg: footerImg,
-          pageWidth: pageWidth,
-          contentWidth: contentWidth,
+    if (includeServiceReport) {
+      // The report is deliberately a separate, paginated section so the
+      // financial invoice remains clean while detailed service notes can flow
+      // onto as many branded report pages as necessary.
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          margin: pw.EdgeInsets.zero,
+          header: (_) => pw.Column(
+            children: [
+              pw.Image(
+                headerImg,
+                width: pageWidth,
+                height: pageWidth / 3.9174,
+                fit: pw.BoxFit.fill,
+              ),
+              _buildServiceReportHeading(),
+            ],
+          ),
+          footer: (_) => _buildFooter(footerImg, pageWidth),
+          build: (_) => _buildServiceReportContent(
+            invoice,
+            dateFmt,
+            horizontalMargin: (pageWidth - contentWidth) / 2,
+          ),
         ),
-      ),
-    );
+      );
+    }
 
     return pdf;
   }
@@ -621,100 +636,41 @@ class PdfService {
     );
   }
 
-  // ── 6. Report/Remarks + Totals ────────────────────────────────────────────
-
   // ── Service Report (page 2) ──────────────────────────────────────────────
 
-  static pw.Widget _buildServiceReportPage({
-    required Invoice invoice,
-    required DateFormat dateFmt,
-    required pw.MemoryImage headerImg,
-    required pw.MemoryImage footerImg,
-    required double pageWidth,
-    required double contentWidth,
+  static List<pw.Widget> _buildServiceReportContent(
+    Invoice invoice,
+    DateFormat dateFmt, {
+    required double horizontalMargin,
   }) {
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-      children: [
-        pw.Image(
-          headerImg,
-          width: pageWidth,
-          height: pageWidth / 3.9174,
-          fit: pw.BoxFit.fill,
-        ),
-        pw.Align(
-          alignment: pw.Alignment.topCenter,
-          child: pw.SizedBox(
-            width: contentWidth,
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-              children: [
-                pw.SizedBox(height: 12),
-                pw.Container(
-                  color: _black,
-                  padding: const pw.EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 9),
-                  child: pw.Row(
-                    children: [
-                      pw.Text(
-                        'SERVICE REPORT',
-                        style: pw.TextStyle(
-                          color: _white,
-                          fontSize: 15,
-                          fontWeight: pw.FontWeight.bold,
-                          letterSpacing: 1.1,
-                        ),
-                      ),
-                      pw.Spacer(),
-                      pw.Container(
-                        color: _yellow,
-                        padding: const pw.EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
-                        child: pw.Text(
-                          'PAGE 2 OF 2',
-                          style: pw.TextStyle(
-                            color: _black,
-                            fontSize: 7.5,
-                            fontWeight: pw.FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                pw.SizedBox(height: 10),
-                _buildReportReferenceCard(invoice, dateFmt),
-                pw.SizedBox(height: 10),
-                _buildReportNarrative(
-                  'WORK PERFORMED',
-                  _safe(invoice.jobDescription, 'No work details recorded.'),
-                  maxLines: 6,
-                ),
-                pw.SizedBox(height: 8),
-                _buildReportNarrative(
-                  'OBSERVATIONS / CONDITION FOUND',
-                  _safe(invoice.observations, 'No observations recorded.'),
-                  maxLines: 4,
-                ),
-                pw.SizedBox(height: 8),
-                _buildReportNarrative(
-                  'RECOMMENDATIONS / NEXT ACTIONS',
-                  _safe(
-                      invoice.recommendations, 'No recommendations recorded.'),
-                  maxLines: 4,
-                ),
-                pw.SizedBox(height: 10),
-                _buildPartsUsedSection(invoice),
-                pw.SizedBox(height: 12),
-                _buildServiceReportSignOff(invoice),
-              ],
-            ),
-          ),
-        ),
-        pw.Spacer(),
-        _buildFooter(footerImg, pageWidth),
-      ],
-    );
+    pw.Widget content(pw.Widget child) => pw.Padding(
+          padding: pw.EdgeInsets.symmetric(horizontal: horizontalMargin),
+          child: child,
+        );
+
+    return [
+      pw.SizedBox(height: 10),
+      content(_buildReportReferenceCard(invoice, dateFmt)),
+      pw.SizedBox(height: 10),
+      content(_buildReportNarrative(
+        'WORK PERFORMED',
+        _safe(invoice.jobDescription, 'No work details recorded.'),
+      )),
+      pw.SizedBox(height: 8),
+      content(_buildReportNarrative(
+        'OBSERVATIONS / CONDITION FOUND',
+        _safe(invoice.observations, 'No observations recorded.'),
+      )),
+      pw.SizedBox(height: 8),
+      content(_buildReportNarrative(
+        'RECOMMENDATIONS / NEXT ACTIONS',
+        _safe(invoice.recommendations, 'No recommendations recorded.'),
+      )),
+      pw.SizedBox(height: 10),
+      content(_buildPartsUsedSection(invoice)),
+      pw.SizedBox(height: 12),
+      content(_buildServiceReportSignOff(invoice)),
+    ];
   }
 
   static pw.Widget _buildReportReferenceCard(
@@ -759,6 +715,27 @@ class PdfService {
     );
   }
 
+  static pw.Widget _buildServiceReportHeading() {
+    return pw.Container(
+      color: _black,
+      padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      child: pw.Row(
+        children: [
+          pw.Text(
+            'GENERATOR SERVICE REPORT & TECHNICAL REMARKS',
+            style: pw.TextStyle(
+              color: _white,
+              fontSize: 15,
+              fontWeight: pw.FontWeight.bold,
+              letterSpacing: 1.1,
+            ),
+          ),
+          pw.Spacer(),
+        ],
+      ),
+    );
+  }
+
   static pw.Widget _reportReference(String label, String value) {
     return pw.Expanded(
       child: pw.Padding(
@@ -784,8 +761,7 @@ class PdfService {
     );
   }
 
-  static pw.Widget _buildReportNarrative(String title, String text,
-      {required int maxLines}) {
+  static pw.Widget _buildReportNarrative(String title, String text) {
     return pw.Container(
       decoration: pw.BoxDecoration(
         border: pw.Border.all(color: _borderGrey, width: 0.7),
@@ -798,12 +774,11 @@ class PdfService {
             padding: const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 5),
             child: pw.Text(title, style: _sectionTitleStyle),
           ),
-          pw.Container(
-            height: 19.0 + (maxLines * 10.0),
+          pw.Padding(
             padding: const pw.EdgeInsets.all(8),
             child: pw.Text(
               text,
-              maxLines: maxLines,
+              overflow: pw.TextOverflow.span,
               style: const pw.TextStyle(fontSize: 8.6, color: _black),
             ),
           ),
@@ -1121,8 +1096,12 @@ class PdfService {
   // ── Public Methods ────────────────────────────────────────────────────────
 
   /// Print or preview in-app using the printing package.
-  static Future<void> printPdf(Invoice invoice) async {
-    final pdf = await buildPdf(invoice);
+  static Future<void> printPdf(
+    Invoice invoice, {
+    bool includeServiceReport = true,
+  }) async {
+    final pdf =
+        await buildPdf(invoice, includeServiceReport: includeServiceReport);
     await Printing.layoutPdf(
       onLayout: (_) async => pdf.save(),
       name: '${invoice.invoiceNumber}.pdf',
@@ -1132,8 +1111,12 @@ class PdfService {
   }
 
   /// Share PDF via OS share dialog / email / WhatsApp etc.
-  static Future<void> share(Invoice invoice) async {
-    final pdf = await buildPdf(invoice);
+  static Future<void> share(
+    Invoice invoice, {
+    bool includeServiceReport = true,
+  }) async {
+    final pdf =
+        await buildPdf(invoice, includeServiceReport: includeServiceReport);
     final bytes = await pdf.save();
 
     final exportsDir = StorageService.instance.exportsDir;
@@ -1149,8 +1132,12 @@ class PdfService {
   }
 
   /// Save PDF — native file picker on desktop, share sheet on mobile.
-  static Future<String?> savePdf(Invoice invoice) async {
-    final pdf = await buildPdf(invoice);
+  static Future<String?> savePdf(
+    Invoice invoice, {
+    bool includeServiceReport = true,
+  }) async {
+    final pdf =
+        await buildPdf(invoice, includeServiceReport: includeServiceReport);
     final bytes = await pdf.save();
 
     final clientName = _sanitizeFilename(invoice.clientName);
