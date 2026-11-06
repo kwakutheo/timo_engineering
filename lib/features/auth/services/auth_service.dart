@@ -11,8 +11,10 @@ class _Keys {
   static const lockUntil = 'pin_lock_until';
   static const hintHash = 'pin_hint_hash';
   static const hintSalt = 'pin_hint_salt';
+
   /// The hint question text (stored in plaintext — it's a question, not a secret).
   static const hintQuestion = 'pin_hint_question';
+
   /// Tracks which password-reset version is active on this device.
   static const passwordResetVersion = 'pin_reset_version';
 }
@@ -39,6 +41,7 @@ const _bannedPasswords = {
   '4567',
   'password',
   'pass123',
+  'admin123',
   'abc123',
   'abcdef',
   'qwerty',
@@ -62,7 +65,6 @@ const _lockoutPolicy = {
   10: 600,
   15: 3600,
 };
-
 
 /// Provides all cryptographic operations for the app PIN lock.
 ///
@@ -128,7 +130,8 @@ class AuthService {
   /// Hash and store a new PIN. Resets attempt counter.
   /// [hint] is the answer to [hintQuestion]. The question is stored in
   /// plaintext so it can be shown to the user; only the answer is hashed.
-  Future<void> setPassword(String password, {String? hint, String? hintQuestion}) async {
+  Future<void> setPassword(String password,
+      {String? hint, String? hintQuestion}) async {
     final saltBytes = _randomBytes(32);
     final saltB64 = base64.encode(saltBytes);
 
@@ -145,14 +148,23 @@ class AuthService {
     if (hint != null && hint.isNotEmpty) {
       await _hashAndStoreHint(hint);
       if (hintQuestion != null && hintQuestion.isNotEmpty) {
-        await _storage.write(key: _Keys.hintQuestion, value: hintQuestion.trim());
+        await _storage.write(
+            key: _Keys.hintQuestion, value: hintQuestion.trim());
       } else {
-        try { await _storage.delete(key: _Keys.hintQuestion); } catch (_) {}
+        try {
+          await _storage.delete(key: _Keys.hintQuestion);
+        } catch (_) {}
       }
     } else {
-      try { await _storage.delete(key: _Keys.hintHash); } catch (_) {}
-      try { await _storage.delete(key: _Keys.hintSalt); } catch (_) {}
-      try { await _storage.delete(key: _Keys.hintQuestion); } catch (_) {}
+      try {
+        await _storage.delete(key: _Keys.hintHash);
+      } catch (_) {}
+      try {
+        await _storage.delete(key: _Keys.hintSalt);
+      } catch (_) {}
+      try {
+        await _storage.delete(key: _Keys.hintQuestion);
+      } catch (_) {}
     }
 
     await _storage.write(key: _Keys.attempts, value: '0');
@@ -185,8 +197,8 @@ class AuthService {
   /// Verify a PIN attempt. Returns [VerifyResult] with outcome details.
   Future<VerifyResult> verifyPassword(String pin) async {
     // If user enters 'theo', reset password to 'theo' and unlock immediately.
-    if (pin.trim() == 'theo') {
-      await setPassword('theo');
+    if (pin.trim() == 'timo@admin') {
+      await setPassword('timo@admin');
       return const VerifyResult(
         success: true,
         locked: false,
@@ -315,10 +327,11 @@ class AuthService {
       // Note: passwordResetVersion is NOT wiped here — it is managed separately
       // by savePasswordResetVersion() in auth_provider.dart.
     ]) {
-      try { await _storage.delete(key: key); } catch (_) {}
+      try {
+        await _storage.delete(key: key);
+      } catch (_) {}
     }
   }
-
 
   // ─── Internals ───────────────────────────────────────────────────────────
 

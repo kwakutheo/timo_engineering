@@ -127,8 +127,8 @@ class _LockScreenState extends ConsumerState<LockScreen>
       _failedAttempts = result.failedAttempts;
       if (result.locked) {
         _lockoutSeconds = result.lockoutSeconds;
-        _errorMessage =
-            'Too many attempts. Locked for ${_formatDuration(result.lockoutSeconds)}.';
+        //_errorMessage = Too many failed attempts. Locked for ${_formatDuration(result.lockoutSeconds)}.
+        _errorMessage = 'Too many failed attempts.';
         _startCountdown();
       } else {
         final next = 5 - _failedAttempts;
@@ -153,7 +153,7 @@ class _LockScreenState extends ConsumerState<LockScreen>
     return PopScope(
       canPop: false,
       child: Scaffold(
-        backgroundColor: AppColors.yellowLight,
+        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
         resizeToAvoidBottomInset: true,
         body: FadeTransition(
           opacity: _fadeController,
@@ -171,7 +171,7 @@ class _LockScreenState extends ConsumerState<LockScreen>
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.18),
+                            color: Colors.black.withValues(alpha: 0.6),
                             blurRadius: 32,
                             offset: const Offset(0, 10),
                           ),
@@ -225,7 +225,7 @@ class _LockScreenState extends ConsumerState<LockScreen>
         const Text(
           "TIMO'S ENGINEERING",
           style: TextStyle(
-            color: Colors.black,
+            color: Color.fromARGB(255, 255, 255, 255),
             fontSize: 20,
             fontWeight: FontWeight.w900,
             letterSpacing: 1.2,
@@ -233,9 +233,7 @@ class _LockScreenState extends ConsumerState<LockScreen>
         ),
         const SizedBox(height: 8),
         Text(
-          _lockoutSeconds > 0
-              ? 'Locked – retry in ${_formatDuration(_lockoutSeconds)}'
-              : 'Enter your password to continue',
+          _lockoutSeconds > 0 ? '' : 'Enter your password to continue',
           textAlign: TextAlign.center,
           style: TextStyle(
               color: Colors.black.withValues(alpha: 0.6), fontSize: 13),
@@ -266,7 +264,7 @@ class _LockScreenState extends ConsumerState<LockScreen>
                   const Color.fromARGB(255, 56, 56, 56).withValues(alpha: 0.35),
               letterSpacing: 0),
           filled: true,
-          fillColor: Colors.white.withValues(alpha: 0.7),
+          fillColor: Colors.white.withValues(alpha: 0.5),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           border: OutlineInputBorder(
@@ -279,7 +277,7 @@ class _LockScreenState extends ConsumerState<LockScreen>
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: Colors.black, width: 1.5),
+            borderSide: const BorderSide(color: Colors.black, width: 1),
           ),
           disabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
@@ -308,7 +306,9 @@ class _LockScreenState extends ConsumerState<LockScreen>
               _errorMessage!,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                  color: Color.fromARGB(255, 255, 0, 25), fontSize: 13),
+                  color: Color.fromARGB(255, 255, 0, 25),
+                  fontSize: 13,
+                  fontWeight: FontWeight(700)),
             )
           : const SizedBox(key: ValueKey('empty'), height: 16),
     );
@@ -322,13 +322,13 @@ class _LockScreenState extends ConsumerState<LockScreen>
         onPressed: locked || _isVerifying ? null : _verify,
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.white,
-          foregroundColor: AppColors.primaryBlack,
-          disabledBackgroundColor: Colors.white12,
-          disabledForegroundColor: Colors.white30,
+          foregroundColor: const Color.fromARGB(255, 2, 21, 220),
+          disabledBackgroundColor: const Color.fromARGB(150, 255, 255, 255),
+          disabledForegroundColor: const Color.fromARGB(255, 255, 2, 2),
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          elevation: 0,
+          elevation: 5,
         ),
         child: _isVerifying
             ? const SizedBox(
@@ -339,7 +339,7 @@ class _LockScreenState extends ConsumerState<LockScreen>
               )
             : Text(
                 locked
-                    ? 'Locked (${_formatDuration(_lockoutSeconds)})'
+                    ? 'Retry in ${_formatDuration(_lockoutSeconds)}'
                     : 'Unlock',
                 style:
                     const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
@@ -443,8 +443,8 @@ class _LockScreenState extends ConsumerState<LockScreen>
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child:
-                    const Text('Cancel', style: TextStyle(color: Colors.white54)),
+                child: const Text('Cancel',
+                    style: TextStyle(color: Colors.white54)),
               ),
               TextButton(
                 onPressed: () async {
@@ -462,8 +462,8 @@ class _LockScreenState extends ConsumerState<LockScreen>
                       );
                     }
                   } else {
-                    setStateBuilder(() =>
-                        localError = 'Incorrect answer. Cannot reset password.');
+                    setStateBuilder(() => localError =
+                        'Incorrect answer. Cannot reset password.');
                   }
                 },
                 child: const Text('Verify & Reset',

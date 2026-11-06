@@ -539,7 +539,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
         color: Colors.white70,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 6,
             offset: const Offset(0, -4),
           ),
@@ -548,6 +548,21 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
       child: SafeArea(
         child: Row(
           children: [
+            Expanded(
+              flex: 1,
+              child: TextButton.icon(
+                onPressed: _isSaving ? null : _cancel,
+                icon: const Icon(Icons.cancel_outlined),
+                label: const Text('Cancel'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.errorRed,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
             Expanded(
               flex: 2,
               child: ElevatedButton.icon(
@@ -566,21 +581,6 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.success,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              flex: 1,
-              child: TextButton.icon(
-                onPressed: _isSaving ? null : _cancel,
-                icon: const Icon(Icons.cancel_outlined),
-                label: const Text('Cancel'),
-                style: TextButton.styleFrom(
-                  foregroundColor: AppColors.errorRed,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
@@ -807,9 +807,10 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                 Expanded(child: _sectionHeader("CLIENT'S DETAILS")),
                 Row(
                   children: [
+                    const SizedBox(width: 8),
                     OutlinedButton.icon(
                       icon: const Icon(Icons.contacts_outlined, size: 16),
-                      label: const Text('Select Contact',
+                      label: const Text('Select Client',
                           style: TextStyle(fontSize: 12)),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.primaryBlack,
@@ -825,7 +826,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                     const SizedBox(width: 8),
                     OutlinedButton.icon(
                       icon: const Icon(Icons.person_add_outlined, size: 16),
-                      label: const Text('Save Contact',
+                      label: const Text('Save Client',
                           style: TextStyle(fontSize: 12)),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.success,
@@ -914,7 +915,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                 Expanded(
                   child: OutlinedButton.icon(
                     icon: const Icon(Icons.contacts_outlined, size: 16),
-                    label: const Text('Select Contact',
+                    label: const Text('Select Client',
                         style: TextStyle(fontSize: 12)),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.primaryBlack,
@@ -931,7 +932,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                 Expanded(
                   child: OutlinedButton.icon(
                     icon: const Icon(Icons.person_add_outlined, size: 16),
-                    label: const Text('Save Contact',
+                    label: const Text('Save Client',
                         style: TextStyle(fontSize: 12)),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.success,
@@ -1475,24 +1476,6 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
             ),
             child: Row(
               children: [
-                Container(
-                  width: 26,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    gradient: AppColors.blackGradient,
-                    borderRadius: BorderRadius.circular(7),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    '${index + 1}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
                 Text(
                   'Item ${index + 1}',
                   style: const TextStyle(
@@ -1745,26 +1728,12 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _sectionHeader('PREPARED BY'),
-                  const SizedBox(height: 10),
-                  _formField('Manager Name', _managerName,
-                      onChanged: (v) => ref
-                          .read(invoiceFormProvider.notifier)
-                          .updateManagerName(v)),
-                  const SizedBox(height: 8),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Prepared by',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primaryBlack,
-                        ),
-                      ),
                       const SizedBox(height: 4),
                       Container(
-                        height: 48,
+                        height: 40,
                         decoration: BoxDecoration(
                           color: AppColors.yellowLight,
                           border: Border.all(color: AppColors.borderYellow),
@@ -1783,6 +1752,11 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 10),
+                  _formField('Name', _managerName,
+                      onChanged: (v) => ref
+                          .read(invoiceFormProvider.notifier)
+                          .updateManagerName(v)),
                 ],
               ),
             ),
@@ -2035,7 +2009,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
         const SizedBox(height: 4),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           decoration: BoxDecoration(
             color: AppColors.yellowLight.withValues(alpha: 0.6),
             border: Border.all(
