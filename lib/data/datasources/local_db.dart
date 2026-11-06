@@ -51,7 +51,7 @@ class LocalDb {
 
     return openDatabase(
       dbPath,
-      version: 6,
+      version: 7,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -74,6 +74,8 @@ class LocalDb {
         model TEXT,
         next_service_date TEXT,
         job_description TEXT,
+        observations TEXT DEFAULT '',
+        recommendations TEXT DEFAULT '',
         manager_name TEXT,
         transportation_amount REAL DEFAULT 0,
         labour_amount REAL DEFAULT 0,
@@ -120,7 +122,8 @@ class LocalDb {
     } catch (e) {
       // Ignore duplicate column errors (code 1 = SQLITE_ERROR for dup column)
       final msg = e.toString().toLowerCase();
-      if (!msg.contains('duplicate column') && !msg.contains('already exists')) {
+      if (!msg.contains('duplicate column') &&
+          !msg.contains('already exists')) {
         rethrow;
       }
     }
@@ -184,6 +187,12 @@ class LocalDb {
     if (oldVersion < 6) {
       await _safeAlter(
           db, 'ALTER TABLE clients ADD COLUMN bill_to TEXT DEFAULT ""');
+    }
+    if (oldVersion < 7) {
+      await _safeAlter(
+          db, 'ALTER TABLE invoices ADD COLUMN observations TEXT DEFAULT ""');
+      await _safeAlter(db,
+          'ALTER TABLE invoices ADD COLUMN recommendations TEXT DEFAULT ""');
     }
   }
 
@@ -312,8 +321,8 @@ class LocalDb {
     final map = client.toMap();
     map['updated_at'] = nowIso;
     map['is_deleted'] = 0;
-    await database.update('clients', map,
-        where: 'id = ?', whereArgs: [client.id]);
+    await database
+        .update('clients', map, where: 'id = ?', whereArgs: [client.id]);
   }
 
   Future<void> deleteClient(String id) async {
@@ -400,8 +409,8 @@ class LocalDb {
     );
 
     if (existing.isNotEmpty) {
-      final localUpdatedAt = DateTime.tryParse(
-          existing.first['updated_at']?.toString() ?? '');
+      final localUpdatedAt =
+          DateTime.tryParse(existing.first['updated_at']?.toString() ?? '');
       final remoteUpdatedAt =
           DateTime.tryParse(row['updated_at']?.toString() ?? '');
       if (localUpdatedAt != null &&
@@ -423,6 +432,8 @@ class LocalDb {
       'model': row['model'] ?? '',
       'next_service_date': row['next_service_date'],
       'job_description': row['job_description'] ?? '',
+      'observations': row['observations'] ?? '',
+      'recommendations': row['recommendations'] ?? '',
       'manager_name': row['manager_name'] ?? '',
       'transportation_amount':
           (row['transportation_amount'] as num?)?.toDouble() ?? 0.0,
@@ -437,8 +448,8 @@ class LocalDb {
     };
 
     if (existing.isNotEmpty) {
-      await database.update('invoices', localRow,
-          where: 'id = ?', whereArgs: [id]);
+      await database
+          .update('invoices', localRow, where: 'id = ?', whereArgs: [id]);
     } else {
       await database.insert('invoices', localRow);
     }
@@ -455,8 +466,8 @@ class LocalDb {
     );
 
     if (existing.isNotEmpty) {
-      final localUpdatedAt = DateTime.tryParse(
-          existing.first['updated_at']?.toString() ?? '');
+      final localUpdatedAt =
+          DateTime.tryParse(existing.first['updated_at']?.toString() ?? '');
       final remoteUpdatedAt =
           DateTime.tryParse(row['updated_at']?.toString() ?? '');
       if (localUpdatedAt != null &&
@@ -472,14 +483,15 @@ class LocalDb {
       'description': row['description'] ?? '',
       'quantity': (row['quantity'] as num?)?.toDouble() ?? 0.0,
       'price': (row['price'] as num?)?.toDouble() ?? 0.0,
-      'updated_at': row['updated_at'] ?? DateTime.now().toUtc().toIso8601String(),
+      'updated_at':
+          row['updated_at'] ?? DateTime.now().toUtc().toIso8601String(),
       'is_deleted':
           (row['is_deleted'] == true || row['is_deleted'] == 1) ? 1 : 0,
     };
 
     if (existing.isNotEmpty) {
-      await database.update('invoice_items', localRow,
-          where: 'id = ?', whereArgs: [id]);
+      await database
+          .update('invoice_items', localRow, where: 'id = ?', whereArgs: [id]);
     } else {
       // Guard against foreign key failure if parent invoice doesn't exist locally
       final parent = await database.query(
@@ -505,8 +517,8 @@ class LocalDb {
     );
 
     if (existing.isNotEmpty) {
-      final localUpdatedAt = DateTime.tryParse(
-          existing.first['updated_at']?.toString() ?? '');
+      final localUpdatedAt =
+          DateTime.tryParse(existing.first['updated_at']?.toString() ?? '');
       final remoteUpdatedAt =
           DateTime.tryParse(row['updated_at']?.toString() ?? '');
       if (localUpdatedAt != null &&
@@ -529,8 +541,8 @@ class LocalDb {
     };
 
     if (existing.isNotEmpty) {
-      await database.update('clients', localRow,
-          where: 'id = ?', whereArgs: [id]);
+      await database
+          .update('clients', localRow, where: 'id = ?', whereArgs: [id]);
     } else {
       await database.insert('clients', localRow);
     }

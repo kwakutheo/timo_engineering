@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:timo_enginerring/data/models/invoice.dart';
 import 'package:timo_enginerring/data/models/invoice_item.dart';
@@ -7,7 +6,8 @@ import 'package:timo_enginerring/features/invoice/services/pdf_service.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('PdfService.buildPdf generates valid PDF document without errors', () async {
+  test('PdfService.buildPdf generates valid PDF document without errors',
+      () async {
     final invoice = Invoice(
       invoiceNumber: 'TI-2026-001',
       clientName: 'Acme Industries Ltd.',
@@ -19,6 +19,8 @@ void main() {
       runningHour: '1,450 hrs',
       nextServiceDate: DateTime(2027, 2, 6),
       jobDescription: 'Quarterly routine generator maintenance and oil change.',
+      observations: 'Oil level and coolant level were within normal range.',
+      recommendations: 'Inspect the starter battery during the next service.',
       managerName: 'Theophilus Ayebeng',
       transportationAmount: 150.0,
       labourAmount: 500.0,
@@ -47,10 +49,6 @@ void main() {
 
     expect(bytes, isNotEmpty);
     expect(bytes.length, greaterThan(1000));
-
-    // Also write out to disk so we can inspect it if needed
-    final testPdfFile = File('test_output_invoice.pdf');
-    await testPdfFile.writeAsBytes(bytes);
-    expect(testPdfFile.existsSync(), isTrue);
+    expect(doc.document.pdfPageList.pages, hasLength(2));
   });
 }

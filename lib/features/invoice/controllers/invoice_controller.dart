@@ -77,11 +77,13 @@ class InvoiceFormNotifier extends StateNotifier<Invoice> {
       state = state.copyWith(nextServiceDate: v);
   void updateJobDescription(String v) =>
       state = state.copyWith(jobDescription: v);
+  void updateObservations(String v) => state = state.copyWith(observations: v);
+  void updateRecommendations(String v) =>
+      state = state.copyWith(recommendations: v);
   void updateManagerName(String v) => state = state.copyWith(managerName: v);
   void updateTransportationAmount(double v) =>
       state = state.copyWith(transportationAmount: v);
-  void updateLabourAmount(double v) =>
-      state = state.copyWith(labourAmount: v);
+  void updateLabourAmount(double v) => state = state.copyWith(labourAmount: v);
   void updateOtherChargesAmount(double v) =>
       state = state.copyWith(otherChargesAmount: v);
 

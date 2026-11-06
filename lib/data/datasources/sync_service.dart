@@ -113,23 +113,21 @@ class SyncService {
             'date': row['date'],
             'running_hour': row['running_hour'] ?? '',
             'model': row['model'] ?? '',
-            'next_service_date': (nextDate != null && nextDate.isNotEmpty)
-                ? nextDate
-                : null,
+            'next_service_date':
+                (nextDate != null && nextDate.isNotEmpty) ? nextDate : null,
             'job_description': row['job_description'] ?? '',
+            'observations': row['observations'] ?? '',
+            'recommendations': row['recommendations'] ?? '',
             'manager_name': row['manager_name'] ?? '',
             'transportation_amount':
                 (row['transportation_amount'] as num?)?.toDouble() ?? 0.0,
-            'labour_amount':
-                (row['labour_amount'] as num?)?.toDouble() ?? 0.0,
+            'labour_amount': (row['labour_amount'] as num?)?.toDouble() ?? 0.0,
             'other_charges_amount':
                 (row['other_charges_amount'] as num?)?.toDouble() ?? 0.0,
-            'grand_total':
-                (row['grand_total'] as num?)?.toDouble() ?? 0.0,
+            'grand_total': (row['grand_total'] as num?)?.toDouble() ?? 0.0,
             'created_at': row['created_at'],
             'updated_at': row['updated_at'] ?? row['created_at'],
-            'is_deleted':
-                (row['is_deleted'] == 1 || row['is_deleted'] == true),
+            'is_deleted': (row['is_deleted'] == 1 || row['is_deleted'] == true),
           };
         }).toList();
 
@@ -147,9 +145,9 @@ class SyncService {
             'description': row['description'] ?? '',
             'quantity': (row['quantity'] as num?)?.toDouble() ?? 0.0,
             'price': (row['price'] as num?)?.toDouble() ?? 0.0,
-            'updated_at': row['updated_at'] ?? DateTime.now().toUtc().toIso8601String(),
-            'is_deleted':
-                (row['is_deleted'] == 1 || row['is_deleted'] == true),
+            'updated_at':
+                row['updated_at'] ?? DateTime.now().toUtc().toIso8601String(),
+            'is_deleted': (row['is_deleted'] == 1 || row['is_deleted'] == true),
           };
         }).toList();
 
@@ -169,8 +167,7 @@ class SyncService {
             'phone': row['phone'] ?? '',
             'created_at': row['created_at'],
             'updated_at': row['updated_at'] ?? row['created_at'],
-            'is_deleted':
-                (row['is_deleted'] == 1 || row['is_deleted'] == true),
+            'is_deleted': (row['is_deleted'] == 1 || row['is_deleted'] == true),
           };
         }).toList();
 
@@ -182,14 +179,13 @@ class SyncService {
       // ─────────────────────────────────────────────────────────────────────
       // Subtract a 5-minute safety window to prevent clock skew between devices
       // from causing missed records.
-      final pullSince =
-          previousSyncTime?.subtract(const Duration(minutes: 5));
+      final pullSince = previousSyncTime?.subtract(const Duration(minutes: 5));
 
       // 1. Pull Invoices
       dynamic invoicesQuery = client.from('invoices').select();
       if (pullSince != null) {
-        invoicesQuery = invoicesQuery.gt(
-            'updated_at', pullSince.toUtc().toIso8601String());
+        invoicesQuery =
+            invoicesQuery.gt('updated_at', pullSince.toUtc().toIso8601String());
       }
       final remoteInvoices = await invoicesQuery as List<dynamic>;
       for (final raw in remoteInvoices) {
@@ -200,8 +196,8 @@ class SyncService {
       // 2. Pull Invoice Items
       dynamic itemsQuery = client.from('invoice_items').select();
       if (pullSince != null) {
-        itemsQuery = itemsQuery.gt(
-            'updated_at', pullSince.toUtc().toIso8601String());
+        itemsQuery =
+            itemsQuery.gt('updated_at', pullSince.toUtc().toIso8601String());
       }
       final remoteItems = await itemsQuery as List<dynamic>;
       for (final raw in remoteItems) {
@@ -212,8 +208,8 @@ class SyncService {
       // 3. Pull Clients
       dynamic clientsQuery = client.from('clients').select();
       if (pullSince != null) {
-        clientsQuery = clientsQuery.gt(
-            'updated_at', pullSince.toUtc().toIso8601String());
+        clientsQuery =
+            clientsQuery.gt('updated_at', pullSince.toUtc().toIso8601String());
       }
       final remoteClients = await clientsQuery as List<dynamic>;
       for (final raw in remoteClients) {

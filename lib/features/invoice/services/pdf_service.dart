@@ -23,9 +23,6 @@ class PdfService {
   /// Borders for totals boxes and inner lines
   static const _borderGrey = PdfColor.fromInt(0xFFCCCCCC);
 
-  /// Faint notebook lines inside the Remarks box
-  static const _lineGrey = PdfColor.fromInt(0xFFE2E2E2);
-
   // ── Text Styles ───────────────────────────────────────────────────────────
 
   static final _tableHeaderStyle = pw.TextStyle(
@@ -187,8 +184,8 @@ class PdfService {
                     _buildItemsTable(invoice, contentWidth),
                     pw.SizedBox(height: 5),
 
-                    // ── 6. Report/Remarks + Totals ───────────────────────────
-                    _buildRemarksAndTotals(invoice, contentWidth),
+                    // ── 6. Invoice totals ───────────────────────────────────
+                    _buildTotalsBox(invoice, contentWidth, 142),
                     pw.SizedBox(height: 6),
 
                     // ── 7. Signature Section ─────────────────────────────────
@@ -203,6 +200,23 @@ class PdfService {
             // ── 8. Full-bleed Footer ───────────────────────────────────────
             _buildFooter(footerImg, pageWidth),
           ],
+        ),
+      ),
+    );
+
+    // The report is deliberately a separate page so the financial invoice
+    // remains clean while the service record has room for useful detail.
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        margin: pw.EdgeInsets.zero,
+        build: (ctx) => _buildServiceReportPage(
+          invoice: invoice,
+          dateFmt: dateFmt,
+          headerImg: headerImg,
+          footerImg: footerImg,
+          pageWidth: pageWidth,
+          contentWidth: contentWidth,
         ),
       ),
     );
@@ -609,121 +623,188 @@ class PdfService {
 
   // ── 6. Report/Remarks + Totals ────────────────────────────────────────────
 
-  static pw.Widget _buildRemarksAndTotals(Invoice invoice, double width) {
-    const boxHeight = 122.0;
-    const leftWidth = 325.0;
-    const rightWidth = 241.0; // 325 + 8 + 241 = 574.0
+  // ── Service Report (page 2) ──────────────────────────────────────────────
 
-    return pw.Row(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
+  static pw.Widget _buildServiceReportPage({
+    required Invoice invoice,
+    required DateFormat dateFmt,
+    required pw.MemoryImage headerImg,
+    required pw.MemoryImage footerImg,
+    required double pageWidth,
+    required double contentWidth,
+  }) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
       children: [
-        _buildRemarksBox(_safe(invoice.jobDescription), leftWidth, boxHeight),
-        pw.SizedBox(width: 8),
-        _buildTotalsBox(invoice, rightWidth, boxHeight),
+        pw.Image(
+          headerImg,
+          width: pageWidth,
+          height: pageWidth / 3.9174,
+          fit: pw.BoxFit.fill,
+        ),
+        pw.Align(
+          alignment: pw.Alignment.topCenter,
+          child: pw.SizedBox(
+            width: contentWidth,
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+              children: [
+                pw.SizedBox(height: 12),
+                pw.Container(
+                  color: _black,
+                  padding: const pw.EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 9),
+                  child: pw.Row(
+                    children: [
+                      pw.Text(
+                        'SERVICE REPORT',
+                        style: pw.TextStyle(
+                          color: _white,
+                          fontSize: 15,
+                          fontWeight: pw.FontWeight.bold,
+                          letterSpacing: 1.1,
+                        ),
+                      ),
+                      pw.Spacer(),
+                      pw.Container(
+                        color: _yellow,
+                        padding: const pw.EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        child: pw.Text(
+                          'PAGE 2 OF 2',
+                          style: pw.TextStyle(
+                            color: _black,
+                            fontSize: 7.5,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                pw.SizedBox(height: 10),
+                _buildReportReferenceCard(invoice, dateFmt),
+                pw.SizedBox(height: 10),
+                _buildReportNarrative(
+                  'WORK PERFORMED',
+                  _safe(invoice.jobDescription, 'No work details recorded.'),
+                  maxLines: 6,
+                ),
+                pw.SizedBox(height: 8),
+                _buildReportNarrative(
+                  'OBSERVATIONS / CONDITION FOUND',
+                  _safe(invoice.observations, 'No observations recorded.'),
+                  maxLines: 4,
+                ),
+                pw.SizedBox(height: 8),
+                _buildReportNarrative(
+                  'RECOMMENDATIONS / NEXT ACTIONS',
+                  _safe(
+                      invoice.recommendations, 'No recommendations recorded.'),
+                  maxLines: 4,
+                ),
+                pw.SizedBox(height: 10),
+                _buildPartsUsedSection(invoice),
+                pw.SizedBox(height: 12),
+                _buildServiceReportSignOff(invoice),
+              ],
+            ),
+          ),
+        ),
+        pw.Spacer(),
+        _buildFooter(footerImg, pageWidth),
       ],
     );
   }
 
-  static List<String> _splitRemarks(String remarks,
-      {int maxLines = 5, int maxCharsPerLine = 82}) {
-    if (remarks.trim().isEmpty) return [];
-    final paragraphs = remarks.split('\n');
-    final lines = <String>[];
-    for (final p in paragraphs) {
-      final words = p.trim().split(RegExp(r'\s+'));
-      if (words.isEmpty || (words.length == 1 && words[0].isEmpty)) {
-        lines.add('');
-        if (lines.length >= maxLines) break;
-        continue;
-      }
-      var current = '';
-      for (final word in words) {
-        if (word.isEmpty) continue;
-        if (current.isEmpty) {
-          current = word;
-        } else if ((current.length + 1 + word.length) <= maxCharsPerLine) {
-          current += ' $word';
-        } else {
-          lines.add(current);
-          current = word;
-          if (lines.length >= maxLines) break;
-        }
-      }
-      if (current.isNotEmpty && lines.length < maxLines) {
-        lines.add(current);
-      }
-      if (lines.length >= maxLines) break;
-    }
-    return lines;
+  static pw.Widget _buildReportReferenceCard(
+      Invoice invoice, DateFormat dateFmt) {
+    return pw.Container(
+      decoration: const pw.BoxDecoration(
+        color: PdfColor.fromInt(0xFFFFF8D8),
+        border: pw.Border(
+          top: pw.BorderSide(color: _yellow),
+          right: pw.BorderSide(color: _yellow),
+          bottom: pw.BorderSide(color: _yellow),
+          left: pw.BorderSide(color: _yellow),
+        ),
+      ),
+      padding: const pw.EdgeInsets.all(9),
+      child: pw.Column(
+        children: [
+          pw.Row(
+            children: [
+              _reportReference('INVOICE NO.', invoice.invoiceNumber),
+              _reportReference('SERVICE DATE', dateFmt.format(invoice.date)),
+              _reportReference(
+                  'NEXT SERVICE',
+                  invoice.nextServiceDate == null
+                      ? 'Not scheduled'
+                      : dateFmt.format(invoice.nextServiceDate!)),
+            ],
+          ),
+          pw.SizedBox(height: 7),
+          pw.Row(
+            children: [
+              _reportReference(
+                  'CLIENT', _safe(invoice.billTo, invoice.clientName)),
+              _reportReference(
+                  'GENERATOR / MODEL', _safe(invoice.model, 'Not recorded')),
+              _reportReference(
+                  'RUNNING HOURS', _safe(invoice.runningHour, 'Not recorded')),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
-  static pw.Widget _buildRemarksBox(
-      String remarks, double width, double height) {
-    const headerHeight = 22.0;
-    const lineCount = 5;
-    final textLines =
-        _splitRemarks(remarks, maxLines: lineCount, maxCharsPerLine: 82);
+  static pw.Widget _reportReference(String label, String value) {
+    return pw.Expanded(
+      child: pw.Padding(
+        padding: const pw.EdgeInsets.symmetric(horizontal: 4),
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text(label,
+                style: pw.TextStyle(
+                    fontSize: 6.8,
+                    fontWeight: pw.FontWeight.bold,
+                    color: _black)),
+            pw.SizedBox(height: 2),
+            pw.Text(value,
+                maxLines: 2,
+                style: pw.TextStyle(
+                    fontSize: 8.3,
+                    fontWeight: pw.FontWeight.bold,
+                    color: _black)),
+          ],
+        ),
+      ),
+    );
+  }
 
+  static pw.Widget _buildReportNarrative(String title, String text,
+      {required int maxLines}) {
     return pw.Container(
-      width: width,
-      height: height,
       decoration: pw.BoxDecoration(
-        color: _white,
-        border: pw.Border.all(color: _yellow, width: 1.5),
-        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+        border: pw.Border.all(color: _borderGrey, width: 0.7),
       ),
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.stretch,
         children: [
-          // Yellow header bar
           pw.Container(
-            height: headerHeight,
-            decoration: const pw.BoxDecoration(
-              color: _yellow,
-              borderRadius: pw.BorderRadius.only(
-                topLeft: pw.Radius.circular(2.5),
-                topRight: pw.Radius.circular(2.5),
-              ),
-            ),
-            padding: const pw.EdgeInsets.symmetric(horizontal: 8),
-            alignment: pw.Alignment.centerLeft,
-            child: pw.Row(
-              children: [
-                _buildClipboardIcon(),
-                pw.SizedBox(width: 6),
-                pw.Text('Report / Remarks', style: _sectionTitleStyle),
-              ],
-            ),
+            color: _yellow,
+            padding: const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+            child: pw.Text(title, style: _sectionTitleStyle),
           ),
-          // Ruled notebook lines area with text aligned cleanly on grey lines
-          pw.Expanded(
-            child: pw.Padding(
-              padding: const pw.EdgeInsets.only(bottom: 4.0),
-              child: pw.Column(
-                children: List.generate(lineCount, (i) {
-                  final lineText = i < textLines.length ? textLines[i] : '';
-                  return pw.Expanded(
-                    child: pw.Container(
-                      margin: const pw.EdgeInsets.symmetric(horizontal: 8),
-                      decoration: const pw.BoxDecoration(
-                        border: pw.Border(
-                          bottom: pw.BorderSide(color: _lineGrey, width: 0.6),
-                        ),
-                      ),
-                      alignment: pw.Alignment.bottomLeft,
-                      padding: const pw.EdgeInsets.only(bottom: 2.0),
-                      child: pw.Text(
-                        lineText,
-                        style: const pw.TextStyle(
-                          fontSize: 8.5,
-                          color: _black,
-                        ),
-                        maxLines: 1,
-                      ),
-                    ),
-                  );
-                }),
-              ),
+          pw.Container(
+            height: 19.0 + (maxLines * 10.0),
+            padding: const pw.EdgeInsets.all(8),
+            child: pw.Text(
+              text,
+              maxLines: maxLines,
+              style: const pw.TextStyle(fontSize: 8.6, color: _black),
             ),
           ),
         ],
@@ -731,25 +812,121 @@ class PdfService {
     );
   }
 
-  static pw.Widget _buildClipboardIcon() {
-    return pw.Container(
-      width: 12,
-      height: 14,
-      decoration: pw.BoxDecoration(
-        color: _yellow,
-        border: pw.Border.all(color: _black, width: 1.2),
-        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(1.5)),
+  static pw.Widget _buildPartsUsedSection(Invoice invoice) {
+    final items = invoice.items
+        .where((item) =>
+            item.description.trim().isNotEmpty ||
+            item.quantity > 0 ||
+            item.price > 0)
+        .toList();
+
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+      children: [
+        pw.Container(
+          color: _black,
+          padding: const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+          child: pw.Text(
+            'PARTS AND CONSUMABLES USED',
+            style: pw.TextStyle(
+              color: _white,
+              fontSize: 9.5,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+        ),
+        pw.Table(
+          border: pw.TableBorder.all(color: _borderGrey, width: 0.6),
+          columnWidths: const {
+            0: pw.FixedColumnWidth(34),
+            1: pw.FlexColumnWidth(),
+            2: pw.FixedColumnWidth(80),
+          },
+          children: [
+            pw.TableRow(
+              decoration: const pw.BoxDecoration(color: _yellow),
+              children: [
+                _partsCell('NO.', bold: true),
+                _partsCell('DESCRIPTION', bold: true),
+                _partsCell('QTY', bold: true, align: pw.TextAlign.center),
+              ],
+            ),
+            if (items.isEmpty)
+              pw.TableRow(children: [
+                _partsCell(''),
+                _partsCell('No parts or consumables recorded.'),
+                _partsCell(''),
+              ])
+            else
+              ...items.asMap().entries.map(
+                    (entry) => pw.TableRow(children: [
+                      _partsCell('${entry.key + 1}',
+                          align: pw.TextAlign.center),
+                      _partsCell(
+                          _safe(entry.value.description, 'Unnamed item')),
+                      _partsCell(
+                          entry.value.quantity.toStringAsFixed(
+                              entry.value.quantity % 1 == 0 ? 0 : 2),
+                          align: pw.TextAlign.center),
+                    ]),
+                  ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  static pw.Widget _partsCell(String text,
+      {bool bold = false, pw.TextAlign align = pw.TextAlign.left}) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(horizontal: 7, vertical: 5),
+      child: pw.Text(
+        text,
+        textAlign: align,
+        maxLines: 2,
+        style: pw.TextStyle(
+          fontSize: 8.2,
+          color: _black,
+          fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
+        ),
       ),
-      child: pw.Column(
-        mainAxisAlignment: pw.MainAxisAlignment.center,
-        children: [
-          pw.Container(width: 6, height: 1.0, color: _black),
-          pw.SizedBox(height: 1.5),
-          pw.Container(width: 6, height: 1.0, color: _black),
-          pw.SizedBox(height: 1.5),
-          pw.Container(width: 4, height: 1.0, color: _black),
-        ],
-      ),
+    );
+  }
+
+  static pw.Widget _buildServiceReportSignOff(Invoice invoice) {
+    return pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Expanded(
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text('TECHNICIAN SIGN-OFF', style: _sectionTitleStyle),
+              pw.SizedBox(height: 7),
+              _sigLine('Technician:', _safe(invoice.managerName)),
+              pw.SizedBox(height: 8),
+              _sigLine('Signature:', ''),
+              pw.SizedBox(height: 8),
+              _sigLine('Date:', ''),
+            ],
+          ),
+        ),
+        pw.SizedBox(width: 38),
+        pw.Expanded(
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text('CLIENT ACCEPTANCE', style: _sectionTitleStyle),
+              pw.SizedBox(height: 7),
+              _sigLine('Representative:', ''),
+              pw.SizedBox(height: 8),
+              _sigLine('Signature:', ''),
+              pw.SizedBox(height: 8),
+              _sigLine('Date:', ''),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -778,6 +955,10 @@ class PdfService {
           _totalRow(
             'Labour (GHC)',
             _formatMoneyOrBlank(invoice.labourAmount),
+          ),
+          _totalRow(
+            'Other Charges (GHC)',
+            _formatMoneyOrBlank(invoice.otherChargesAmount),
           ),
           // Yellow highlighted row for TOTAL AMOUNT DUE
           pw.Container(

@@ -37,6 +37,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
   late final TextEditingController _runningHour;
   late final TextEditingController _model;
   late final TextEditingController _jobDescription;
+  late final TextEditingController _observations;
+  late final TextEditingController _recommendations;
   late final TextEditingController _managerName;
 
   // ── Per-row item controllers ─────────────────────────────────────────────
@@ -81,6 +83,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     _runningHour = TextEditingController(text: src?.runningHour ?? '');
     _model = TextEditingController(text: src?.model ?? '');
     _jobDescription = TextEditingController(text: src?.jobDescription ?? '');
+    _observations = TextEditingController(text: src?.observations ?? '');
+    _recommendations = TextEditingController(text: src?.recommendations ?? '');
     _managerName = TextEditingController(text: src?.managerName ?? '');
     _transportation = TextEditingController(
       text: (src?.transportationAmount ?? 0) > 0
@@ -109,6 +113,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     _runningHour.dispose();
     _model.dispose();
     _jobDescription.dispose();
+    _observations.dispose();
+    _recommendations.dispose();
     _managerName.dispose();
     _transportation.dispose();
     _labour.dispose();
@@ -296,6 +302,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
         current.model != saved.model ||
         current.nextServiceDate != saved.nextServiceDate ||
         current.jobDescription != saved.jobDescription ||
+        current.observations != saved.observations ||
+        current.recommendations != saved.recommendations ||
         current.managerName != saved.managerName) {
       return true;
     }
@@ -473,8 +481,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
 
               const SizedBox(height: 12),
 
-              // ── Job Description ──────────────────────────────────────────
-              _jobDescriptionCard(),
+              // ── Service Report (PDF page 2) ──────────────────────────────
+              _serviceReportCard(),
 
               const SizedBox(height: 12),
 
@@ -1653,6 +1661,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                 CurrencyFormatter.format(invoice.transportationAmount)),
             _totalsSubRow(
                 'Labour:', CurrencyFormatter.format(invoice.labourAmount)),
+            _totalsSubRow('Other charges:',
+                CurrencyFormatter.format(invoice.otherChargesAmount)),
             // Divider
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 6),
@@ -1685,9 +1695,9 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     );
   }
 
-  // ── Job Description ───────────────────────────────────────────────────────
+  // ── Service Report ───────────────────────────────────────────────────────
 
-  Widget _jobDescriptionCard() {
+  Widget _serviceReportCard() {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
@@ -1695,18 +1705,54 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _sectionHeader('JOB DESCRIPTION'),
+            _sectionHeader('SERVICE REPORT — PDF PAGE 2'),
             const SizedBox(height: 10),
             TextField(
               controller: _jobDescription,
-              maxLines: 4,
+              minLines: 3,
+              maxLines: 5,
               decoration: const InputDecoration(
-                hintText: 'Enter a detailed description of the job performed…',
+                labelText: 'Work performed',
+                hintText: 'Describe the maintenance or service completed…',
                 alignLabelWithHint: true,
               ),
               onChanged: (v) => ref
                   .read(invoiceFormProvider.notifier)
                   .updateJobDescription(v),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _observations,
+              minLines: 2,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                labelText: 'Observations / condition found',
+                hintText:
+                    'Record findings, faults, measurements, or equipment condition…',
+                alignLabelWithHint: true,
+              ),
+              onChanged: (v) =>
+                  ref.read(invoiceFormProvider.notifier).updateObservations(v),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _recommendations,
+              minLines: 2,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                labelText: 'Recommendations / next actions',
+                hintText:
+                    'State follow-up work, monitoring advice, or replacement needs…',
+                alignLabelWithHint: true,
+              ),
+              onChanged: (v) => ref
+                  .read(invoiceFormProvider.notifier)
+                  .updateRecommendations(v),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'The parts and consumables section on the report is generated automatically from the invoice items.',
+              style: TextStyle(color: AppColors.textGrey, fontSize: 12),
             ),
           ],
         ),

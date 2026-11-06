@@ -15,6 +15,8 @@ class Invoice {
   DateTime? nextServiceDate;
   List<InvoiceItem> items;
   String jobDescription;
+  String observations;
+  String recommendations;
   String managerName;
   double transportationAmount;
   double labourAmount;
@@ -36,6 +38,8 @@ class Invoice {
     this.nextServiceDate,
     List<InvoiceItem>? items,
     this.jobDescription = '',
+    this.observations = '',
+    this.recommendations = '',
     this.managerName = '',
     this.transportationAmount = 0.0,
     this.labourAmount = 0.0,
@@ -66,6 +70,8 @@ class Invoice {
     bool clearNextServiceDate = false,
     List<InvoiceItem>? items,
     String? jobDescription,
+    String? observations,
+    String? recommendations,
     String? managerName,
     double? transportationAmount,
     double? labourAmount,
@@ -88,6 +94,8 @@ class Invoice {
             : (nextServiceDate ?? this.nextServiceDate),
         items: items ?? this.items,
         jobDescription: jobDescription ?? this.jobDescription,
+        observations: observations ?? this.observations,
+        recommendations: recommendations ?? this.recommendations,
         managerName: managerName ?? this.managerName,
         transportationAmount: transportationAmount ?? this.transportationAmount,
         labourAmount: labourAmount ?? this.labourAmount,
@@ -109,6 +117,8 @@ class Invoice {
         'model': model,
         'next_service_date': nextServiceDate?.toIso8601String(),
         'job_description': jobDescription,
+        'observations': observations,
+        'recommendations': recommendations,
         'manager_name': managerName,
         'transportation_amount': transportationAmount,
         'labour_amount': labourAmount,
@@ -127,8 +137,8 @@ class Invoice {
         address: map['address'] as String? ?? '',
         phone: map['phone'] as String? ?? '',
         billTo: map['bill_to'] as String? ?? '',
-        date: DateTime.tryParse(map['date']?.toString() ?? '') ??
-            DateTime.now(),
+        date:
+            DateTime.tryParse(map['date']?.toString() ?? '') ?? DateTime.now(),
         runningHour: map['running_hour'] as String? ?? '',
         model: map['model'] as String? ?? '',
         nextServiceDate: map['next_service_date'] != null
@@ -136,6 +146,8 @@ class Invoice {
             : null,
         items: items,
         jobDescription: map['job_description'] as String? ?? '',
+        observations: map['observations'] as String? ?? '',
+        recommendations: map['recommendations'] as String? ?? '',
         managerName: map['manager_name'] as String? ?? '',
         transportationAmount:
             (map['transportation_amount'] as num?)?.toDouble() ?? 0.0,
@@ -166,6 +178,8 @@ class Invoice {
                 ))
             .toList(),
         jobDescription: source.jobDescription,
+        observations: source.observations,
+        recommendations: source.recommendations,
         managerName: source.managerName,
         transportationAmount: source.transportationAmount,
         labourAmount: source.labourAmount,
