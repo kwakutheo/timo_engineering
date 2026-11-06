@@ -7,7 +7,6 @@ import '../../../data/datasources/sync_service.dart';
 import '../../../data/models/invoice.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/screens/change_password_screen.dart';
-import '../../auth/services/auth_service.dart';
 import '../controllers/invoice_controller.dart';
 import '../controllers/client_controller.dart';
 import '../services/pdf_service.dart';
@@ -26,6 +25,10 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  // Deleting an invoice is reserved for the software owner. This credential is
+  // deliberately separate from the regular app-lock password.
+  static const _ownerDeletionPassword = 'Timo_Admin';
+
   StreamSubscription<void>? _syncSubscription;
 
   @override
@@ -522,20 +525,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               if (pwd.isEmpty) return;
 
               setState(() => isBusy = true);
-              final res = await AuthService.instance.verifyPassword(pwd);
-              if (!ctx.mounted) return;
               setState(() => isBusy = false);
 
-              if (res.success) {
+              if (pwd == _ownerDeletionPassword) {
                 Navigator.pop(ctx, true);
               } else {
                 attempts++;
                 controller.clear();
                 if (attempts >= 2) {
+                  if (ctx.mounted) {
+                    ScaffoldMessenger.of(ctx).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Incorrect owner password. Please contact the manager for authorization.',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        backgroundColor: AppColors.errorRed,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
                   Navigator.pop(ctx, false);
                 } else {
                   setState(() {
-                    error = 'Incorrect password. You have 1 attempt remaining.';
+                    error =
+                        'Incorrect owner password. Contact the manager for authorization. You have 1 attempt remaining.';
                   });
                   focus.requestFocus();
                 }
@@ -557,7 +571,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
-                      'Please enter your password to authorize this deletion.'),
+                      'Enter the owner authorization password to delete this invoice.'),
                   const SizedBox(height: 16),
                   TextField(
                     controller: controller,
@@ -567,7 +581,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     enabled: !isBusy,
                     onSubmitted: (_) => verify(),
                     decoration: InputDecoration(
-                      hintText: 'Enter password',
+                      hintText: 'Enter owner password',
                       errorText: error,
                       border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12)),
