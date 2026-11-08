@@ -57,7 +57,7 @@ class InvoiceCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               decoration: const BoxDecoration(
-                gradient: AppColors.yellowGradient,
+                color: AppColors.primaryYellow,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
               ),
               child: Row(

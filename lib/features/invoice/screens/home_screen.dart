@@ -29,7 +29,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   // Deleting an invoice is reserved for the software owner. This credential is
   // deliberately separate from the regular app-lock password.
   static const _ownerDeletionPassword = 'Timo_Admin';
+  static const int _pageSize = 25;
 
+  int _currentPage = 1;
   StreamSubscription<void>? _syncSubscription;
 
   @override
@@ -56,8 +58,74 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.dispose();
   }
 
+  void _goToPage(int page, int totalPages) {
+    final targetPage = page.clamp(1, totalPages);
+    if (targetPage == _currentPage) return;
+    setState(() {
+      _currentPage = targetPage;
+    });
+
+    // Scroll smoothly back to top of list
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      try {
+        PrimaryScrollController.maybeOf(context)?.animateTo(
+          0.0,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      } catch (_) {}
+    });
+  }
+
+  List<int?> _getPageNumbers(int current, int total) {
+    if (total <= 7) {
+      return List<int?>.generate(total, (i) => i + 1);
+    }
+
+    final pages = <int>{};
+    pages.add(1);
+    pages.add(total);
+
+    for (int p = current - 1; p <= current + 1; p++) {
+      if (p >= 1 && p <= total) {
+        pages.add(p);
+      }
+    }
+
+    if (current <= 3) {
+      pages.add(2);
+      pages.add(3);
+    }
+    if (current >= total - 2) {
+      pages.add(total - 1);
+      pages.add(total - 2);
+    }
+
+    final sorted = pages.toList()..sort();
+    final result = <int?>[];
+
+    for (int i = 0; i < sorted.length; i++) {
+      if (i > 0 && sorted[i] > sorted[i - 1] + 1) {
+        result.add(null);
+      }
+      result.add(sorted[i]);
+    }
+
+    return result;
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Reset to page 1 whenever the user searches
+    ref.listen<String>(searchQueryProvider, (previous, next) {
+      if (previous != next && _currentPage != 1) {
+        setState(() {
+          _currentPage = 1;
+        });
+      }
+    });
+
     final allAsync = ref.watch(allInvoicesProvider);
     final filteredAsync = ref.watch(filteredInvoicesProvider);
     final isMobile = MediaQuery.sizeOf(context).width < 600;
@@ -75,6 +143,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           error: (e, _) => _errorView(e.toString()),
           data: (allInvoices) {
             final filtered = filteredAsync.valueOrNull ?? allInvoices;
+            final totalItems = filtered.length;
+            final totalPages =
+                totalItems == 0 ? 1 : (totalItems / _pageSize).ceil();
+            final currentPage = _currentPage.clamp(1, totalPages);
+
+            if (_currentPage != currentPage) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  setState(() => _currentPage = currentPage);
+                }
+              });
+            }
+
+            final startIndex = (currentPage - 1) * _pageSize;
+            final endIndex = (startIndex + _pageSize).clamp(0, totalItems);
+            final pageInvoices = totalItems == 0
+                ? <Invoice>[]
+                : filtered.sublist(startIndex, endIndex);
 
             return RefreshIndicator(
               color: AppColors.primaryBlack,
@@ -98,28 +184,50 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         onCreateNew: () => _createNew(context),
                       ),
                     )
-                  else
+                  else ...[
                     SliverPadding(
                       padding: EdgeInsets.fromLTRB(
-                          isMobile ? 12 : 16, 0, isMobile ? 12 : 16, 100),
+                          isMobile ? 12 : 16, 0, isMobile ? 12 : 16, 12),
                       sliver: SliverList(
                         delegate: SliverChildBuilderDelegate(
-                          (ctx, i) => InvoiceCard(
-                            invoice: filtered[i],
-                            onView: () => _openView(context, filtered[i]),
-                            onCopy: () => _duplicate(context, filtered[i]),
-                            onPrint: () => _print(context, filtered[i]),
-                            onSave: () => _savePdf(context, filtered[i]),
-                            onShare: () => _share(context, filtered[i]),
-                            onDelete: () =>
-                                _deleteInvoice(context, filtered[i]),
-                            onConfirmDismiss: () =>
-                                _confirmDelete(context, filtered[i]),
-                          ),
-                          childCount: filtered.length,
+                          (ctx, i) {
+                            final invoice = pageInvoices[i];
+                            return InvoiceCard(
+                              invoice: invoice,
+                              onView: () => _openView(context, invoice),
+                              onCopy: () => _duplicate(context, invoice),
+                              onPrint: () => _print(context, invoice),
+                              onSave: () => _savePdf(context, invoice),
+                              onShare: () => _share(context, invoice),
+                              onDelete: () =>
+                                  _deleteInvoice(context, invoice),
+                              onConfirmDismiss: () =>
+                                  _confirmDelete(context, invoice),
+                            );
+                          },
+                          childCount: pageInvoices.length,
                         ),
                       ),
                     ),
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          isMobile ? 12 : 16,
+                          4,
+                          isMobile ? 12 : 16,
+                          isMobile ? 96 : 88,
+                        ),
+                        child: _buildPaginationBar(
+                          isMobile: isMobile,
+                          totalItems: totalItems,
+                          currentPage: currentPage,
+                          totalPages: totalPages,
+                          startIndex: startIndex,
+                          endIndex: endIndex,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             );
@@ -398,6 +506,345 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             onPressed: () => ref.invalidate(allInvoicesProvider),
             child: const Text('Retry'),
           ),
+        ],
+      ),
+    );
+  }
+
+  // ── Pagination bar ─────────────────────────────────────────────────────
+
+  Widget _buildPaginationBar({
+    required bool isMobile,
+    required int totalItems,
+    required int currentPage,
+    required int totalPages,
+    required int startIndex,
+    required int endIndex,
+  }) {
+    final countNoun = totalItems == 1 ? 'invoice' : 'invoices';
+    final String rangeText;
+    if (totalItems == 0) {
+      rangeText = 'No invoices found';
+    } else if (totalItems <= _pageSize) {
+      rangeText = 'Showing all $totalItems $countNoun';
+    } else if (startIndex + 1 == endIndex) {
+      rangeText = 'Showing invoice $endIndex of $totalItems';
+    } else {
+      rangeText =
+          'Showing ${startIndex + 1}–$endIndex of $totalItems $countNoun';
+    }
+
+    if (isMobile) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border:
+              Border.all(color: AppColors.borderGrey.withValues(alpha: 0.6)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.receipt_long_outlined,
+                    size: 16, color: AppColors.textGrey),
+                const SizedBox(width: 6),
+                Text(
+                  rangeText,
+                  style: const TextStyle(
+                    color: AppColors.primaryBlack,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12.5,
+                  ),
+                ),
+              ],
+            ),
+            if (totalPages > 1) ...[
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    tooltip: 'First page',
+                    icon: const Icon(Icons.first_page_rounded, size: 22),
+                    color: AppColors.primaryBlack,
+                    disabledColor:
+                        AppColors.textGrey.withValues(alpha: 0.35),
+                    onPressed: currentPage > 1
+                        ? () => _goToPage(1, totalPages)
+                        : null,
+                  ),
+                  IconButton(
+                    tooltip: 'Previous page',
+                    icon: const Icon(Icons.chevron_left_rounded, size: 22),
+                    color: AppColors.primaryBlack,
+                    disabledColor:
+                        AppColors.textGrey.withValues(alpha: 0.35),
+                    onPressed: currentPage > 1
+                        ? () => _goToPage(currentPage - 1, totalPages)
+                        : null,
+                  ),
+                  const SizedBox(width: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryYellow.withValues(alpha: 0.22),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppColors.primaryYellow.withValues(alpha: 0.9),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Text(
+                      'Page $currentPage of $totalPages',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12.5,
+                        color: AppColors.primaryBlack,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    tooltip: 'Next page',
+                    icon: const Icon(Icons.chevron_right_rounded, size: 22),
+                    color: AppColors.primaryBlack,
+                    disabledColor:
+                        AppColors.textGrey.withValues(alpha: 0.35),
+                    onPressed: currentPage < totalPages
+                        ? () => _goToPage(currentPage + 1, totalPages)
+                        : null,
+                  ),
+                  IconButton(
+                    tooltip: 'Last page',
+                    icon: const Icon(Icons.last_page_rounded, size: 22),
+                    color: AppColors.primaryBlack,
+                    disabledColor:
+                        AppColors.textGrey.withValues(alpha: 0.35),
+                    onPressed: currentPage < totalPages
+                        ? () => _goToPage(totalPages, totalPages)
+                        : null,
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+
+    // Desktop / Tablet layout
+    final pageNumbers = _getPageNumbers(currentPage, totalPages);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.borderGrey.withValues(alpha: 0.6)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.receipt_long_outlined,
+                  size: 18, color: AppColors.textGrey),
+              const SizedBox(width: 8),
+              Text(
+                rangeText,
+                style: const TextStyle(
+                  color: AppColors.primaryBlack,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.scaffoldBg,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Text(
+                  '25 / page',
+                  style: TextStyle(
+                    color: AppColors.textGrey,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (totalPages > 1)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: currentPage > 1
+                      ? () => _goToPage(currentPage - 1, totalPages)
+                      : null,
+                  icon: const Icon(Icons.chevron_left_rounded, size: 18),
+                  label: const Text('Previous'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primaryBlack,
+                    disabledForegroundColor:
+                        AppColors.textGrey.withValues(alpha: 0.35),
+                    side: BorderSide(
+                      color: currentPage > 1
+                          ? AppColors.borderGrey
+                          : AppColors.borderGrey.withValues(alpha: 0.3),
+                    ),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 8),
+                    textStyle: const TextStyle(
+                        fontSize: 12.5, fontWeight: FontWeight.w600),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                for (final p in pageNumbers) ...[
+                  if (p == null)
+                    const SizedBox(
+                      width: 26,
+                      height: 34,
+                      child: Center(
+                        child: Text(
+                          '…',
+                          style: TextStyle(
+                            color: AppColors.textGrey,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    )
+                  else if (p == currentPage)
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 2),
+                      width: 34,
+                      height: 34,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryYellow,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primaryYellow
+                                .withValues(alpha: 0.35),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        '$p',
+                        style: const TextStyle(
+                          color: AppColors.primaryBlack,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                        ),
+                      ),
+                    )
+                  else
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      child: InkWell(
+                        onTap: () => _goToPage(p, totalPages),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                                color: AppColors.borderGrey
+                                    .withValues(alpha: 0.6)),
+                          ),
+                          child: Text(
+                            '$p',
+                            style: const TextStyle(
+                              color: AppColors.primaryBlack,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+                const SizedBox(width: 6),
+                OutlinedButton(
+                  onPressed: currentPage < totalPages
+                      ? () => _goToPage(currentPage + 1, totalPages)
+                      : null,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primaryBlack,
+                    disabledForegroundColor:
+                        AppColors.textGrey.withValues(alpha: 0.35),
+                    side: BorderSide(
+                      color: currentPage < totalPages
+                          ? AppColors.borderGrey
+                          : AppColors.borderGrey.withValues(alpha: 0.3),
+                    ),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 8),
+                    textStyle: const TextStyle(
+                        fontSize: 12.5, fontWeight: FontWeight.w600),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Next'),
+                      SizedBox(width: 4),
+                      Icon(Icons.chevron_right_rounded, size: 18),
+                    ],
+                  ),
+                ),
+              ],
+            )
+          else
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: AppColors.scaffoldBg,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text(
+                'Page 1 of 1',
+                style: TextStyle(
+                  color: AppColors.textGrey,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+              ),
+            ),
         ],
       ),
     );
