@@ -337,7 +337,7 @@ class _LockScreenState extends ConsumerState<LockScreen>
                 height: 20,
                 child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: const Color.fromARGB(255, 2, 21, 220)),
+                    color: Color.fromARGB(255, 2, 21, 220)),
               )
             : Text(
                 locked

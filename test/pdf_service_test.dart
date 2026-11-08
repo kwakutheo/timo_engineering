@@ -91,4 +91,32 @@ void main() {
 
     expect(doc.document.pdfPageList.pages.length, greaterThan(2));
   });
+
+  test('PdfService.buildPdf handles multi-paragraph service report without orphan headers',
+      () async {
+    const clipText =
+        'Tap on a clip to paste it in the text box. Touch and hold a clip to pin it. '
+        'Unpinned clips will be deleted after 1 hour. Welcome to Gboard clipboard, '
+        'any text that you copy will be saved here. Tap on a clip to paste it in the text box.';
+
+    final doc = await PdfService.buildPdf(
+      Invoice(
+        invoiceNumber: 'TI-2026-MULTI',
+        clientName: 'Kwaku TK & Associates',
+        address: 'Accra, Ghana',
+        phone: '+233 24 123 4567',
+        jobDescription: '$clipText $clipText',
+        observations: '$clipText $clipText',
+        recommendations: '$clipText $clipText',
+        managerName: 'Kwaku TK',
+        items: [
+          InvoiceItem(description: 'Engine Oil', quantity: 1, price: 450),
+        ],
+      ),
+    );
+
+    final bytes = await doc.save();
+    expect(bytes, isNotEmpty);
+    expect(doc.document.pdfPageList.pages.length, greaterThanOrEqualTo(2));
+  });
 }

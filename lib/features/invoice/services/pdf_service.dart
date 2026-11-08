@@ -20,8 +20,6 @@ class PdfService {
   static const _black = PdfColors.black;
   static const _white = PdfColors.white;
 
-  static const _reportPageTopSpacing = 16.0;
-
   /// The parts table is intentionally hidden from the current PDF layout.
   /// Keep its builder below because it is planned for a future report version.
   /// Set this to true when the business approves showing it again.
@@ -222,17 +220,25 @@ class PdfService {
         pw.MultiPage(
           pageFormat: PdfPageFormat.a4,
           margin: pw.EdgeInsets.zero,
-          header: (_) => pw.Column(
-            children: [
-              pw.Image(
-                headerImg,
-                width: pageWidth,
-                height: pageWidth / 3.9174,
-                fit: pw.BoxFit.fill,
-              ),
-              _buildServiceReportHeading(),
-            ],
-          ),
+          header: (context) {
+            // Page 1 is always the financial invoice.
+            // Page 2 is the first page of the service report (full branding).
+            // Page 3+ are continuation pages (compact header to maximize content room).
+            if (context.pageNumber <= 2) {
+              return pw.Column(
+                children: [
+                  pw.Image(
+                    headerImg,
+                    width: pageWidth,
+                    height: pageWidth / 3.9174,
+                    fit: pw.BoxFit.fill,
+                  ),
+                  _buildServiceReportHeading(),
+                ],
+              );
+            }
+            return _buildServiceReportContinuationHeading(invoice, pageWidth);
+          },
           footer: (_) => _buildFooter(footerImg, pageWidth),
           build: (_) => _buildServiceReportContent(
             invoice,
@@ -663,19 +669,19 @@ class PdfService {
         );
 
     return [
-      pw.SizedBox(height: 10),
+      pw.SizedBox(height: 8),
       content(_buildReportReferenceCard(invoice, dateFmt)),
-      pw.SizedBox(height: 10),
+      pw.SizedBox(height: 8),
       content(_buildReportNarrative(
         'WORK PERFORMED',
         workPerformed,
       )),
-      pw.SizedBox(height: 8),
+      pw.SizedBox(height: 7),
       content(_buildReportNarrative(
         'OBSERVATIONS / CONDITION FOUND',
         observations,
       )),
-      pw.SizedBox(height: 8),
+      pw.SizedBox(height: 7),
       content(_buildReportNarrative(
         'RECOMMENDATIONS / NEXT ACTIONS',
         recommendations,
@@ -683,14 +689,11 @@ class PdfService {
       // Do not remove this block: the parts table is retained for a future
       // report layout, but is intentionally excluded from PDFs for now.
       if (_includePartsAndConsumablesSection) ...[
-        pw.SizedBox(height: 10),
+        pw.SizedBox(height: 8),
         content(_buildPartsUsedSection(invoice)),
       ],
-      // Keep the sign-off together and, if it starts a new page, place its
-      // spacing after the page break so it does not sit against the heading.
-      pw.NewPage(freeSpace: 120),
-      pw.SizedBox(height: _reportPageTopSpacing),
-      content(_buildServiceReportSignOff(invoice)),
+      pw.SizedBox(height: 10),
+      content(_KeepTogether(child: _buildServiceReportSignOff(invoice))),
     ];
   }
 
@@ -755,6 +758,48 @@ class PdfService {
     );
   }
 
+  static pw.Widget _buildServiceReportContinuationHeading(
+    Invoice invoice,
+    double width,
+  ) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+      children: [
+        pw.Container(
+          color: _black,
+          padding: const pw.EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+          child: pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              pw.Text(
+                'GENERATOR SERVICE REPORT & TECHNICAL REMARKS (Cont.)',
+                style: pw.TextStyle(
+                  color: _white,
+                  fontSize: 10.5,
+                  fontWeight: pw.FontWeight.bold,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              pw.Text(
+                'Invoice: ${_safe(invoice.invoiceNumber)}',
+                style: pw.TextStyle(
+                  color: _yellow,
+                  fontSize: 9.5,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+        pw.Container(
+          height: 2.5,
+          color: _yellow,
+        ),
+        pw.SizedBox(height: 10),
+      ],
+    );
+  }
+
   static pw.Widget _reportReference(String label, String value) {
     return pw.Expanded(
       child: pw.Padding(
@@ -781,33 +826,41 @@ class PdfService {
   }
 
   static pw.Widget _buildReportNarrative(String title, String text) {
-    return pw.Container(
-      decoration: pw.BoxDecoration(
-        border: pw.Border.all(color: _borderGrey, width: 0.7),
-      ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-        children: [
-          pw.Container(
-            color: _yellow,
-            alignment: pw.Alignment.center,
-            padding: const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-            child: pw.Text(
-              title,
-              textAlign: pw.TextAlign.center,
-              style: _sectionTitleStyle,
+    return _KeepTogether(
+      child: pw.Container(
+        decoration: pw.BoxDecoration(
+          border: pw.Border.all(color: _borderGrey, width: 0.7),
+          borderRadius: const pw.BorderRadius.all(pw.Radius.circular(3)),
+        ),
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+          children: [
+            pw.Container(
+              color: _yellow,
+              alignment: pw.Alignment.center,
+              padding:
+                  const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 4.5),
+              child: pw.Text(
+                title,
+                textAlign: pw.TextAlign.center,
+                style: _sectionTitleStyle,
+              ),
             ),
-          ),
-          pw.Padding(
-            padding: const pw.EdgeInsets.all(8),
-            child: pw.Text(
-              text,
-              overflow: pw.TextOverflow.span,
-              textAlign: pw.TextAlign.justify,
-              style: const pw.TextStyle(fontSize: 8.6, color: _black),
+            pw.Padding(
+              padding:
+                  const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+              child: pw.Text(
+                text,
+                textAlign: pw.TextAlign.justify,
+                style: const pw.TextStyle(
+                  fontSize: 8.6,
+                  color: _black,
+                  lineSpacing: 1.15,
+                ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1196,4 +1249,27 @@ class PdfService {
     await file.saveTo(result.path);
     return result.path;
   }
+}
+
+/// Prevents a widget (such as a narrative section or signature block)
+/// from splitting across pages, keeping it as an unbroken block.
+/// If content exceeds typical page height (e.g. > 550pt), it gracefully allows spanning.
+class _KeepTogether extends pw.SingleChildWidget {
+  _KeepTogether({required pw.Widget child}) : super(child: child);
+
+  @override
+  void paint(pw.Context context) {
+    super.paint(context);
+    paintChild(context);
+  }
+
+  @override
+  bool get canSpan =>
+      box != null &&
+      box!.height > 550 &&
+      child is pw.SpanningWidget &&
+      (child as pw.SpanningWidget).canSpan;
+
+  @override
+  bool get hasMoreWidgets => canSpan;
 }
