@@ -119,6 +119,8 @@ class SyncService {
             'observations': row['observations'] ?? '',
             'recommendations': row['recommendations'] ?? '',
             'manager_name': row['manager_name'] ?? '',
+            'technician_name': row['technician_name'] ?? '',
+            'representative_name': row['representative_name'] ?? '',
             'transportation_amount':
                 (row['transportation_amount'] as num?)?.toDouble() ?? 0.0,
             'labour_amount': (row['labour_amount'] as num?)?.toDouble() ?? 0.0,

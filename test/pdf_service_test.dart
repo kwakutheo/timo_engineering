@@ -119,4 +119,36 @@ void main() {
     expect(bytes, isNotEmpty);
     expect(doc.document.pdfPageList.pages.length, greaterThanOrEqualTo(2));
   });
+
+  test('Invoice supports custom technicianName and representativeName',
+      () async {
+    final invoice = Invoice(
+      invoiceNumber: 'TI-2026-SIG',
+      clientName: 'Kwaku TK & Associates',
+      managerName: 'Bright Atiemo Amoani',
+      technicianName: 'Kwaku TK',
+      representativeName: 'Nana Osei Bonsu',
+      items: [
+        InvoiceItem(description: 'Oil Filter', quantity: 1, price: 100),
+      ],
+    );
+
+    expect(invoice.technicianName, equals('Kwaku TK'));
+    expect(invoice.representativeName, equals('Nana Osei Bonsu'));
+
+    // Verify serialization round-trip
+    final map = invoice.toMap();
+    expect(map['technician_name'], equals('Kwaku TK'));
+    expect(map['representative_name'], equals('Nana Osei Bonsu'));
+
+    final restored = Invoice.fromMap(map, invoice.items);
+    expect(restored.technicianName, equals('Kwaku TK'));
+    expect(restored.representativeName, equals('Nana Osei Bonsu'));
+
+    // Verify PDF generation with custom technician and representative
+    final doc = await PdfService.buildPdf(invoice);
+    final bytes = await doc.save();
+    expect(bytes, isNotEmpty);
+    expect(doc.document.pdfPageList.pages, hasLength(2));
+  });
 }

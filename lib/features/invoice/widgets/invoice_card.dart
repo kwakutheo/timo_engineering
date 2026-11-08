@@ -96,7 +96,7 @@ class InvoiceCard extends StatelessWidget {
                     onSelected: _handleAction,
                     itemBuilder: (_) => [
                       _actionMenuItem(_InvoiceAction.view,
-                          Icons.visibility_outlined, 'View'),
+                          Icons.visibility_outlined, 'View/Edit'),
                       _actionMenuItem(
                           _InvoiceAction.copy, Icons.copy_outlined, 'Copy'),
                       _actionMenuItem(

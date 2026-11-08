@@ -50,6 +50,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
   late final TextEditingController _observations;
   late final TextEditingController _recommendations;
   late final TextEditingController _managerName;
+  late final TextEditingController _technicianName;
+  late final TextEditingController _representativeName;
 
   // ── Per-row item controllers ─────────────────────────────────────────────
   final List<_RowCtrls> _rowCtrls = [];
@@ -98,6 +100,9 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     _observations = TextEditingController(text: src?.observations ?? '');
     _recommendations = TextEditingController(text: src?.recommendations ?? '');
     _managerName = TextEditingController(text: src?.managerName ?? '');
+    _technicianName = TextEditingController(text: src?.technicianName ?? '');
+    _representativeName =
+        TextEditingController(text: src?.representativeName ?? '');
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _prefillPreparedByName();
     });
@@ -144,6 +149,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     _observations.dispose();
     _recommendations.dispose();
     _managerName.dispose();
+    _technicianName.dispose();
+    _representativeName.dispose();
     _transportation.dispose();
     _labour.dispose();
     for (final c in _rowCtrls) {
@@ -341,7 +348,9 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
         current.jobDescription != saved.jobDescription ||
         current.observations != saved.observations ||
         current.recommendations != saved.recommendations ||
-        current.managerName != saved.managerName) {
+        current.managerName != saved.managerName ||
+        current.technicianName != saved.technicianName ||
+        current.representativeName != saved.representativeName) {
       return true;
     }
 
@@ -1837,7 +1846,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _sectionHeader('GENERATOR SERVICE REPORT & TECHNICAL REMARKS'),
+            _sectionHeader(
+                'GENERATOR SERVICE REPORT & TECHNICAL REMARKS (Second Part)'),
             const SizedBox(height: 10),
             TextField(
               controller: _jobDescription,
@@ -1881,11 +1891,80 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                   .read(invoiceFormProvider.notifier)
                   .updateRecommendations(v),
             ),
+            const SizedBox(height: 16),
+            const Divider(color: AppColors.divider, height: 1),
+            const SizedBox(height: 12),
+            _sectionHeader('SIGN-OFF & ACCEPTANCE DETAILS'),
             const SizedBox(height: 10),
-            const Text(
-              'The parts and consumables section on the report is generated automatically from the invoice items.',
-              style: TextStyle(color: AppColors.textGrey, fontSize: 12),
-            ),
+            if (_isMobile(context)) ...[
+              TextField(
+                controller: _technicianName,
+                readOnly: _isViewOnly,
+                decoration: const InputDecoration(
+                  labelText: 'Technician name',
+                  hintText: 'Enter name of technician (e.g. Kwaku TK)',
+                  prefixIcon: Icon(Icons.engineering_outlined),
+                ),
+                onChanged: (v) => ref
+                    .read(invoiceFormProvider.notifier)
+                    .updateTechnicianName(v),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _representativeName,
+                readOnly: _isViewOnly,
+                decoration: const InputDecoration(
+                  labelText: 'Client representative name',
+                  hintText: 'Enter client representative accepting the service',
+                  prefixIcon: Icon(Icons.person_outline),
+                ),
+                onChanged: (v) => ref
+                    .read(invoiceFormProvider.notifier)
+                    .updateRepresentativeName(v),
+              ),
+            ] else ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _technicianName,
+                      readOnly: _isViewOnly,
+                      decoration: const InputDecoration(
+                        labelText: 'Technician name',
+                        hintText: 'Enter name of technician (e.g. Kwaku TK)',
+                        prefixIcon: Icon(Icons.engineering_outlined),
+                      ),
+                      onChanged: (v) => ref
+                          .read(invoiceFormProvider.notifier)
+                          .updateTechnicianName(v),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: TextField(
+                      controller: _representativeName,
+                      readOnly: _isViewOnly,
+                      decoration: const InputDecoration(
+                        labelText: 'Client representative name',
+                        hintText:
+                            'Enter client representative accepting the service',
+                        prefixIcon: Icon(Icons.person_outline),
+                      ),
+                      onChanged: (v) => ref
+                          .read(invoiceFormProvider.notifier)
+                          .updateRepresentativeName(v),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+
+            // hidden for the mean time -------------
+            //  const SizedBox(height: 10),
+            //  const Text(
+            //    'The parts and consumables section on the report is generated automatically from the invoice items.',
+            //    style: TextStyle(color: AppColors.textGrey, fontSize: 12),
+            //  ),
           ],
         ),
       ),

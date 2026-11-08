@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -237,7 +238,11 @@ class PdfService {
                 ],
               );
             }
-            return _buildServiceReportContinuationHeading(invoice, pageWidth);
+            return _buildServiceReportContinuationHeading(
+              headerImg,
+              invoice,
+              pageWidth,
+            );
           },
           footer: (_) => _buildFooter(footerImg, pageWidth),
           build: (_) => _buildServiceReportContent(
@@ -656,12 +661,9 @@ class PdfService {
     DateFormat dateFmt, {
     required double horizontalMargin,
   }) {
-    final workPerformed =
-        _safe(invoice.jobDescription, 'No work details recorded.');
-    final observations =
-        _safe(invoice.observations, 'No observations recorded.');
-    final recommendations =
-        _safe(invoice.recommendations, 'No recommendations recorded.');
+    final workPerformed = _safe(invoice.jobDescription, '');
+    final observations = _safe(invoice.observations, '');
+    final recommendations = _safe(invoice.recommendations, '');
 
     pw.Widget content(pw.Widget child) => pw.Padding(
           padding: pw.EdgeInsets.symmetric(horizontal: horizontalMargin),
@@ -759,12 +761,19 @@ class PdfService {
   }
 
   static pw.Widget _buildServiceReportContinuationHeading(
+    pw.MemoryImage headerImg,
     Invoice invoice,
     double width,
   ) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.stretch,
       children: [
+        pw.Image(
+          headerImg,
+          width: width,
+          height: width / 3.9174,
+          fit: pw.BoxFit.fill,
+        ),
         pw.Container(
           color: _black,
           padding: const pw.EdgeInsets.symmetric(horizontal: 14, vertical: 7),
@@ -826,6 +835,7 @@ class PdfService {
   }
 
   static pw.Widget _buildReportNarrative(String title, String text) {
+    final cleanText = text.trim();
     return _KeepTogether(
       child: pw.Container(
         decoration: pw.BoxDecoration(
@@ -846,16 +856,14 @@ class PdfService {
                 style: _sectionTitleStyle,
               ),
             ),
-            pw.Padding(
-              padding:
-                  const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+            _RuledLines(
               child: pw.Text(
-                text,
+                cleanText,
                 textAlign: pw.TextAlign.justify,
                 style: const pw.TextStyle(
-                  fontSize: 8.6,
+                  fontSize: _RuledLines.fontSize,
                   color: _black,
-                  lineSpacing: 1.15,
+                  lineSpacing: _RuledLines.lineSpacing,
                 ),
               ),
             ),
@@ -956,7 +964,8 @@ class PdfService {
             children: [
               pw.Text('TECHNICIAN SIGN-OFF', style: _sectionTitleStyle),
               pw.SizedBox(height: 7),
-              _sigLine('Technician:', _safe(invoice.managerName)),
+              _sigLine('Technician:',
+                  _safe(invoice.technicianName, invoice.managerName)),
               pw.SizedBox(height: 8),
               _sigLine('Signature:', ''),
               pw.SizedBox(height: 8),
@@ -971,7 +980,7 @@ class PdfService {
             children: [
               pw.Text('CLIENT ACCEPTANCE', style: _sectionTitleStyle),
               pw.SizedBox(height: 7),
-              _sigLine('Representative:', ''),
+              _sigLine('Representative:', _safe(invoice.representativeName)),
               pw.SizedBox(height: 8),
               _sigLine('Signature:', ''),
               pw.SizedBox(height: 8),
@@ -1272,4 +1281,86 @@ class _KeepTogether extends pw.SingleChildWidget {
 
   @override
   bool get hasMoreWidgets => canSpan;
+}
+
+/// Renders horizontal grey ruled lines across narrative sections (lined paper style).
+/// Body text at fontSize 10 is harmoniously aligned above each line, and the
+/// container displays a minimum of [minLines] ruled rows (default 5) even when empty.
+class _RuledLines extends pw.SingleChildWidget {
+  static const int minLines = 5;
+  static const double lineHeight = 19.0;
+  static const double fontSize = 10.0;
+  // Helvetica height factor in package:pdf is 1.156.
+  // Using lineHeight - fontHeight guarantees an exact 19.0pt advance per line with 0.0 drift.
+  static const double fontHeight = fontSize * 1.156;
+  static const double lineSpacing = lineHeight - fontHeight;
+  static const double topOffset = 5.6;
+  static const PdfColor lineColor = PdfColor.fromInt(0xFFCCCCCC);
+  static const double lineWidth = 0.6;
+  static const double horizontalPadding = 9.0;
+
+  _RuledLines({required pw.Widget child}) : super(child: child);
+
+  @override
+  void layout(pw.Context context, pw.BoxConstraints constraints,
+      {bool parentUsesSize = false}) {
+    double childWidth = 0.0;
+    double childHeight = 0.0;
+
+    if (child != null) {
+      final innerConstraints = constraints.deflate(
+        const pw.EdgeInsets.symmetric(horizontal: horizontalPadding),
+      );
+      child!.layout(context, innerConstraints, parentUsesSize: true);
+      childWidth = child!.box?.width ?? 0.0;
+      childHeight = child!.box?.height ?? 0.0;
+    }
+
+    // Compute line count using the exact font height to prevent any fractional drift
+    final textLines = childHeight > 0
+        ? ((childHeight + (lineHeight - fontHeight)) / lineHeight).round()
+        : 0;
+    final totalLines = math.max(minLines, textLines);
+    final totalHeight = totalLines * lineHeight;
+
+    final resolvedWidth = constraints.hasBoundedWidth
+        ? constraints.maxWidth
+        : childWidth + horizontalPadding * 2;
+
+    box = PdfRect(0, 0, resolvedWidth, totalHeight);
+
+    // Shifts text downward so baselines sit consistently close to the ruled line beneath,
+    // and comfortably away from the line above, on every single row without drift.
+    if (child?.box != null) {
+      child!.box = PdfRect(
+        horizontalPadding,
+        totalHeight - childHeight - topOffset,
+        childWidth,
+        childHeight,
+      );
+    }
+  }
+
+  @override
+  void paint(pw.Context context) {
+    super.paint(context);
+
+    if (box != null) {
+      context.canvas
+        ..setStrokeColor(lineColor)
+        ..setLineWidth(lineWidth);
+
+      // In PDF coordinates, box!.top is the top of this widget, box!.bottom is 0.
+      // Draw horizontal ruled lines at intervals of [lineHeight] from the top down.
+      for (var y = box!.top - lineHeight;
+          y > box!.bottom + 1.0;
+          y -= lineHeight) {
+        context.canvas
+          ..drawLine(box!.left, y, box!.right, y)
+          ..strokePath();
+      }
+    }
+
+    paintChild(context);
+  }
 }

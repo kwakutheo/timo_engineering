@@ -18,6 +18,8 @@ class Invoice {
   String observations;
   String recommendations;
   String managerName;
+  String technicianName;
+  String representativeName;
   double transportationAmount;
   double labourAmount;
   double otherChargesAmount;
@@ -41,6 +43,8 @@ class Invoice {
     this.observations = '',
     this.recommendations = '',
     this.managerName = '',
+    this.technicianName = '',
+    this.representativeName = '',
     this.transportationAmount = 0.0,
     this.labourAmount = 0.0,
     this.otherChargesAmount = 0.0,
@@ -73,6 +77,8 @@ class Invoice {
     String? observations,
     String? recommendations,
     String? managerName,
+    String? technicianName,
+    String? representativeName,
     double? transportationAmount,
     double? labourAmount,
     double? otherChargesAmount,
@@ -97,6 +103,8 @@ class Invoice {
         observations: observations ?? this.observations,
         recommendations: recommendations ?? this.recommendations,
         managerName: managerName ?? this.managerName,
+        technicianName: technicianName ?? this.technicianName,
+        representativeName: representativeName ?? this.representativeName,
         transportationAmount: transportationAmount ?? this.transportationAmount,
         labourAmount: labourAmount ?? this.labourAmount,
         otherChargesAmount: otherChargesAmount ?? this.otherChargesAmount,
@@ -120,6 +128,8 @@ class Invoice {
         'observations': observations,
         'recommendations': recommendations,
         'manager_name': managerName,
+        'technician_name': technicianName,
+        'representative_name': representativeName,
         'transportation_amount': transportationAmount,
         'labour_amount': labourAmount,
         'other_charges_amount': otherChargesAmount,
@@ -149,6 +159,8 @@ class Invoice {
         observations: map['observations'] as String? ?? '',
         recommendations: map['recommendations'] as String? ?? '',
         managerName: map['manager_name'] as String? ?? '',
+        technicianName: map['technician_name'] as String? ?? '',
+        representativeName: map['representative_name'] as String? ?? '',
         transportationAmount:
             (map['transportation_amount'] as num?)?.toDouble() ?? 0.0,
         labourAmount: (map['labour_amount'] as num?)?.toDouble() ?? 0.0,
@@ -181,6 +193,8 @@ class Invoice {
         observations: source.observations,
         recommendations: source.recommendations,
         managerName: source.managerName,
+        technicianName: source.technicianName,
+        representativeName: source.representativeName,
         transportationAmount: source.transportationAmount,
         labourAmount: source.labourAmount,
         otherChargesAmount: source.otherChargesAmount,

@@ -51,7 +51,7 @@ class LocalDb {
 
     return openDatabase(
       dbPath,
-      version: 7,
+      version: 8,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -77,6 +77,8 @@ class LocalDb {
         observations TEXT DEFAULT '',
         recommendations TEXT DEFAULT '',
         manager_name TEXT,
+        technician_name TEXT DEFAULT '',
+        representative_name TEXT DEFAULT '',
         transportation_amount REAL DEFAULT 0,
         labour_amount REAL DEFAULT 0,
         other_charges_amount REAL DEFAULT 0,
@@ -193,6 +195,12 @@ class LocalDb {
           db, 'ALTER TABLE invoices ADD COLUMN observations TEXT DEFAULT ""');
       await _safeAlter(db,
           'ALTER TABLE invoices ADD COLUMN recommendations TEXT DEFAULT ""');
+    }
+    if (oldVersion < 8) {
+      await _safeAlter(db,
+          'ALTER TABLE invoices ADD COLUMN technician_name TEXT DEFAULT ""');
+      await _safeAlter(db,
+          'ALTER TABLE invoices ADD COLUMN representative_name TEXT DEFAULT ""');
     }
   }
 
@@ -435,6 +443,8 @@ class LocalDb {
       'observations': row['observations'] ?? '',
       'recommendations': row['recommendations'] ?? '',
       'manager_name': row['manager_name'] ?? '',
+      'technician_name': row['technician_name'] ?? '',
+      'representative_name': row['representative_name'] ?? '',
       'transportation_amount':
           (row['transportation_amount'] as num?)?.toDouble() ?? 0.0,
       'labour_amount': (row['labour_amount'] as num?)?.toDouble() ?? 0.0,
