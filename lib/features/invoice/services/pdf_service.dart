@@ -20,6 +20,8 @@ class PdfService {
   static const _black = PdfColors.black;
   static const _white = PdfColors.white;
 
+  static const _reportPageTopSpacing = 16.0;
+
   /// The parts table is intentionally hidden from the current PDF layout.
   /// Keep its builder below because it is planned for a future report version.
   /// Set this to true when the business approves showing it again.
@@ -648,6 +650,13 @@ class PdfService {
     DateFormat dateFmt, {
     required double horizontalMargin,
   }) {
+    final workPerformed =
+        _safe(invoice.jobDescription, 'No work details recorded.');
+    final observations =
+        _safe(invoice.observations, 'No observations recorded.');
+    final recommendations =
+        _safe(invoice.recommendations, 'No recommendations recorded.');
+
     pw.Widget content(pw.Widget child) => pw.Padding(
           padding: pw.EdgeInsets.symmetric(horizontal: horizontalMargin),
           child: child,
@@ -659,17 +668,17 @@ class PdfService {
       pw.SizedBox(height: 10),
       content(_buildReportNarrative(
         'WORK PERFORMED',
-        _safe(invoice.jobDescription, 'No work details recorded.'),
+        workPerformed,
       )),
       pw.SizedBox(height: 8),
       content(_buildReportNarrative(
         'OBSERVATIONS / CONDITION FOUND',
-        _safe(invoice.observations, 'No observations recorded.'),
+        observations,
       )),
       pw.SizedBox(height: 8),
       content(_buildReportNarrative(
         'RECOMMENDATIONS / NEXT ACTIONS',
-        _safe(invoice.recommendations, 'No recommendations recorded.'),
+        recommendations,
       )),
       // Do not remove this block: the parts table is retained for a future
       // report layout, but is intentionally excluded from PDFs for now.
@@ -677,7 +686,10 @@ class PdfService {
         pw.SizedBox(height: 10),
         content(_buildPartsUsedSection(invoice)),
       ],
-      pw.SizedBox(height: 12),
+      // Keep the sign-off together and, if it starts a new page, place its
+      // spacing after the page break so it does not sit against the heading.
+      pw.NewPage(freeSpace: 120),
+      pw.SizedBox(height: _reportPageTopSpacing),
       content(_buildServiceReportSignOff(invoice)),
     ];
   }
@@ -778,14 +790,20 @@ class PdfService {
         children: [
           pw.Container(
             color: _yellow,
+            alignment: pw.Alignment.center,
             padding: const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-            child: pw.Text(title, style: _sectionTitleStyle),
+            child: pw.Text(
+              title,
+              textAlign: pw.TextAlign.center,
+              style: _sectionTitleStyle,
+            ),
           ),
           pw.Padding(
             padding: const pw.EdgeInsets.all(8),
             child: pw.Text(
               text,
               overflow: pw.TextOverflow.span,
+              textAlign: pw.TextAlign.justify,
               style: const pw.TextStyle(fontSize: 8.6, color: _black),
             ),
           ),

@@ -106,7 +106,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         delegate: SliverChildBuilderDelegate(
                           (ctx, i) => InvoiceCard(
                             invoice: filtered[i],
-                            onEdit: () => _openEdit(context, filtered[i]),
+                            onView: () => _openView(context, filtered[i]),
                             onCopy: () => _duplicate(context, filtered[i]),
                             onPrint: () => _print(context, filtered[i]),
                             onSave: () => _savePdf(context, filtered[i]),
@@ -505,9 +505,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ref.invalidate(allInvoicesProvider);
   }
 
-  Future<void> _openEdit(BuildContext context, Invoice invoice) async {
+  Future<void> _openView(BuildContext context, Invoice invoice) async {
     await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => InvoiceFormScreen(existing: invoice)),
+      MaterialPageRoute(
+          builder: (_) => InvoiceFormScreen(existing: invoice, viewOnly: true)),
     );
     ref.invalidate(allInvoicesProvider);
   }

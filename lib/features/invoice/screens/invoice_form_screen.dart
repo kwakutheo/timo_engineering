@@ -18,13 +18,21 @@ import '../../auth/providers/auth_provider.dart';
 import '../../auth/services/auth_service.dart';
 
 class InvoiceFormScreen extends ConsumerStatefulWidget {
-  /// Pass an existing invoice to open in edit mode, null for new.
+  /// Pass an existing invoice to open in edit or read-only view mode.
   final Invoice? existing;
+
+  /// Displays an existing invoice without allowing changes.
+  final bool viewOnly;
 
   /// Pass an existing invoice to duplicate into a new invoice.
   final Invoice? duplicateFrom;
 
-  const InvoiceFormScreen({super.key, this.existing, this.duplicateFrom});
+  const InvoiceFormScreen({
+    super.key,
+    this.existing,
+    this.duplicateFrom,
+    this.viewOnly = false,
+  });
 
   @override
   ConsumerState<InvoiceFormScreen> createState() => _InvoiceFormScreenState();
@@ -55,6 +63,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
 
   bool _isSaving = false;
   Invoice? _lastSavedInvoice;
+
+  bool get _isViewOnly => widget.viewOnly;
 
   // ── Responsive helper ─────────────────────────────────────────────────────
   bool _isMobile(BuildContext ctx) => MediaQuery.sizeOf(ctx).width < 600;
@@ -110,6 +120,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
   }
 
   Future<void> _prefillPreparedByName() async {
+    if (_isViewOnly) return;
     if (_managerName.text.trim().isNotEmpty) return;
 
     final fullName = await AuthService.instance.getUserFullName();
@@ -145,7 +156,15 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
 
   void _addRow() {
     final notifier = ref.read(invoiceFormProvider.notifier);
-    notifier.addItem();
+    if (!notifier.addItem()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('An invoice can contain a maximum of 10 items.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
     setState(() => _rowCtrls.add(_RowCtrls()));
   }
 
@@ -209,10 +228,11 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
           label: 'UNDO',
           textColor: AppColors.primaryYellow,
           onPressed: () {
-            notifier.insertItem(index, deletedItem);
-            setState(() {
-              _rowCtrls.insert(index, _RowCtrls.from(deletedItem));
-            });
+            if (notifier.insertItem(index, deletedItem)) {
+              setState(() {
+                _rowCtrls.insert(index, _RowCtrls.from(deletedItem));
+              });
+            }
           },
         ),
       ),
@@ -437,7 +457,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     final isNew = widget.existing == null;
     final mobile = _isMobile(context);
 
-    final canPop = !_hasUnsavedChanges();
+    final canPop = _isViewOnly || !_hasUnsavedChanges();
 
     return PopScope(
       canPop: canPop,
@@ -487,54 +507,57 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
         appBar: _buildAppBar(isNew),
         body: SingleChildScrollView(
           padding: EdgeInsets.all(mobile ? 10 : 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // ── Header image ─────────────────────────────────────────────
-              _headerImage(),
+          child: IgnorePointer(
+            ignoring: _isViewOnly,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // ── Header image ─────────────────────────────────────────────
+                _headerImage(),
 
-              const SizedBox(height: 12),
+                const SizedBox(height: 12),
 
-              const SizedBox(height: 12),
+                const SizedBox(height: 12),
 
-              // ── Client + Job Nature ──────────────────────────────────────
-              _clientJobCard(invoice, mobile),
+                // ── Client + Job Nature ──────────────────────────────────────
+                _clientJobCard(invoice, mobile),
 
-              const SizedBox(height: 12),
+                const SizedBox(height: 12),
 
-              // ── Job Info row ─────────────────────────────────────────────
-              _jobInfoCard(invoice, mobile),
+                // ── Job Info row ─────────────────────────────────────────────
+                _jobInfoCard(invoice, mobile),
 
-              const SizedBox(height: 12),
+                const SizedBox(height: 12),
 
-              // ── Items table ──────────────────────────────────────────────
-              _itemsCard(invoice, mobile),
+                // ── Items table ──────────────────────────────────────────────
+                _itemsCard(invoice, mobile),
 
-              const SizedBox(height: 8),
+                const SizedBox(height: 8),
 
-              // ── Grand Total ──────────────────────────────────────────────
-              _grandTotalRow(invoice),
+                // ── Grand Total ──────────────────────────────────────────────
+                _grandTotalRow(invoice),
 
-              const SizedBox(height: 12),
+                const SizedBox(height: 12),
 
-              // ── Service Report (PDF page 2) ──────────────────────────────
-              _serviceReportCard(),
+                // ── Service Report (PDF page 2) ──────────────────────────────
+                _serviceReportCard(),
 
-              const SizedBox(height: 12),
+                const SizedBox(height: 12),
 
-              // ── Signature ────────────────────────────────────────────────
-              _signatureCard(),
+                // ── Signature ────────────────────────────────────────────────
+                _signatureCard(),
 
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-              // ── Footer image ─────────────────────────────────────────────
-              _footerImage(),
+                // ── Footer image ─────────────────────────────────────────────
+                _footerImage(),
 
-              const SizedBox(height: 80),
-            ],
+                const SizedBox(height: 80),
+              ],
+            ),
           ),
         ),
-        bottomNavigationBar: _bottomBar(),
+        bottomNavigationBar: _isViewOnly ? _viewBottomBar() : _bottomBar(),
       ),
     );
   }
@@ -543,7 +566,11 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
 
   PreferredSizeWidget _buildAppBar(bool isNew) {
     return AppBar(
-      title: Text((isNew ? 'New Invoice' : 'Edit Invoice'),
+      iconTheme: const IconThemeData(color: AppColors.primaryBlack),
+      title: Text(
+          (_isViewOnly
+              ? 'View Invoice'
+              : (isNew ? 'New Invoice' : 'Edit Invoice')),
           style: const TextStyle(
             color: Colors.black,
           )),
@@ -589,6 +616,43 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
   }
 
   // ── Bottom action bar ────────────────────────────────────────────────────
+
+  Widget _viewBottomBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.yellowLight,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.22),
+            blurRadius: 6,
+            offset: const Offset(0, -3),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: ElevatedButton.icon(
+          onPressed: () {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (_) => InvoiceFormScreen(existing: widget.existing),
+              ),
+            );
+          },
+          icon: const Icon(Icons.edit_outlined),
+          label: const Text('Edit Invoice'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primaryYellow,
+            foregroundColor: AppColors.primaryBlack,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            textStyle: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _bottomBar() {
     return Container(
@@ -1161,6 +1225,50 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     return _itemsCardDesktop(invoice);
   }
 
+  Widget _buildAddItemControl(Invoice invoice, {bool isMobile = false}) {
+    final itemCount = invoice.items.length;
+    const maxItems = InvoiceFormNotifier.maxItems;
+    final atLimit = itemCount >= maxItems;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          '$itemCount of $maxItems items — maximum $maxItems items per invoice',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: atLimit ? AppColors.errorRed : AppColors.textGrey,
+            fontSize: 11,
+            fontWeight: atLimit ? FontWeight.w600 : FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 6),
+        OutlinedButton.icon(
+          onPressed: atLimit ? null : _addRow,
+          icon: Icon(Icons.add_circle_outline,
+              color: atLimit ? AppColors.textLightGrey : AppColors.primaryBlack,
+              size: isMobile ? 20 : null),
+          label: Text(
+            atLimit ? 'Maximum of $maxItems Items Reached' : 'Add Item',
+            style: TextStyle(
+              color: atLimit ? AppColors.textLightGrey : AppColors.primaryBlack,
+              fontWeight: isMobile ? FontWeight.w600 : FontWeight.normal,
+            ),
+          ),
+          style: OutlinedButton.styleFrom(
+            side: BorderSide(
+                color: atLimit ? AppColors.borderGrey : AppColors.primaryBlack),
+            padding: isMobile
+                ? const EdgeInsets.symmetric(vertical: 12)
+                : EdgeInsets.zero,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(isMobile ? 10 : 8)),
+          ),
+        ),
+      ],
+    );
+  }
+
   // ── DESKTOP items table (original) ────────────────────────────────────────
   Widget _itemsCardDesktop(Invoice invoice) {
     return Card(
@@ -1236,18 +1344,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
           // Add row button
           Padding(
             padding: const EdgeInsets.all(10),
-            child: OutlinedButton.icon(
-              onPressed: _addRow,
-              icon: const Icon(Icons.add_circle_outline,
-                  color: AppColors.primaryBlack),
-              label: const Text('Add Item',
-                  style: TextStyle(color: AppColors.primaryBlack)),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: AppColors.primaryBlack),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
-              ),
-            ),
+            child: _buildAddItemControl(invoice),
           ),
 
           // ── Sub-total row ──────────────────────────────────────────────
@@ -1442,20 +1539,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
         const SizedBox(height: 10),
 
         // Add item button
-        OutlinedButton.icon(
-          onPressed: _addRow,
-          icon: const Icon(Icons.add_circle_outline,
-              color: AppColors.primaryBlack, size: 20),
-          label: const Text('Add Item',
-              style: TextStyle(
-                  color: AppColors.primaryBlack, fontWeight: FontWeight.w600)),
-          style: OutlinedButton.styleFrom(
-            side: const BorderSide(color: AppColors.primaryBlack),
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        ),
+        _buildAddItemControl(invoice, isMobile: true),
 
         const SizedBox(height: 10),
 

@@ -40,6 +40,10 @@ final filteredInvoicesProvider = Provider<AsyncValue<List<Invoice>>>((ref) {
 // ── Single invoice form notifier ──────────────────────────────────────────
 
 class InvoiceFormNotifier extends StateNotifier<Invoice> {
+  /// An invoice is intentionally limited to keep the form and printed layout
+  /// clear and practical for users.
+  static const maxItems = 10;
+
   final InvoiceRepository _repo;
   bool _isEditing = false;
 
@@ -89,9 +93,11 @@ class InvoiceFormNotifier extends StateNotifier<Invoice> {
 
   // ── Items management ───────────────────────────────────────────────────
 
-  void addItem() {
+  bool addItem() {
+    if (state.items.length >= maxItems) return false;
     final updated = List<InvoiceItem>.from(state.items)..add(InvoiceItem());
     state = state.copyWith(items: updated);
+    return true;
   }
 
   void updateItem(int index, InvoiceItem item) {
@@ -106,9 +112,11 @@ class InvoiceFormNotifier extends StateNotifier<Invoice> {
     state = state.copyWith(items: updated);
   }
 
-  void insertItem(int index, InvoiceItem item) {
+  bool insertItem(int index, InvoiceItem item) {
+    if (state.items.length >= maxItems) return false;
     final updated = List<InvoiceItem>.from(state.items)..insert(index, item);
     state = state.copyWith(items: updated);
+    return true;
   }
 
   // ── Persistence ────────────────────────────────────────────────────────
