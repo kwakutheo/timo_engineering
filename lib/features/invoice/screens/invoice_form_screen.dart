@@ -15,6 +15,7 @@ import '../services/pdf_service.dart';
 import '../widgets/client_picker_dialog.dart';
 import '../widgets/pdf_document_choice_dialog.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../auth/services/auth_service.dart';
 
 class InvoiceFormScreen extends ConsumerStatefulWidget {
   /// Pass an existing invoice to open in edit mode, null for new.
@@ -87,6 +88,9 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     _observations = TextEditingController(text: src?.observations ?? '');
     _recommendations = TextEditingController(text: src?.recommendations ?? '');
     _managerName = TextEditingController(text: src?.managerName ?? '');
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _prefillPreparedByName();
+    });
     _transportation = TextEditingController(
       text: (src?.transportationAmount ?? 0) > 0
           ? src!.transportationAmount.toStringAsFixed(2)
@@ -103,6 +107,18 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     for (final item in initialItems) {
       _rowCtrls.add(_RowCtrls.from(item));
     }
+  }
+
+  Future<void> _prefillPreparedByName() async {
+    if (_managerName.text.trim().isNotEmpty) return;
+
+    final fullName = await AuthService.instance.getUserFullName();
+    if (!mounted || fullName == null || _managerName.text.trim().isNotEmpty) {
+      return;
+    }
+
+    _managerName.text = fullName;
+    ref.read(invoiceFormProvider.notifier).updateManagerName(fullName);
   }
 
   @override
@@ -527,31 +543,45 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
 
   PreferredSizeWidget _buildAppBar(bool isNew) {
     return AppBar(
-      title: Text(isNew ? 'New Invoice' : 'Edit Invoice'),
+      title: Text((isNew ? 'New Invoice' : 'Edit Invoice'),
+          style: const TextStyle(
+            color: Colors.black,
+          )),
       flexibleSpace: Container(
-        decoration: const BoxDecoration(
-          gradient: AppColors.blackGradient,
+        decoration: BoxDecoration(
+          color: AppColors.primaryYellow,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.3),
+              blurRadius: 5,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
       ),
       actions: [
         IconButton(
           tooltip: 'Print',
           icon: const Icon(Icons.print_outlined),
+          color: AppColors.primaryBlack,
           onPressed: _print,
         ),
         IconButton(
           tooltip: 'Save PDF',
           icon: const Icon(Icons.download_outlined),
+          color: AppColors.primaryBlack,
           onPressed: _savePdf,
         ),
         IconButton(
           tooltip: 'Share',
           icon: const Icon(Icons.share_outlined),
+          color: AppColors.primaryBlack,
           onPressed: _share,
         ),
         IconButton(
           tooltip: 'Lock App',
           icon: const Icon(Icons.lock_outline),
+          color: AppColors.primaryBlack,
           onPressed: () => ref.read(authProvider.notifier).lock(),
         ),
       ],
@@ -564,10 +594,10 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white70,
+        color: AppColors.yellowLight,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 6,
             offset: const Offset(0, -4),
           ),
@@ -1681,8 +1711,6 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                 CurrencyFormatter.format(invoice.transportationAmount)),
             _totalsSubRow(
                 'Labour:', CurrencyFormatter.format(invoice.labourAmount)),
-            _totalsSubRow('Other charges:',
-                CurrencyFormatter.format(invoice.otherChargesAmount)),
             // Divider
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 6),
@@ -1725,7 +1753,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _sectionHeader('SERVICE REPORT — PDF PAGE 2'),
+            _sectionHeader('GENERATOR SERVICE REPORT & TECHNICAL REMARKS'),
             const SizedBox(height: 10),
             TextField(
               controller: _jobDescription,
@@ -1819,10 +1847,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                     ],
                   ),
                   const SizedBox(height: 10),
-                  _formField('Name', _managerName,
-                      onChanged: (v) => ref
-                          .read(invoiceFormProvider.notifier)
-                          .updateManagerName(v)),
+                  _formField('Name', _managerName, readOnly: true),
                 ],
               ),
             ),
@@ -2042,6 +2067,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     TextInputType? keyboardType,
     void Function(String)? onChanged,
     List<TextInputFormatter>? inputFormatters,
+    bool readOnly = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2056,6 +2082,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
           controller: ctrl,
           keyboardType: keyboardType,
           inputFormatters: inputFormatters,
+          readOnly: readOnly,
           decoration: const InputDecoration(),
           onChanged: onChanged,
         ),

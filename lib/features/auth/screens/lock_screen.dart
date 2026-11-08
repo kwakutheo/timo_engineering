@@ -251,14 +251,15 @@ class _LockScreenState extends ConsumerState<LockScreen>
         obscureText: _obscure,
         enabled: _lockoutSeconds == 0 && !_isVerifying,
         autocorrect: false,
+        autofocus: false,
         enableSuggestions: false,
         style: const TextStyle(
             color: Colors.black, fontSize: 16, letterSpacing: 2),
-        cursorColor: const Color.fromARGB(221, 52, 51, 51),
+        cursorColor: const Color.fromARGB(112, 0, 0, 0),
         textInputAction: TextInputAction.done,
         onSubmitted: (_) => _verify(),
         decoration: InputDecoration(
-          hintText: 'Enter password here',
+          hintText: 'Enter your password here',
           hintStyle: TextStyle(
               color:
                   const Color.fromARGB(255, 56, 56, 56).withValues(alpha: 0.35),
@@ -335,7 +336,8 @@ class _LockScreenState extends ConsumerState<LockScreen>
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
-                    strokeWidth: 2, color: AppColors.primaryBlack),
+                    strokeWidth: 2,
+                    color: const Color.fromARGB(255, 2, 21, 220)),
               )
             : Text(
                 locked

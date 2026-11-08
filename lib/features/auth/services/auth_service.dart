@@ -17,6 +17,9 @@ class _Keys {
 
   /// Tracks which password-reset version is active on this device.
   static const passwordResetVersion = 'pin_reset_version';
+
+  /// The device user's name, used to prefill "Prepared By" on new invoices.
+  static const userFullName = 'user_full_name';
 }
 
 /// Banned weak passwords.
@@ -127,11 +130,20 @@ class AuthService {
     return null;
   }
 
-  /// Hash and store a new PIN. Resets attempt counter.
+  /// Validates the per-device user's full name.
+  String? validateFullName(String fullName) {
+    final parts = fullName.trim().split(RegExp(r'\s+'));
+    if (fullName.trim().isEmpty || parts.length < 2) {
+      return 'Please enter your full name.';
+    }
+    return null;
+  }
+
+  /// Hash and store a new password. Resets attempt counter.
   /// [hint] is the answer to [hintQuestion]. The question is stored in
   /// plaintext so it can be shown to the user; only the answer is hashed.
   Future<void> setPassword(String password,
-      {String? hint, String? hintQuestion}) async {
+      {String? hint, String? hintQuestion, String? fullName}) async {
     final saltBytes = _randomBytes(32);
     final saltB64 = base64.encode(saltBytes);
 
@@ -143,6 +155,10 @@ class AuthService {
 
     await _storage.write(key: _Keys.hash, value: hashB64);
     await _storage.write(key: _Keys.salt, value: saltB64);
+
+    if (fullName != null && fullName.trim().isNotEmpty) {
+      await _storage.write(key: _Keys.userFullName, value: fullName.trim());
+    }
 
     // Store hint question (plaintext) and hash the answer.
     if (hint != null && hint.isNotEmpty) {
@@ -177,6 +193,19 @@ class AuthService {
   Future<String?> getHintQuestion() async {
     final q = await _storage.read(key: _Keys.hintQuestion);
     return (q != null && q.isNotEmpty) ? q : null;
+  }
+
+  /// Returns the device user's name for pre-filling new invoices.
+  Future<String?> getUserFullName() async {
+    final name = await _storage.read(key: _Keys.userFullName);
+    return (name != null && name.trim().isNotEmpty) ? name.trim() : null;
+  }
+
+  /// Updates the per-device user name shown as the preparer on new invoices.
+  Future<void> setUserFullName(String fullName) async {
+    final error = validateFullName(fullName);
+    if (error != null) throw ArgumentError(error);
+    await _storage.write(key: _Keys.userFullName, value: fullName.trim());
   }
 
   /// Hash and securely store a password hint answer.
@@ -315,6 +344,7 @@ class AuthService {
       _Keys.hintHash,
       _Keys.hintSalt,
       _Keys.hintQuestion,
+      _Keys.userFullName,
       // Note: passwordResetVersion is NOT wiped here — it is managed separately
       // by savePasswordResetVersion() in auth_provider.dart.
     ]) {

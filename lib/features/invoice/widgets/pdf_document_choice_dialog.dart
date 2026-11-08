@@ -28,15 +28,16 @@ Future<bool?> choosePdfDocumentContents(
           onPressed: () => Navigator.of(dialogContext).pop(false),
           style: OutlinedButton.styleFrom(
             foregroundColor: AppColors.primaryBlack,
-            side: const BorderSide(color: AppColors.primaryBlack),
+            backgroundColor: AppColors.yellowLight,
+            side: const BorderSide(color: AppColors.primaryYellow),
           ),
           child: const Text('Invoice Only'),
         ),
         ElevatedButton(
           onPressed: () => Navigator.of(dialogContext).pop(true),
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primaryBlack,
-            foregroundColor: Colors.white,
+            backgroundColor: AppColors.primaryYellow,
+            foregroundColor: Colors.black,
           ),
           child: Text(action),
         ),

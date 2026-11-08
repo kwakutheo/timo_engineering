@@ -7,6 +7,7 @@ import '../../../data/datasources/sync_service.dart';
 import '../../../data/models/invoice.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/screens/change_password_screen.dart';
+import '../../auth/services/auth_service.dart';
 import '../controllers/invoice_controller.dart';
 import '../controllers/client_controller.dart';
 import '../services/pdf_service.dart';
@@ -166,8 +167,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       expandedHeight: expandedHeight,
       floating: false,
       pinned: true,
-      elevation: 0,
-      backgroundColor: AppColors.primaryBlack,
+      // Keep the header visibly raised even before the user scrolls.
+      forceElevated: true,
+      elevation: 12,
+      scrolledUnderElevation: 12,
+      shadowColor: Colors.black87,
+      surfaceTintColor: Colors.transparent,
+      backgroundColor: AppColors.primaryYellow,
       flexibleSpace: FlexibleSpaceBar(
         titlePadding: const EdgeInsets.only(left: 20, bottom: 14),
         title: Column(
@@ -177,7 +183,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Text(
               "TIMO'S ENGINEERING",
               style: TextStyle(
-                color: Colors.white,
+                color: AppColors.primaryBlack,
                 fontSize: isMobile ? 12 : 14,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 0.8,
@@ -186,7 +192,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Text(
               'Invoice Manager',
               style: TextStyle(
-                color: Colors.white70,
+                color: AppColors.primaryBlack.withValues(alpha: 0.72),
                 fontSize: isMobile ? 9 : 10,
                 fontWeight: FontWeight.w400,
               ),
@@ -194,7 +200,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         ),
         background: Container(
-          decoration: const BoxDecoration(gradient: AppColors.blackGradient),
+          decoration: BoxDecoration(
+            gradient: AppColors.yellowGradient,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.28),
+                blurRadius: 12,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
           child: Stack(
             children: [
               // Decorative circles
@@ -206,7 +221,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   height: 160,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.06),
+                    color: Colors.black.withValues(alpha: 0.2),
                   ),
                 ),
               ),
@@ -218,7 +233,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   height: 120,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.06),
+                    color: Colors.black.withValues(alpha: 0.2),
                   ),
                 ),
               ),
@@ -240,14 +255,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         _buildSyncButton(context),
         IconButton(
           tooltip: 'Refresh',
-          icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+          icon:
+              const Icon(Icons.refresh_rounded, color: AppColors.primaryBlack),
           onPressed: () {
             ref.invalidate(allInvoicesProvider);
             SyncService.instance.sync();
           },
         ),
         PopupMenuButton<String>(
-          icon: const Icon(Icons.security_outlined, color: Colors.white),
+          icon: const Icon(Icons.security_outlined,
+              color: AppColors.primaryBlack),
           tooltip: 'Security',
           onSelected: (value) => _onSecurityAction(context, value),
           itemBuilder: (_) => [
@@ -257,6 +274,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 leading: Icon(Icons.lock_reset_outlined,
                     color: AppColors.primaryBlack),
                 title: Text('Change password'),
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'edit_full_name',
+              child: ListTile(
+                leading:
+                    Icon(Icons.badge_outlined, color: AppColors.primaryBlack),
+                title: Text('Edit full name'),
                 contentPadding: EdgeInsets.zero,
               ),
             ),
@@ -288,19 +314,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               height: 18,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: AppColors.primaryYellow,
+                color: AppColors.primaryBlack,
               ),
             );
             tooltip = 'Syncing with cloud...';
             break;
           case SyncStatus.success:
             icon = const Icon(Icons.cloud_done_rounded,
-                color: AppColors.success, size: 22);
+                color: Color.fromARGB(255, 39, 1, 255), size: 22);
             tooltip = 'Cloud synced';
             break;
           case SyncStatus.offline:
             icon = const Icon(Icons.cloud_off_rounded,
-                color: Colors.white54, size: 22);
+                color: AppColors.textGrey, size: 22);
             tooltip = 'Offline - will sync when connected';
             break;
           case SyncStatus.error:
@@ -310,7 +336,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             break;
           case SyncStatus.idle:
             icon = const Icon(Icons.cloud_sync_outlined,
-                color: Colors.white, size: 22);
+                color: AppColors.primaryBlack, size: 22);
             tooltip = 'Sync with cloud';
             break;
         }
@@ -379,13 +405,96 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   // ── Actions ───────────────────────────────────────────────────────────
 
-  void _onSecurityAction(BuildContext context, String action) {
+  Future<void> _onSecurityAction(BuildContext context, String action) async {
     if (action == 'change_pin') {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const ChangePasswordScreen()),
       );
+    } else if (action == 'edit_full_name') {
+      await _editFullName(context);
     } else if (action == 'lock_now') {
       ref.read(authProvider.notifier).lock();
+    }
+  }
+
+  Future<void> _editFullName(BuildContext context) async {
+    final currentName = await AuthService.instance.getUserFullName() ?? '';
+    if (!context.mounted) return;
+
+    final controller = TextEditingController(text: currentName);
+    final focus = FocusNode();
+    String? error;
+    bool isSaving = false;
+
+    final updated = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) {
+          Future<void> save() async {
+            final validation =
+                AuthService.instance.validateFullName(controller.text);
+            if (validation != null) {
+              setState(() => error = validation);
+              focus.requestFocus();
+              return;
+            }
+
+            setState(() => isSaving = true);
+            await AuthService.instance.setUserFullName(controller.text);
+            if (dialogContext.mounted) Navigator.of(dialogContext).pop(true);
+          }
+
+          return AlertDialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: const Text('Edit name',
+                style: TextStyle(fontWeight: FontWeight.w700)),
+            content: TextField(
+              controller: controller,
+              focusNode: focus,
+              autofocus: false,
+              enabled: !isSaving,
+              textCapitalization: TextCapitalization.words,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => save(),
+              decoration: InputDecoration(
+                labelText: 'Full name',
+                errorText: error,
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed:
+                    isSaving ? null : () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: isSaving ? null : save,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryYellow,
+                  foregroundColor: AppColors.primaryBlack,
+                ),
+                child: isSaving
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Save'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    controller.dispose();
+    focus.dispose();
+
+    if (updated == true && context.mounted) {
+      _showSnack(context, 'Full name updated for future invoices.');
     }
   }
 

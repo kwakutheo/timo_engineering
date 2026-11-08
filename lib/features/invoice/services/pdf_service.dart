@@ -20,6 +20,11 @@ class PdfService {
   static const _black = PdfColors.black;
   static const _white = PdfColors.white;
 
+  /// The parts table is intentionally hidden from the current PDF layout.
+  /// Keep its builder below because it is planned for a future report version.
+  /// Set this to true when the business approves showing it again.
+  static const _includePartsAndConsumablesSection = false;
+
   /// Borders for totals boxes and inner lines
   static const _borderGrey = PdfColor.fromInt(0xFFCCCCCC);
 
@@ -188,7 +193,7 @@ class PdfService {
                     pw.SizedBox(height: 5),
 
                     // ── 6. Invoice totals ───────────────────────────────────
-                    _buildTotalsBox(invoice, contentWidth, 142),
+                    _buildTotalsBox(invoice, contentWidth, 96),
                     pw.SizedBox(height: 6),
 
                     // ── 7. Signature Section ─────────────────────────────────
@@ -482,16 +487,16 @@ class PdfService {
   // ── 5. Items Table ────────────────────────────────────────────────────────
 
   static pw.Widget _buildItemsTable(Invoice invoice, double width) {
-    const minRows = 7;
+    const minRows = 8;
     const col1Width = 330.0;
     const col2Width = 60.0;
     const col3Width = 90.0;
     const col4Width = 94.0; // sum = 574.0
 
-    // Keep table perfectly sized for A4 with 7 rows
+    // The compact totals panel leaves space for eight standard item rows.
     final rowHeight = invoice.items.length <= minRows
         ? 22.0
-        : (154.0 / invoice.items.length).clamp(14.0, 22.0);
+        : (176.0 / invoice.items.length).clamp(14.0, 22.0);
 
     // Header row
     final headerRow = pw.Container(
@@ -636,7 +641,7 @@ class PdfService {
     );
   }
 
-  // ── Service Report (page 2) ──────────────────────────────────────────────
+  // ── Service Report (second part) ──────────────────────────────────────────────
 
   static List<pw.Widget> _buildServiceReportContent(
     Invoice invoice,
@@ -666,8 +671,12 @@ class PdfService {
         'RECOMMENDATIONS / NEXT ACTIONS',
         _safe(invoice.recommendations, 'No recommendations recorded.'),
       )),
-      pw.SizedBox(height: 10),
-      content(_buildPartsUsedSection(invoice)),
+      // Do not remove this block: the parts table is retained for a future
+      // report layout, but is intentionally excluded from PDFs for now.
+      if (_includePartsAndConsumablesSection) ...[
+        pw.SizedBox(height: 10),
+        content(_buildPartsUsedSection(invoice)),
+      ],
       pw.SizedBox(height: 12),
       content(_buildServiceReportSignOff(invoice)),
     ];
@@ -719,19 +728,17 @@ class PdfService {
     return pw.Container(
       color: _black,
       padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-      child: pw.Row(
-        children: [
-          pw.Text(
-            'GENERATOR SERVICE REPORT & TECHNICAL REMARKS',
-            style: pw.TextStyle(
-              color: _white,
-              fontSize: 15,
-              fontWeight: pw.FontWeight.bold,
-              letterSpacing: 1.1,
-            ),
+      child: pw.Center(
+        child: pw.Text(
+          'GENERATOR SERVICE REPORT & TECHNICAL REMARKS',
+          textAlign: pw.TextAlign.center,
+          style: pw.TextStyle(
+            color: _white,
+            fontSize: 15,
+            fontWeight: pw.FontWeight.bold,
+            letterSpacing: 1.1,
           ),
-          pw.Spacer(),
-        ],
+        ),
       ),
     );
   }
@@ -931,10 +938,6 @@ class PdfService {
             'Labour (GHC)',
             _formatMoneyOrBlank(invoice.labourAmount),
           ),
-          _totalRow(
-            'Other Charges (GHC)',
-            _formatMoneyOrBlank(invoice.otherChargesAmount),
-          ),
           // Yellow highlighted row for TOTAL AMOUNT DUE
           pw.Container(
             height: 24,
@@ -1037,7 +1040,7 @@ class PdfService {
               children: [
                 _sigLine('Customer Signature:', ''),
                 pw.SizedBox(height: 6),
-                _sigLine('Name:', ''),
+                _sigLine('Name:', _safe(invoice.clientName)),
                 pw.SizedBox(height: 6),
                 _sigLine('Date:', ''),
               ],

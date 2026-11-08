@@ -16,9 +16,11 @@ enum _SetStep { create, confirm }
 
 class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen>
     with SingleTickerProviderStateMixin {
+  final _fullNameController = TextEditingController();
   final _createController = TextEditingController();
   final _confirmController = TextEditingController();
   final _hintAnswerController = TextEditingController();
+  final _fullNameFocus = FocusNode();
   final _createFocus = FocusNode();
   final _confirmFocus = FocusNode();
   final _hintAnswerFocus = FocusNode();
@@ -59,14 +61,16 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen>
     ]).animate(CurvedAnimation(parent: _shakeCtrl, curve: Curves.easeInOut));
 
     WidgetsBinding.instance
-        .addPostFrameCallback((_) => _createFocus.requestFocus());
+        .addPostFrameCallback((_) => _fullNameFocus.requestFocus());
   }
 
   @override
   void dispose() {
+    _fullNameController.dispose();
     _createController.dispose();
     _confirmController.dispose();
     _hintAnswerController.dispose();
+    _fullNameFocus.dispose();
     _createFocus.dispose();
     _confirmFocus.dispose();
     _hintAnswerFocus.dispose();
@@ -75,6 +79,8 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen>
   }
 
   void _onCreateSubmit() {
+    if (!_hasValidFullName()) return;
+
     final password = _createController.text.trim();
     final error = AuthService.instance.validatePassword(password);
     if (error != null) {
@@ -89,9 +95,24 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen>
     _confirmFocus.requestFocus();
   }
 
+  bool _hasValidFullName() {
+    final error =
+        AuthService.instance.validateFullName(_fullNameController.text);
+    if (error != null) {
+      _shakeCtrl.forward(from: 0);
+      setState(() => _errorMessage = error);
+      _fullNameFocus.requestFocus();
+      return false;
+    }
+    return true;
+  }
+
   Future<void> _onConfirmSubmit() async {
+    if (!_hasValidFullName()) return;
+
     final password = _createController.text.trim();
     final confirmed = _confirmController.text.trim();
+    final fullName = _fullNameController.text.trim();
 
     if (password != confirmed) {
       _shakeCtrl.forward(from: 0);
@@ -122,6 +143,7 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen>
       password,
       hint: hintAnswer,
       hintQuestion: hintQuestion,
+      fullName: fullName,
     );
     if (mounted) {
       ref.read(authProvider.notifier).onPasswordSet();
@@ -164,6 +186,8 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen>
                         const SizedBox(height: 24),
                         _buildTitle(),
                         const SizedBox(height: 32),
+                        _buildFullNameField(),
+                        const SizedBox(height: 16),
                         _buildCreateField(),
                         AnimatedSize(
                           duration: const Duration(milliseconds: 300),
@@ -250,6 +274,43 @@ class _SetPasswordScreenState extends ConsumerState<SetPasswordScreen>
         onToggle: () => setState(() => _obscureCreate = !_obscureCreate),
         onSubmit: _step == _SetStep.create ? _onCreateSubmit : null,
         enabled: !_isSaving,
+      ),
+    );
+  }
+
+  Widget _buildFullNameField() {
+    return SlideTransition(
+      position: _shakeAnim,
+      child: TextField(
+        controller: _fullNameController,
+        focusNode: _fullNameFocus,
+        enabled: !_isSaving,
+        style: const TextStyle(color: Colors.white, fontSize: 15),
+        cursorColor: Colors.white70,
+        textCapitalization: TextCapitalization.words,
+        textInputAction: TextInputAction.next,
+        onSubmitted: (_) => _createFocus.requestFocus(),
+        decoration: InputDecoration(
+          hintText: 'Your full name',
+          hintStyle: TextStyle(
+              color: Colors.white.withValues(alpha: 0.35), fontSize: 15),
+          filled: true,
+          fillColor: Colors.white.withValues(alpha: 0.1),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: Colors.white54, width: 1.5),
+          ),
+        ),
       ),
     );
   }

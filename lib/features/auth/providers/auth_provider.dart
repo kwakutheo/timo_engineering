@@ -54,9 +54,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
 
     final hasPassword = await _service.hasPassword();
+    final hasFullName = (await _service.getUserFullName()) != null;
     state = AuthState(
-      isLocked: hasPassword,
-      isFirstLaunch: !hasPassword,
+      isLocked: hasPassword && hasFullName,
+      isFirstLaunch: !hasPassword || !hasFullName,
       isLoading: false,
     );
   }
