@@ -6,7 +6,7 @@ import 'data/datasources/local_db.dart';
 import 'data/datasources/storage_service.dart';
 import 'data/datasources/sync_service.dart';
 import 'features/auth/widgets/app_lock_wrapper.dart';
-import 'features/invoice/screens/home_screen.dart';
+import 'features/invoice/screens/main_shell_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,7 +52,7 @@ class TimosInvoiceApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       home: const AppLockWrapper(
-        child: HomeScreen(),
+        child: MainShellScreen(),
       ),
     );
   }

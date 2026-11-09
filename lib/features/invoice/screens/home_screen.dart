@@ -13,9 +13,9 @@ import '../controllers/client_controller.dart';
 import '../services/pdf_service.dart';
 import '../widgets/home_empty_state.dart';
 import '../widgets/invoice_card.dart';
+import '../widgets/navigation_tab_pills.dart';
 import '../widgets/pdf_document_choice_dialog.dart';
 import '../widgets/search_bar_widget.dart';
-import '../widgets/stats_row.dart';
 import 'invoice_form_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -173,10 +173,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   // Search bar
                   const SliverToBoxAdapter(child: InvoiceSearchBar()),
 
-                  // Stats
-                  if (allInvoices.isNotEmpty)
-                    SliverToBoxAdapter(child: StatsRow(invoices: allInvoices)),
-
                   // List
                   if (filtered.isEmpty)
                     SliverFillRemaining(
@@ -199,8 +195,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               onPrint: () => _print(context, invoice),
                               onSave: () => _savePdf(context, invoice),
                               onShare: () => _share(context, invoice),
-                              onDelete: () =>
-                                  _deleteInvoice(context, invoice),
+                              onDelete: () => _deleteInvoice(context, invoice),
                               onConfirmDismiss: () =>
                                   _confirmDelete(context, invoice),
                             );
@@ -296,6 +291,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 fontWeight: FontWeight.w900,
                 letterSpacing: 0.8,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
             Text(
               'Invoice Manager',
@@ -304,6 +301,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 fontSize: isMobile ? 9 : 10,
                 fontWeight: FontWeight.w400,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -360,6 +359,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
       ),
       actions: [
+        if (!isMobile) ...[
+          const Center(child: NavigationTabPills()),
+          const SizedBox(width: 8),
+        ],
         _buildSyncButton(context),
         IconButton(
           tooltip: 'Refresh',
@@ -429,7 +432,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             break;
           case SyncStatus.success:
             icon = const Icon(Icons.cloud_done_rounded,
-                color: Color.fromARGB(255, 39, 1, 255), size: 22);
+                color: Color.fromARGB(255, 255, 255, 255), size: 22);
             tooltip = 'Cloud synced';
             break;
           case SyncStatus.offline:
@@ -578,26 +581,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     tooltip: 'First page',
                     icon: const Icon(Icons.first_page_rounded, size: 22),
                     color: AppColors.primaryBlack,
-                    disabledColor:
-                        AppColors.textGrey.withValues(alpha: 0.35),
-                    onPressed: currentPage > 1
-                        ? () => _goToPage(1, totalPages)
-                        : null,
+                    disabledColor: AppColors.textGrey.withValues(alpha: 0.35),
+                    onPressed:
+                        currentPage > 1 ? () => _goToPage(1, totalPages) : null,
                   ),
                   IconButton(
                     tooltip: 'Previous page',
                     icon: const Icon(Icons.chevron_left_rounded, size: 22),
                     color: AppColors.primaryBlack,
-                    disabledColor:
-                        AppColors.textGrey.withValues(alpha: 0.35),
+                    disabledColor: AppColors.textGrey.withValues(alpha: 0.35),
                     onPressed: currentPage > 1
                         ? () => _goToPage(currentPage - 1, totalPages)
                         : null,
                   ),
                   const SizedBox(width: 4),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(
                       color: AppColors.primaryYellow.withValues(alpha: 0.22),
                       borderRadius: BorderRadius.circular(8),
@@ -620,8 +620,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     tooltip: 'Next page',
                     icon: const Icon(Icons.chevron_right_rounded, size: 22),
                     color: AppColors.primaryBlack,
-                    disabledColor:
-                        AppColors.textGrey.withValues(alpha: 0.35),
+                    disabledColor: AppColors.textGrey.withValues(alpha: 0.35),
                     onPressed: currentPage < totalPages
                         ? () => _goToPage(currentPage + 1, totalPages)
                         : null,
@@ -630,8 +629,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     tooltip: 'Last page',
                     icon: const Icon(Icons.last_page_rounded, size: 22),
                     color: AppColors.primaryBlack,
-                    disabledColor:
-                        AppColors.textGrey.withValues(alpha: 0.35),
+                    disabledColor: AppColors.textGrey.withValues(alpha: 0.35),
                     onPressed: currentPage < totalPages
                         ? () => _goToPage(totalPages, totalPages)
                         : null,
@@ -680,8 +678,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               const SizedBox(width: 10),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: AppColors.scaffoldBg,
                   borderRadius: BorderRadius.circular(6),
@@ -718,8 +715,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8)),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     textStyle: const TextStyle(
                         fontSize: 12.5, fontWeight: FontWeight.w600),
                   ),
@@ -752,8 +749,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         borderRadius: BorderRadius.circular(8),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primaryYellow
-                                .withValues(alpha: 0.35),
+                            color:
+                                AppColors.primaryYellow.withValues(alpha: 0.35),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),
@@ -813,8 +810,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8)),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     textStyle: const TextStyle(
                         fontSize: 12.5, fontWeight: FontWeight.w600),
                   ),

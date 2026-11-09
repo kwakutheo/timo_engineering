@@ -11,8 +11,13 @@ class StatsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final total = invoices.fold(0.0, (s, inv) => s + inv.grandTotal);
-    final transportTotal =
-        invoices.fold(0.0, (s, inv) => s + inv.transportationAmount + inv.labourAmount + inv.otherChargesAmount);
+    final transportTotal = invoices.fold(
+        0.0,
+        (s, inv) =>
+            s +
+            inv.transportationAmount +
+            inv.labourAmount +
+            inv.otherChargesAmount);
     final isMobile = MediaQuery.sizeOf(context).width < 600;
 
     final cards = [
@@ -211,8 +216,8 @@ class _StatCard extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style:
-                        const TextStyle(fontSize: 10, color: AppColors.textGrey),
+                    style: const TextStyle(
+                        fontSize: 10, color: AppColors.textGrey),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
