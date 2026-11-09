@@ -430,8 +430,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         _buildSyncButton(context),
         IconButton(
           tooltip: 'Refresh',
-          icon:
-              const Icon(Icons.refresh_rounded, color: AppColors.primaryBlack),
+          icon: const Icon(Icons.refresh_rounded,
+              color: Color.fromARGB(255, 255, 255, 255)),
           onPressed: () {
             ref.invalidate(allInvoicesProvider);
             ref.invalidate(allClientsProvider);
@@ -440,7 +440,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ),
         PopupMenuButton<String>(
           icon: const Icon(Icons.security_outlined,
-              color: AppColors.primaryBlack),
+              color: Color.fromARGB(255, 255, 255, 255)),
           tooltip: 'Security',
           onSelected: (value) => _onSecurityAction(context, value),
           itemBuilder: (_) => [

@@ -70,8 +70,9 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                       labelText: 'Client / Contact Name *',
                       border: OutlineInputBorder(),
                     ),
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Name is required'
+                        : null,
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
@@ -267,8 +268,8 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
         ],
         IconButton(
           tooltip: 'Refresh',
-          icon:
-              const Icon(Icons.refresh_rounded, color: AppColors.primaryBlack),
+          icon: const Icon(Icons.refresh_rounded,
+              color: Color.fromARGB(255, 255, 255, 255)),
           onPressed: () {
             ref.invalidate(allClientsProvider);
             SyncService.instance.sync();
@@ -276,7 +277,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
         ),
         PopupMenuButton<String>(
           icon: const Icon(Icons.security_outlined,
-              color: AppColors.primaryBlack),
+              color: Color.fromARGB(255, 255, 255, 255)),
           tooltip: 'Security',
           onSelected: (value) {
             if (value == 'change_pin') {
@@ -373,7 +374,8 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                     const SizedBox(width: 12),
                     ElevatedButton.icon(
                       onPressed: () => _openClientDialog(),
-                      icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
+                      icon:
+                          const Icon(Icons.person_add_alt_1_rounded, size: 18),
                       label: Text(isMobile ? 'Add' : 'Add Client'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryYellow,

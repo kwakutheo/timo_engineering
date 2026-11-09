@@ -233,27 +233,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       floatingActionButton: isMobile
           ? FloatingActionButton(
               onPressed: () => _createNew(context),
-              backgroundColor: AppColors.primaryYellow,
+              backgroundColor: AppColors.success,
               elevation: 6,
               shape: const CircleBorder(),
               tooltip: 'New Invoice',
               child: const Icon(Icons.add,
-                  color: AppColors.primaryBlack, size: 28),
+                  color: Color.fromARGB(255, 255, 255, 255), size: 28),
             )
           : FloatingActionButton.extended(
               onPressed: () => _createNew(context),
               mouseCursor: SystemMouseCursors.click,
               shape: const StadiumBorder(),
-              icon: const Icon(Icons.add, color: AppColors.primaryBlack),
+              icon: const Icon(Icons.add,
+                  color: Color.fromARGB(255, 255, 255, 255)),
               label: const Text(
                 'New Invoice',
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 14,
-                  color: AppColors.primaryBlack,
+                  color: Color.fromARGB(255, 255, 255, 255),
                 ),
               ),
-              backgroundColor: AppColors.primaryYellow,
+              backgroundColor: AppColors.success,
               elevation: 6,
             ),
     );
@@ -366,8 +367,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         _buildSyncButton(context),
         IconButton(
           tooltip: 'Refresh',
-          icon:
-              const Icon(Icons.refresh_rounded, color: AppColors.primaryBlack),
+          icon: const Icon(Icons.refresh_rounded,
+              color: Color.fromARGB(255, 255, 255, 255)),
           onPressed: () {
             ref.invalidate(allInvoicesProvider);
             SyncService.instance.sync();
@@ -375,7 +376,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
         PopupMenuButton<String>(
           icon: const Icon(Icons.security_outlined,
-              color: AppColors.primaryBlack),
+              color: Color.fromARGB(255, 255, 255, 255)),
           tooltip: 'Security',
           onSelected: (value) => _onSecurityAction(context, value),
           itemBuilder: (_) => [
