@@ -340,7 +340,8 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                             .read(clientSearchQueryProvider.notifier)
                             .state = v,
                         decoration: InputDecoration(
-                          hintText: 'Search clients by name, company, phone…',
+                          hintText:
+                              'Search clients by name, company, phone, address…',
                           prefixIcon: const Icon(
                             Icons.search,
                             color: AppColors.primaryBlack,

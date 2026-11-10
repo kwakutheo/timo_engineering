@@ -233,28 +233,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       floatingActionButton: isMobile
           ? FloatingActionButton(
               onPressed: () => _createNew(context),
-              backgroundColor: AppColors.success,
+              backgroundColor: AppColors.primaryYellow,
               elevation: 6,
               shape: const CircleBorder(),
               tooltip: 'New Invoice',
               child: const Icon(Icons.add,
-                  color: Color.fromARGB(255, 255, 255, 255), size: 28),
+                  color: Color.fromARGB(255, 3, 3, 3), size: 28),
             )
           : FloatingActionButton.extended(
               onPressed: () => _createNew(context),
               mouseCursor: SystemMouseCursors.click,
               shape: const StadiumBorder(),
-              icon: const Icon(Icons.add,
-                  color: Color.fromARGB(255, 255, 255, 255)),
+              icon: const Icon(Icons.add, color: Color.fromARGB(255, 0, 0, 0)),
               label: const Text(
                 'New Invoice',
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 14,
-                  color: Color.fromARGB(255, 255, 255, 255),
+                  color: Color.fromARGB(255, 0, 0, 0),
                 ),
               ),
-              backgroundColor: AppColors.success,
+              backgroundColor: AppColors.primaryYellow,
               elevation: 6,
             ),
     );

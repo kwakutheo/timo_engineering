@@ -710,8 +710,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                     : const Icon(Icons.save_outlined),
                 label: Text(_isSaving ? 'Saving…' : 'Save Invoice'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.success,
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppColors.primaryYellow,
+                  foregroundColor: Colors.black,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
@@ -855,8 +855,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.success,
-                foregroundColor: Colors.white,
+                backgroundColor: AppColors.primaryYellow,
+                foregroundColor: Colors.black,
               ),
               onPressed: () =>
                   Navigator.of(ctx).pop(_ContactConflictAction.updateExisting),
