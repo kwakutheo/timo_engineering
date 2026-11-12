@@ -87,6 +87,15 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
       } else {
         notifier.reset();
       }
+      // For new invoices (no src), auto-set next service date = today + 90 days
+      if (_nextServiceDate == null && mounted) {
+        final autoDate = ref
+            .read(invoiceFormProvider)
+            .date
+            .add(const Duration(days: 90));
+        setState(() => _nextServiceDate = autoDate);
+        ref.read(invoiceFormProvider.notifier).updateNextServiceDate(autoDate);
+      }
     });
 
     final src = widget.existing ?? widget.duplicateFrom;
@@ -116,7 +125,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
           ? src!.labourAmount.toStringAsFixed(2)
           : '',
     );
-    _nextServiceDate = src?.nextServiceDate;
+    _nextServiceDate = src?.nextServiceDate ?? src?.date.add(const Duration(days: 90));
 
     final initialItems = src?.items ?? [InvoiceItem()];
     for (final item in initialItems) {
@@ -1135,33 +1144,12 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                   onChanged: (v) =>
                       ref.read(invoiceFormProvider.notifier).updateModel(v)),
               const SizedBox(height: 10),
-              // Next Service Date
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('NEXT SERVICE DATE',
-                      style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primaryBlack)),
-                  const SizedBox(height: 4),
-                  InkWell(
-                    onTap: _pickNextServiceDate,
-                    child: InputDecorator(
-                      decoration: const InputDecoration(),
-                      child: Text(
-                        _nextServiceDate != null
-                            ? '${_nextServiceDate!.day.toString().padLeft(2, '0')}/${_nextServiceDate!.month.toString().padLeft(2, '0')}/${_nextServiceDate!.year}'
-                            : 'Tap to select…',
-                        style: TextStyle(
-                          color: _nextServiceDate != null
-                              ? AppColors.textDark
-                              : AppColors.textGrey,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+              // Next Service Date (auto: invoice date + 90 days, read-only)
+              _readOnlyField(
+                'NEXT SERVICE DATE',
+                _nextServiceDate != null
+                    ? '${_nextServiceDate!.day.toString().padLeft(2, '0')}/${_nextServiceDate!.month.toString().padLeft(2, '0')}/${_nextServiceDate!.year}'
+                    : '—',
               ),
             ],
           ),
@@ -1191,34 +1179,13 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                       ref.read(invoiceFormProvider.notifier).updateModel(v)),
             ),
             const SizedBox(width: 8),
-            // Next Service Date
+            // Next Service Date (auto: invoice date + 90 days, read-only)
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('NEXT SERVICE DATE',
-                      style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primaryBlack)),
-                  const SizedBox(height: 4),
-                  InkWell(
-                    onTap: _pickNextServiceDate,
-                    child: InputDecorator(
-                      decoration: const InputDecoration(),
-                      child: Text(
-                        _nextServiceDate != null
-                            ? '${_nextServiceDate!.day.toString().padLeft(2, '0')}/${_nextServiceDate!.month.toString().padLeft(2, '0')}/${_nextServiceDate!.year}'
-                            : 'Tap to select…',
-                        style: TextStyle(
-                          color: _nextServiceDate != null
-                              ? AppColors.textDark
-                              : AppColors.textGrey,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+              child: _readOnlyField(
+                'NEXT SERVICE DATE',
+                _nextServiceDate != null
+                    ? '${_nextServiceDate!.day.toString().padLeft(2, '0')}/${_nextServiceDate!.month.toString().padLeft(2, '0')}/${_nextServiceDate!.year}'
+                    : '—',
               ),
             ),
           ],
@@ -2187,21 +2154,6 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
         ],
       ),
     );
-  }
-
-  // ── Next Service Date picker ──────────────────────────────────────────────
-  Future<void> _pickNextServiceDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate:
-          _nextServiceDate ?? DateTime.now().add(const Duration(days: 90)),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 3650)),
-    );
-    if (picked != null) {
-      setState(() => _nextServiceDate = picked);
-      ref.read(invoiceFormProvider.notifier).updateNextServiceDate(picked);
-    }
   }
 
   Widget _sectionHeader(String title) {
