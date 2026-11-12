@@ -197,7 +197,11 @@ class PdfService {
                     _buildTotalsBox(invoice, contentWidth, 96),
                     pw.SizedBox(height: 6),
 
-                    // ── 7. Signature Section ─────────────────────────────────
+                    // ── 7. Invoice Validity Notice ───────────────────────────
+                    _buildValidityNotice(invoice, dateFmt, contentWidth),
+                    pw.SizedBox(height: 6),
+
+                    // ── 8. Signature Section ─────────────────────────────────
                     _buildSignatureSection(invoice, contentWidth),
                   ],
                 ),
@@ -1091,7 +1095,53 @@ class PdfService {
     );
   }
 
-  // ── 7. Signature Section ──────────────────────────────────────────────────
+  // ── 7. Invoice Validity Notice ────────────────────────────────────────────
+
+  static pw.Widget _buildValidityNotice(
+      Invoice invoice, DateFormat dateFmt, double width) {
+    final expiryDate = DateTime(
+      invoice.date.year,
+      invoice.date.month + 1,
+      invoice.date.day,
+    );
+    final expiryStr = dateFmt.format(expiryDate);
+    final boldStyle = pw.TextStyle(fontWeight: pw.FontWeight.bold);
+
+    return pw.Container(
+      width: width,
+      padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: pw.BoxDecoration(
+        color: const PdfColor.fromInt(0xFFFFF8D8),
+        border: pw.Border.all(color: _yellow, width: 0.8),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(3)),
+      ),
+      child: pw.RichText(
+        text: pw.TextSpan(
+          style: const pw.TextStyle(fontSize: 7.8, color: _black),
+          children: [
+            pw.TextSpan(
+              text: 'INVOICE VALIDITY NOTICE: ',
+              style: boldStyle,
+            ),
+            const pw.TextSpan(
+              text:
+                  'This invoice is valid for 30 days from the date of issue and expires on ',
+            ),
+            pw.TextSpan(
+              text: expiryStr,
+              style: boldStyle,
+            ),
+            const pw.TextSpan(
+              text:
+                  '. Upon expiry, a new invoice will be issued with an updated terms.',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── 8. Signature Section ──────────────────────────────────────────────────
 
   static pw.Widget _buildSignatureSection(Invoice invoice, double width) {
     return pw.SizedBox(
