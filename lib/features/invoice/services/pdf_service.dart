@@ -158,7 +158,7 @@ class PdfService {
               headerImg,
               width: pageWidth,
               height: pageWidth /
-                  3.9174, // Aspect ratio of updated full_header.png (2609x666)
+                  5.9174, // Aspect ratio of updated full_header.png (2609x666)
               fit: pw.BoxFit.fill,
             ),
 
@@ -266,7 +266,7 @@ class PdfService {
     double width,
   ) {
     // invoice.png aspect ratio: 2581 / 244 = 10.5779
-    final height = width / 10.5779;
+    final height = width / 13.5779;
 
     return pw.SizedBox(
       width: width,
@@ -281,7 +281,7 @@ class PdfService {
           // Invoice No overlay (line y: 86/244 = 0.352, x: 1821 to 2522 in invoice.png)
           pw.Positioned(
             left: width * 0.710,
-            top: height * 0.15,
+            top: height * 0.10,
             child: pw.SizedBox(
               width: width * 0.265,
               child: pw.Text(
@@ -298,7 +298,7 @@ class PdfService {
           // Date overlay (line y: 195/244 = 0.799, x: 1821 to 2522 in invoice.png)
           pw.Positioned(
             left: width * 0.710,
-            top: height * 0.59,
+            top: height * 0.65,
             child: pw.SizedBox(
               width: width * 0.265,
               child: pw.Text(
@@ -325,7 +325,7 @@ class PdfService {
     double width,
   ) {
     // customer_details.png aspect ratio: 2590 / 331 = 7.8248
-    final height = width / 7.8248;
+    final height = width / 9.8248;
 
     return pw.SizedBox(
       width: width,
@@ -339,8 +339,8 @@ class PdfService {
           ),
           // Customer Name (line 1 left, y: 98/331 = 0.296, x: 515 to 1558)
           pw.Positioned(
-            left: width * 0.202,
-            top: height * 0.13,
+            left: width * 0.070,
+            top: height * 0.37,
             child: pw.SizedBox(
               width: width * 0.395,
               child: pw.Text(
@@ -356,8 +356,8 @@ class PdfService {
           ),
           // Bill To (line 1 right, y: 98/331 = 0.296, x: 1829 to 2538)
           pw.Positioned(
-            left: width * 0.710,
-            top: height * 0.13,
+            left: width * 0.570,
+            top: height * 0.37,
             child: pw.SizedBox(
               width: width * 0.265,
               child: pw.Text(
@@ -373,8 +373,8 @@ class PdfService {
           ),
           // Customer Address (line 2, y: 190/331 = 0.574, x: 515 to 2538)
           pw.Positioned(
-            left: width * 0.202,
-            top: height * 0.41,
+            left: width * 0.095,
+            top: height * 0.73,
             child: pw.SizedBox(
               width: width * 0.770,
               child: pw.Text(
@@ -390,8 +390,8 @@ class PdfService {
           ),
           // Customer Phone (line 3, y: 283/331 = 0.855, x: 515 to 2538)
           pw.Positioned(
-            left: width * 0.202,
-            top: height * 0.69,
+            left: width * 0.570,
+            top: height * 0.73,
             child: pw.SizedBox(
               width: width * 0.770,
               child: pw.Text(
@@ -418,7 +418,7 @@ class PdfService {
     double width,
   ) {
     // generator_details.png aspect ratio: 2590 / 387 = 6.6925
-    final height = width / 6.6925;
+    final height = width / 9.6925;
 
     String nextServiceDateStr = '';
     if (invoice.nextServiceDate != null) {
@@ -441,8 +441,8 @@ class PdfService {
           ),
           // Generator Model / Make (line y: 305/387 = 0.788, x: 84 to 650)
           pw.Positioned(
-            left: width * 0.034,
-            top: height * 0.64,
+            left: width * 0.030,
+            top: height * 0.70,
             child: pw.SizedBox(
               width: width * 0.216,
               child: pw.Text(
@@ -458,8 +458,8 @@ class PdfService {
           ),
           // Engine Running Hours (line y: 305/387 = 0.788, x: 1099 to 1695)
           pw.Positioned(
-            left: width * 0.426,
-            top: height * 0.64,
+            left: width * 0.422,
+            top: height * 0.70,
             child: pw.SizedBox(
               width: width * 0.228,
               child: pw.Text(
@@ -475,8 +475,8 @@ class PdfService {
           ),
           // Next Service Date (unified single line: y: 305/387 = 0.788, x: 2059 to 2507)
           pw.Positioned(
-            left: width * 0.795,
-            top: height * 0.64,
+            left: width * 0.755,
+            top: height * 0.70,
             child: pw.SizedBox(
               width: width * 0.173,
               child: pw.Center(
@@ -500,13 +500,13 @@ class PdfService {
   // ── 5. Items Table ────────────────────────────────────────────────────────
 
   static pw.Widget _buildItemsTable(Invoice invoice, double width) {
-    const minRows = 8;
+    const minRows = 10;
     const col1Width = 330.0;
     const col2Width = 60.0;
     const col3Width = 90.0;
     const col4Width = 94.0; // sum = 574.0
 
-    // The compact totals panel leaves space for eight standard item rows.
+    // The compact totals panel leaves space for ten standard item rows.
     final rowHeight = invoice.items.length <= minRows
         ? 22.0
         : (176.0 / invoice.items.length).clamp(14.0, 22.0);
@@ -619,7 +619,7 @@ class PdfService {
       decoration: pw.BoxDecoration(
         border: showBottomBorder
             ? const pw.Border(
-                bottom: pw.BorderSide(color: _yellow, width: 0.8),
+                bottom: pw.BorderSide(color: _yellow, width: 0.6),
               )
             : null,
       ),

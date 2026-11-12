@@ -1296,7 +1296,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
               children: [
                 SizedBox(
                   width: 32,
-                  child: Text('NO',
+                  child: Text('',
                       style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -1304,7 +1304,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                       textAlign: TextAlign.center),
                 ),
                 Expanded(
-                  child: Text('DESCRIPTION OF GOODS / SERVICE',
+                  child: Text('DESCRIPTION OF GOODS / SERVICES',
                       style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -1533,7 +1533,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // Section header
-        _sectionHeader('ITEMS / SERVICES'),
+        _sectionHeader('DESCRIPTION OF GOODS / SERVICES'),
         const SizedBox(height: 8),
 
         // Item cards

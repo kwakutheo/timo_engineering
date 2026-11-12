@@ -42,7 +42,7 @@ final filteredInvoicesProvider = Provider<AsyncValue<List<Invoice>>>((ref) {
 class InvoiceFormNotifier extends StateNotifier<Invoice> {
   /// An invoice is intentionally limited to keep the form and printed layout
   /// clear and practical for users.
-  static const maxItems = 10;
+  static const maxItems = 20;
 
   final InvoiceRepository _repo;
   bool _isEditing = false;
