@@ -144,74 +144,121 @@ class PdfService {
     final footerImg = await _loadFooter();
 
     final pageWidth = PdfPageFormat.a4.width;
+    final pageHeight = PdfPageFormat.a4.height;
     const contentWidth = 574.0;
+    const minRows = 10;
+
+    // ── Compute section heights from asset aspect ratios ──────────────────
+    final headerH = pageWidth / 5.9174;
+    final footerH = pageWidth / 8.057;
+    const bannerH = contentWidth / 10.5779;
+    const customerH = contentWidth / 7.8248;
+    const generatorH = contentWidth / 6.6925;
+    const tableHeaderH = 22.0;
+    const totalsNormal = 96.0;
+    const totalsCompact = 92.0;
+    const validityH = 30.0; // ~2 wrapped lines of text at 7.8pt
+    const signatureH = 51.0; // 3 sig lines × (13pt + 6pt gap)
+
+    // ── Compact mode: kick in when items exceed the normal minimum ────────
+    final itemCount = invoice.items.length;
+    final isCompact = itemCount > minRows;
+    final gap = isCompact ? 3.0 : 5.0; // between sections
+    final gapPost = isCompact ? 4.0 : 6.0; // after totals / validity
+    final totalsH = isCompact ? totalsCompact : totalsNormal;
+    final validityPadV = isCompact ? 4.0 : 6.0;
+
+    // ── Row height: fills available space exactly, stays readable ─────────
+    // Available = page height − footer − all fixed sections above/below table
+    final fixedH = headerH
+        + gap + bannerH
+        + gap + customerH
+        + gap + generatorH
+        + gap + tableHeaderH // gap before table + table header row
+        + gap + totalsH // gap after table rows + totals box
+        + gapPost + validityH
+        + gapPost + signatureH;
+
+    final availableForRows = (pageHeight - footerH) - fixedH;
+    final effectiveRows = itemCount > minRows ? itemCount : minRows;
+    final rowHeight = (availableForRows / effectiveRows).clamp(12.0, 22.0);
 
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
         margin: pw.EdgeInsets.zero,
-        build: (ctx) => pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+        build: (ctx) => pw.Stack(
           children: [
-            // ── 1. Full-bleed Company Header ───────────────────────────────
-            pw.Image(
-              headerImg,
-              width: pageWidth,
-              height: pageWidth /
-                  5.9174, // Aspect ratio of updated full_header.png (2609x666)
-              fit: pw.BoxFit.fill,
-            ),
-
-            // ── Body Elements with Horizontal Margins ──────────────────────
-            pw.Align(
-              alignment: pw.Alignment.topCenter,
-              child: pw.SizedBox(
-                width: contentWidth,
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-                  children: [
-                    pw.SizedBox(height: 5),
-
-                    // ── 2. INVOICE Banner ────────────────────────────────────
-                    _buildInvoiceBanner(
-                      invoiceImg,
-                      invoice,
-                      dateFmt.format(invoice.date),
-                      contentWidth,
-                    ),
-                    pw.SizedBox(height: 5),
-
-                    // ── 3. Customer Details ──────────────────────────────────
-                    _buildCustomerSection(customerImg, invoice, contentWidth),
-                    pw.SizedBox(height: 5),
-
-                    // ── 4. Generator Details ─────────────────────────────────
-                    _buildGeneratorDetails(generatorImg, invoice, contentWidth),
-                    pw.SizedBox(height: 5),
-
-                    // ── 5. Items Table ───────────────────────────────────────
-                    _buildItemsTable(invoice, contentWidth),
-                    pw.SizedBox(height: 5),
-
-                    // ── 6. Invoice totals ───────────────────────────────────
-                    _buildTotalsBox(invoice, contentWidth, 96),
-                    pw.SizedBox(height: 6),
-
-                    // ── 7. Invoice Validity Notice ───────────────────────────
-                    _buildValidityNotice(invoice, dateFmt, contentWidth),
-                    pw.SizedBox(height: 6),
-
-                    // ── 8. Signature Section ─────────────────────────────────
-                    _buildSignatureSection(invoice, contentWidth),
-                  ],
+            // ── Content column (header + body) ────────────────────────────
+            pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+              children: [
+                // ── 1. Full-bleed Company Header ───────────────────────────
+                pw.Image(
+                  headerImg,
+                  width: pageWidth,
+                  height: headerH,
+                  fit: pw.BoxFit.fill,
                 ),
-              ),
+
+                // ── Body Elements with Horizontal Margins ──────────────────
+                pw.Align(
+                  alignment: pw.Alignment.topCenter,
+                  child: pw.SizedBox(
+                    width: contentWidth,
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+                      children: [
+                        pw.SizedBox(height: gap),
+
+                        // ── 2. INVOICE Banner ────────────────────────────────
+                        _buildInvoiceBanner(
+                          invoiceImg,
+                          invoice,
+                          dateFmt.format(invoice.date),
+                          contentWidth,
+                        ),
+                        pw.SizedBox(height: gap),
+
+                        // ── 3. Customer Details ──────────────────────────────
+                        _buildCustomerSection(
+                            customerImg, invoice, contentWidth),
+                        pw.SizedBox(height: gap),
+
+                        // ── 4. Generator Details ─────────────────────────────
+                        _buildGeneratorDetails(
+                            generatorImg, invoice, contentWidth),
+                        pw.SizedBox(height: gap),
+
+                        // ── 5. Items Table ───────────────────────────────────
+                        _buildItemsTable(invoice, contentWidth,
+                            rowHeight: rowHeight, minRows: minRows),
+                        pw.SizedBox(height: gap),
+
+                        // ── 6. Invoice Totals ────────────────────────────────
+                        _buildTotalsBox(invoice, contentWidth, totalsH),
+                        pw.SizedBox(height: gapPost),
+
+                        // ── 7. Invoice Validity Notice ───────────────────────
+                        _buildValidityNotice(invoice, dateFmt, contentWidth,
+                            verticalPadding: validityPadV),
+                        pw.SizedBox(height: gapPost),
+
+                        // ── 8. Signature Section ─────────────────────────────
+                        _buildSignatureSection(invoice, contentWidth),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
 
-            pw.Spacer(),
-
-            // ── 8. Full-bleed Footer ───────────────────────────────────────
-            _buildFooter(footerImg, pageWidth),
+            // ── Footer pinned permanently to the bottom of the page ───────
+            pw.Positioned(
+              bottom: 0,
+              left: 0,
+              child: _buildFooter(footerImg, pageWidth),
+            ),
           ],
         ),
       ),
@@ -503,17 +550,16 @@ class PdfService {
 
   // ── 5. Items Table ────────────────────────────────────────────────────────
 
-  static pw.Widget _buildItemsTable(Invoice invoice, double width) {
-    const minRows = 10;
+  static pw.Widget _buildItemsTable(
+    Invoice invoice,
+    double width, {
+    required double rowHeight,
+    required int minRows,
+  }) {
     const col1Width = 330.0;
     const col2Width = 60.0;
     const col3Width = 90.0;
     const col4Width = 94.0; // sum = 574.0
-
-    // The compact totals panel leaves space for ten standard item rows.
-    final rowHeight = invoice.items.length <= minRows
-        ? 22.0
-        : (176.0 / invoice.items.length).clamp(14.0, 22.0);
 
     // Header row
     final headerRow = pw.Container(
@@ -1098,7 +1144,8 @@ class PdfService {
   // ── 7. Invoice Validity Notice ────────────────────────────────────────────
 
   static pw.Widget _buildValidityNotice(
-      Invoice invoice, DateFormat dateFmt, double width) {
+      Invoice invoice, DateFormat dateFmt, double width,
+      {double verticalPadding = 6.0}) {
     final expiryDate = DateTime(
       invoice.date.year,
       invoice.date.month + 1,
@@ -1109,7 +1156,7 @@ class PdfService {
 
     return pw.Container(
       width: width,
-      padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: pw.EdgeInsets.symmetric(horizontal: 10, vertical: verticalPadding),
       decoration: pw.BoxDecoration(
         color: const PdfColor.fromInt(0xFFFFF8D8),
         border: pw.Border.all(color: _yellow, width: 0.8),
