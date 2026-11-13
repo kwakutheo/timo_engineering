@@ -151,4 +151,29 @@ void main() {
     expect(bytes, isNotEmpty);
     expect(doc.document.pdfPageList.pages, hasLength(2));
   });
+
+  test('PdfService.buildPdf accommodates 20 items on page 1 without overflow',
+      () async {
+    final invoice = Invoice(
+      invoiceNumber: 'TI-2026-20ITEMS',
+      clientName: 'Max Items Client',
+      address: 'Accra, Ghana',
+      phone: '+233 24 123 4567',
+      managerName: 'Kwaku TK',
+      items: List.generate(
+        20,
+        (i) => InvoiceItem(
+          description: 'Comprehensive generator maintenance service part #$i',
+          quantity: 1,
+          price: 110.0,
+        ),
+      ),
+    );
+
+    final doc =
+        await PdfService.buildPdf(invoice, includeServiceReport: false);
+    final bytes = await doc.save();
+    expect(bytes, isNotEmpty);
+    expect(doc.document.pdfPageList.pages, hasLength(1));
+  });
 }

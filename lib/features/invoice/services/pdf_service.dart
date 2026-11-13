@@ -151,25 +151,30 @@ class PdfService {
     // ── Compute section heights from asset aspect ratios ──────────────────
     final headerH = pageWidth / 5.9174;
     final footerH = pageWidth / 8.057;
-    const bannerH = contentWidth / 10.5779;
-    const customerH = contentWidth / 7.8248;
-    const generatorH = contentWidth / 6.6925;
+    const bannerH = contentWidth / 13.5779;
+    const customerH = contentWidth / 9.8248;
+    const generatorH = contentWidth / 9.6925;
     const tableHeaderH = 22.0;
     const totalsNormal = 96.0;
     const totalsCompact = 92.0;
-    const validityH = 30.0; // ~2 wrapped lines of text at 7.8pt
     const signatureH = 51.0; // 3 sig lines × (13pt + 6pt gap)
 
-    // ── Compact mode: kick in when items exceed the normal minimum ────────
+    // ── Progressive push-down layout ──────────────────────────────────────
+    // When items <= 10:
+    //   - 10 rows at standard 22.0pt height
+    //   - Signature finishes with ~50pt of natural breathing space above footer
+    // When items > 10 (up to 20):
+    //   - Each additional item pushes down the totals, validity notice, and signature
+    //   - At 20 items, the signature lands just above the footer with a small ~10pt space
     final itemCount = invoice.items.length;
     final isCompact = itemCount > minRows;
     final gap = isCompact ? 3.0 : 5.0; // between sections
     final gapPost = isCompact ? 4.0 : 6.0; // after totals / validity
     final totalsH = isCompact ? totalsCompact : totalsNormal;
     final validityPadV = isCompact ? 4.0 : 6.0;
+    final validityH = isCompact ? 27.0 : 31.0;
 
-    // ── Row height: fills available space exactly, stays readable ─────────
-    // Available = page height − footer − all fixed sections above/below table
+    // Height of all fixed sections (everything on page 1 except table rows)
     final fixedH = headerH +
         gap +
         bannerH +
@@ -178,19 +183,32 @@ class PdfService {
         gap +
         generatorH +
         gap +
-        tableHeaderH // gap before table + table header row
+        tableHeaderH +
+        2.0 // table container border
         +
         gap +
-        totalsH // gap after table rows + totals box
-        +
+        totalsH +
         gapPost +
         validityH +
         gapPost +
         signatureH;
 
-    final availableForRows = (pageHeight - footerH) - fixedH;
+    // Footer starts at (pageHeight - footerH).
+    // Target bottom of content:
+    // At <= 10 items: content ends at ~713.5pt (leaving ~55pt before footer).
+    // At 20 items: content ends at ~758pt (leaving ~10pt before footer).
+    final footerTop = pageHeight - footerH;
+    const baseBottom = 713.5;
+    final maxBottom = footerTop - 10.0;
+
+    final progress = itemCount > minRows
+        ? ((itemCount - minRows) / (20 - minRows)).clamp(0.0, 1.0)
+        : 0.0;
+    final targetBottom = baseBottom + progress * (maxBottom - baseBottom);
+
+    final availableForRows = targetBottom - fixedH;
     final effectiveRows = itemCount > minRows ? itemCount : minRows;
-    final rowHeight = (availableForRows / effectiveRows).clamp(12.0, 22.0);
+    final rowHeight = (availableForRows / effectiveRows).clamp(13.0, 22.0);
 
     pdf.addPage(
       pw.Page(
