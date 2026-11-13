@@ -21,10 +21,8 @@ class PdfService {
   static const _black = PdfColors.black;
   static const _white = PdfColors.white;
 
-  /// The parts table is intentionally hidden from the current PDF layout.
-  /// Keep its builder below because it is planned for a future report version.
-  /// Set this to true when the business approves showing it again.
-  static const _includePartsAndConsumablesSection = false;
+  /// Dedicated parts and consumables page enabled on a separate final page of the report.
+  static const _includePartsAndConsumablesSection = true;
 
   /// Borders for totals boxes and inner lines
   static const _borderGrey = PdfColor.fromInt(0xFFCCCCCC);
@@ -309,7 +307,7 @@ class PdfService {
                   pw.Image(
                     headerImg,
                     width: pageWidth,
-                    height: pageWidth / 3.9174,
+                    height: pageWidth / 5.9174,
                     fit: pw.BoxFit.fill,
                   ),
                   _buildServiceReportHeading(),
@@ -330,6 +328,20 @@ class PdfService {
           ),
         ),
       );
+
+      // Dedicated final page for Parts & Consumables Used
+      if (_includePartsAndConsumablesSection) {
+        pdf.addPage(
+          _buildPartsUsedPage(
+            invoice,
+            dateFmt,
+            headerImg,
+            footerImg,
+            pageWidth,
+            contentWidth,
+          ),
+        );
+      }
     }
 
     return pdf;
@@ -583,9 +595,9 @@ class PdfService {
     required double rowHeight,
     required int minRows,
   }) {
-    const col1Width = 330.0;
-    const col2Width = 60.0;
-    const col3Width = 90.0;
+    const col1Width = 340.0;
+    const col2Width = 55.0;
+    const col3Width = 85.0;
     const col4Width = 94.0; // sum = 574.0
 
     // Header row
@@ -765,12 +777,6 @@ class PdfService {
         'RECOMMENDATIONS / NEXT ACTIONS',
         recommendations,
       )),
-      // Do not remove this block: the parts table is retained for a future
-      // report layout, but is intentionally excluded from PDFs for now.
-      if (_includePartsAndConsumablesSection) ...[
-        pw.SizedBox(height: 8),
-        content(_buildPartsUsedSection(invoice)),
-      ],
       pw.SizedBox(height: 10),
       content(_KeepTogether(child: _buildServiceReportSignOff(invoice))),
     ];
@@ -848,7 +854,7 @@ class PdfService {
         pw.Image(
           headerImg,
           width: width,
-          height: width / 3.9174,
+          height: width / 5.9174,
           fit: pw.BoxFit.fill,
         ),
         pw.Container(
@@ -950,6 +956,80 @@ class PdfService {
     );
   }
 
+  static pw.Page _buildPartsUsedPage(
+    Invoice invoice,
+    DateFormat dateFmt,
+    pw.MemoryImage headerImg,
+    pw.MemoryImage footerImg,
+    double pageWidth,
+    double contentWidth,
+  ) {
+    final horizontalMargin = (pageWidth - contentWidth) / 2;
+
+    return pw.Page(
+      pageFormat: PdfPageFormat.a4,
+      margin: pw.EdgeInsets.zero,
+      build: (context) => pw.Stack(
+        children: [
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+            children: [
+              // Branded Header (matching report heading style)
+              pw.Image(
+                headerImg,
+                width: pageWidth,
+                height: pageWidth / 5.9174,
+                fit: pw.BoxFit.fill,
+              ),
+              pw.Container(
+                color: _black,
+                padding:
+                    const pw.EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                child: pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text(
+                      'GENERATOR SERVICE REPORT - PARTS & CONSUMABLES USED',
+                      textAlign: pw.TextAlign.center,
+                      style: pw.TextStyle(
+                        color: _white,
+                        fontSize: 12,
+                        fontWeight: pw.FontWeight.bold,
+                        letterSpacing: 0.9,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              pw.Container(height: 2.5, color: _yellow),
+              pw.SizedBox(height: 10),
+
+              // Content Area
+              pw.Padding(
+                padding: pw.EdgeInsets.symmetric(horizontal: horizontalMargin),
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+                  children: [
+                    _buildReportReferenceCard(invoice, dateFmt),
+                    pw.SizedBox(height: 12),
+                    _buildPartsUsedSection(invoice),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          // Branded Footer pinned at the bottom of the page
+          pw.Positioned(
+            bottom: 0,
+            left: 0,
+            child: _buildFooter(footerImg, pageWidth),
+          ),
+        ],
+      ),
+    );
+  }
+
   static pw.Widget _buildPartsUsedSection(Invoice invoice) {
     final items = invoice.items
         .where((item) =>
@@ -961,18 +1041,6 @@ class PdfService {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.stretch,
       children: [
-        pw.Container(
-          color: _black,
-          padding: const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-          child: pw.Text(
-            'PARTS AND CONSUMABLES USED',
-            style: pw.TextStyle(
-              color: _white,
-              fontSize: 9.5,
-              fontWeight: pw.FontWeight.bold,
-            ),
-          ),
-        ),
         pw.Table(
           border: pw.TableBorder.all(color: _borderGrey, width: 0.6),
           columnWidths: const {
