@@ -23,7 +23,7 @@ class ClientsScreen extends ConsumerStatefulWidget {
 class _ClientsScreenState extends ConsumerState<ClientsScreen> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  static const int _pageSize = 40;
+  static const int _pageSize = 50;
   int _currentPage = 1;
 
   @override
@@ -259,7 +259,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: const Text(
-                  '40 / page',
+                  '50 / page',
                   style: TextStyle(
                     color: AppColors.textGrey,
                     fontWeight: FontWeight.w500,
@@ -784,8 +784,8 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
               loading: () => [
                 const SliverFillRemaining(
                   child: Center(
-                    child:
-                        CircularProgressIndicator(color: AppColors.primaryYellow),
+                    child: CircularProgressIndicator(
+                        color: AppColors.primaryYellow),
                   ),
                 ),
               ],
@@ -837,10 +837,9 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                   ];
                 }
 
-                // 4 cards in a row on desktop/wide screens, responsive fallback for tablet/mobile
-                final crossAxisCount = width >= 950
-                    ? 4
-                    : (width >= 700 ? 3 : (isMobile ? 1 : 2));
+                // 5 cards in a row on desktop/wide screens, responsive fallback for tablet/mobile
+                final crossAxisCount =
+                    width >= 950 ? 5 : (width >= 700 ? 3 : (isMobile ? 1 : 2));
 
                 final totalItems = clients.length;
                 final totalPages =
@@ -869,191 +868,180 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                         crossAxisCount: crossAxisCount,
                         mainAxisSpacing: 12,
                         crossAxisSpacing: 12,
-                        mainAxisExtent: 180,
+                        mainAxisExtent: 165,
                       ),
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
                           final client = pageClients[index];
-                        return Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                                color: AppColors.borderGrey
-                                    .withValues(alpha: 0.5)),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.03),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 16,
-                                    backgroundColor: AppColors.primaryYellow
-                                        .withValues(alpha: 0.3),
-                                    child: Text(
-                                      client.name.isNotEmpty
-                                          ? client.name[0].toUpperCase()
-                                          : 'C',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w800,
-                                        color: AppColors.primaryBlack,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          client.name,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w800,
-                                            fontSize: 14,
-                                            color: AppColors.primaryBlack,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        if (client.billTo.isNotEmpty)
+                          return Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                  color: AppColors.borderGrey
+                                      .withValues(alpha: 0.5)),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.03),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
                                           Text(
-                                            client.billTo,
+                                            client.name,
                                             style: const TextStyle(
-                                              fontSize: 12,
-                                              color: AppColors.textGrey,
+                                              fontWeight: FontWeight.w800,
+                                              fontSize: 14,
+                                              color: AppColors.primaryBlack,
                                             ),
                                             overflow: TextOverflow.ellipsis,
                                           ),
+                                          if (client.billTo.isNotEmpty)
+                                            Text(
+                                              client.billTo,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: AppColors.textGrey,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                    PopupMenuButton<String>(
+                                      icon:
+                                          const Icon(Icons.more_vert, size: 18),
+                                      onSelected: (val) async {
+                                        if (val == 'edit') {
+                                          _openClientDialog(existing: client);
+                                        } else if (val == 'delete') {
+                                          await ref
+                                              .read(clientRepositoryProvider)
+                                              .delete(client.id);
+                                          ref.invalidate(allClientsProvider);
+                                          if (!context.mounted) return;
+                                          _showSnack(
+                                              context, 'Client deleted.');
+                                        }
+                                      },
+                                      itemBuilder: (_) => [
+                                        const PopupMenuItem(
+                                          value: 'edit',
+                                          child: ListTile(
+                                            leading: Icon(Icons.edit_outlined,
+                                                size: 18),
+                                            title: Text('Edit'),
+                                            contentPadding: EdgeInsets.zero,
+                                          ),
+                                        ),
+                                        const PopupMenuItem(
+                                          value: 'delete',
+                                          child: ListTile(
+                                            leading: Icon(Icons.delete_outline,
+                                                size: 18,
+                                                color: AppColors.errorRed),
+                                            title: Text('Delete',
+                                                style: TextStyle(
+                                                    color: AppColors.errorRed)),
+                                            contentPadding: EdgeInsets.zero,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                if (client.phone.isNotEmpty)
+                                  InkWell(
+                                    onTap: () {
+                                      Clipboard.setData(
+                                          ClipboardData(text: client.phone));
+                                      _showSnack(context,
+                                          'Phone copied: ${client.phone}');
+                                    },
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.phone_outlined,
+                                            size: 14,
+                                            color: AppColors.textGrey),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          client.phone,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: AppColors.textGrey,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),
-                                  PopupMenuButton<String>(
-                                    icon: const Icon(Icons.more_vert, size: 18),
-                                    onSelected: (val) async {
-                                      if (val == 'edit') {
-                                        _openClientDialog(existing: client);
-                                      } else if (val == 'delete') {
-                                        await ref
-                                            .read(clientRepositoryProvider)
-                                            .delete(client.id);
-                                        ref.invalidate(allClientsProvider);
-                                        if (!context.mounted) return;
-                                        _showSnack(context, 'Client deleted.');
-                                      }
-                                    },
-                                    itemBuilder: (_) => [
-                                      const PopupMenuItem(
-                                        value: 'edit',
-                                        child: ListTile(
-                                          leading: Icon(Icons.edit_outlined,
-                                              size: 18),
-                                          title: Text('Edit'),
-                                          contentPadding: EdgeInsets.zero,
-                                        ),
-                                      ),
-                                      const PopupMenuItem(
-                                        value: 'delete',
-                                        child: ListTile(
-                                          leading: Icon(Icons.delete_outline,
-                                              size: 18,
-                                              color: AppColors.errorRed),
-                                          title: Text('Delete',
-                                              style: TextStyle(
-                                                  color: AppColors.errorRed)),
-                                          contentPadding: EdgeInsets.zero,
+                                if (client.address.isNotEmpty) ...[
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.location_on_outlined,
+                                          size: 14, color: AppColors.textGrey),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          client.address,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: AppColors.textGrey,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
                                     ],
                                   ),
                                 ],
-                              ),
-                              const Spacer(),
-                              if (client.phone.isNotEmpty)
-                                InkWell(
-                                  onTap: () {
-                                    Clipboard.setData(
-                                        ClipboardData(text: client.phone));
-                                    _showSnack(context,
-                                        'Phone copied: ${client.phone}');
-                                  },
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.phone_outlined,
-                                          size: 14, color: AppColors.textGrey),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        client.phone,
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: AppColors.textGrey,
-                                          fontWeight: FontWeight.w500,
-                                        ),
+                                const SizedBox(height: 10),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 32,
+                                  child: OutlinedButton.icon(
+                                    onPressed: () =>
+                                        _createInvoiceForClient(client),
+                                    icon:
+                                        const Icon(Icons.add_rounded, size: 16),
+                                    label: const Text('Create Invoice'),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: AppColors.primaryBlack,
+                                      side: BorderSide(
+                                        color: AppColors.primaryYellow
+                                            .withValues(alpha: 0.8),
                                       ),
-                                    ],
-                                  ),
-                                ),
-                              if (client.address.isNotEmpty) ...[
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.location_on_outlined,
-                                        size: 14, color: AppColors.textGrey),
-                                    const SizedBox(width: 6),
-                                    Expanded(
-                                      child: Text(
-                                        client.address,
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: AppColors.textGrey,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
                                       ),
+                                      textStyle: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700),
                                     ),
-                                  ],
+                                  ),
                                 ),
                               ],
-                              const SizedBox(height: 10),
-                              SizedBox(
-                                width: double.infinity,
-                                height: 32,
-                                child: OutlinedButton.icon(
-                                  onPressed: () =>
-                                      _createInvoiceForClient(client),
-                                  icon: const Icon(Icons.add_rounded, size: 16),
-                                  label: const Text('Create Invoice'),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: AppColors.primaryBlack,
-                                    side: BorderSide(
-                                      color: AppColors.primaryYellow
-                                          .withValues(alpha: 0.8),
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    textStyle: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                      childCount: pageClients.length,
+                            ),
+                          );
+                        },
+                        childCount: pageClients.length,
+                      ),
                     ),
                   ),
-                ),
-                SliverToBoxAdapter(
+                  SliverToBoxAdapter(
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(
                         isMobile ? 12 : 16,

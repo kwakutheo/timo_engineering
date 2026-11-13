@@ -989,7 +989,7 @@ class PdfService {
                     const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 9),
                 child: pw.Center(
                   child: pw.Text(
-                    'GENERATOR SERVICE REPORT - PARTS & CONSUMABLES USED',
+                    'PARTS & CONSUMABLES USED',
                     textAlign: pw.TextAlign.center,
                     style: pw.TextStyle(
                       color: _white,
@@ -1263,7 +1263,7 @@ class PdfService {
           style: const pw.TextStyle(fontSize: 7.8, color: _black),
           children: [
             pw.TextSpan(
-              text: 'INVOICE VALIDITY NOTICE: ',
+              text: 'NOTE: ',
               style: boldStyle,
             ),
             const pw.TextSpan(
@@ -1276,7 +1276,7 @@ class PdfService {
             ),
             const pw.TextSpan(
               text:
-                  '. Upon expiry, a new invoice will be issued with an updated terms.',
+                  '. Upon expiry, a new invoice will be issued with updated terms.',
             ),
           ],
         ),
