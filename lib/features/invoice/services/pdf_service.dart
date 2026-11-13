@@ -777,8 +777,10 @@ class PdfService {
         'RECOMMENDATIONS / NEXT ACTIONS',
         recommendations,
       )),
-      pw.SizedBox(height: 10),
-      content(_KeepTogether(child: _buildServiceReportSignOff(invoice))),
+      if (!_includePartsAndConsumablesSection) ...[
+        pw.SizedBox(height: 10),
+        content(_KeepTogether(child: _buildServiceReportSignOff(invoice))),
+      ],
     ];
   }
 
@@ -984,24 +986,20 @@ class PdfService {
               pw.Container(
                 color: _black,
                 padding:
-                    const pw.EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                child: pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                  children: [
-                    pw.Text(
-                      'GENERATOR SERVICE REPORT - PARTS & CONSUMABLES USED',
-                      textAlign: pw.TextAlign.center,
-                      style: pw.TextStyle(
-                        color: _white,
-                        fontSize: 12,
-                        fontWeight: pw.FontWeight.bold,
-                        letterSpacing: 0.9,
-                      ),
+                    const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                child: pw.Center(
+                  child: pw.Text(
+                    'GENERATOR SERVICE REPORT - PARTS & CONSUMABLES USED',
+                    textAlign: pw.TextAlign.center,
+                    style: pw.TextStyle(
+                      color: _white,
+                      fontSize: 13,
+                      fontWeight: pw.FontWeight.bold,
+                      letterSpacing: 1.0,
                     ),
-                  ],
+                  ),
                 ),
               ),
-              pw.Container(height: 2.5, color: _yellow),
               pw.SizedBox(height: 10),
 
               // Content Area
@@ -1013,6 +1011,8 @@ class PdfService {
                     _buildReportReferenceCard(invoice, dateFmt),
                     pw.SizedBox(height: 12),
                     _buildPartsUsedSection(invoice),
+                    pw.SizedBox(height: 30),
+                    _buildServiceReportSignOff(invoice),
                   ],
                 ),
               ),
