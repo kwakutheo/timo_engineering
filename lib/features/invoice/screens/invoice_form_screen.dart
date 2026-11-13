@@ -89,10 +89,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
       }
       // For new invoices (no src), auto-set next service date = today + 90 days
       if (_nextServiceDate == null && mounted) {
-        final autoDate = ref
-            .read(invoiceFormProvider)
-            .date
-            .add(const Duration(days: 90));
+        final autoDate =
+            ref.read(invoiceFormProvider).date.add(const Duration(days: 90));
         setState(() => _nextServiceDate = autoDate);
         ref.read(invoiceFormProvider.notifier).updateNextServiceDate(autoDate);
       }
@@ -125,7 +123,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
           ? src!.labourAmount.toStringAsFixed(2)
           : '',
     );
-    _nextServiceDate = src?.nextServiceDate ?? src?.date.add(const Duration(days: 90));
+    _nextServiceDate =
+        src?.nextServiceDate ?? src?.date.add(const Duration(days: 90));
 
     final initialItems = src?.items ?? [InvoiceItem()];
     for (final item in initialItems) {
@@ -1809,7 +1808,7 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
