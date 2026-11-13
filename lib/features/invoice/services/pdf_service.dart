@@ -267,7 +267,7 @@ class PdfService {
                         // ── 7. Invoice Validity Notice ───────────────────────
                         _buildValidityNotice(invoice, dateFmt, contentWidth,
                             verticalPadding: validityPadV),
-                        pw.SizedBox(height: gapPost),
+                        pw.SizedBox(height: 15),
 
                         // ── 8. Signature Section ─────────────────────────────
                         _buildSignatureSection(invoice, contentWidth),
@@ -708,7 +708,7 @@ class PdfService {
       decoration: pw.BoxDecoration(
         border: showBottomBorder
             ? const pw.Border(
-                bottom: pw.BorderSide(color: _yellow, width: 0.6),
+                bottom: pw.BorderSide(color: _yellow, width: 0.7),
               )
             : null,
       ),
@@ -1335,7 +1335,7 @@ class PdfService {
             height: 13,
             decoration: const pw.BoxDecoration(
               border: pw.Border(
-                bottom: pw.BorderSide(color: _black, width: 0.8),
+                bottom: pw.BorderSide(color: _borderGrey, width: 0.8),
               ),
             ),
             child: pw.Align(
@@ -1477,17 +1477,19 @@ class _KeepTogether extends pw.SingleChildWidget {
 }
 
 /// Renders horizontal grey ruled lines across narrative sections (lined paper style).
-/// Body text at fontSize 10 is harmoniously aligned above each line, and the
-/// container displays a minimum of [minLines] ruled rows (default 5) even when empty.
+/// Body text at fontSize 9.5 is baseline-aligned on the ruled line beneath it, and the
+/// container displays a minimum of [minLines] ruled rows (default 10) even when empty.
 class _RuledLines extends pw.SingleChildWidget {
-  static const int minLines = 5;
-  static const double lineHeight = 19.0;
-  static const double fontSize = 10.0;
+  static const int minLines = 10;
+  static const double lineHeight = 15.0;
+  static const double fontSize = 9.5;
   // Helvetica height factor in package:pdf is 1.156.
-  // Using lineHeight - fontHeight guarantees an exact 19.0pt advance per line with 0.0 drift.
+  // Using lineHeight - fontHeight guarantees an exact 15.0pt advance per line with 0.0 drift.
   static const double fontHeight = fontSize * 1.156;
   static const double lineSpacing = lineHeight - fontHeight;
-  static const double topOffset = 5.6;
+  // topOffset positions the text so its baseline sits ~2.5pt above the ruled line.
+  // Decrease to move text up; increase to move text down.
+  static const double topOffset = 5.5;
   static const PdfColor lineColor = PdfColor.fromInt(0xFFCCCCCC);
   static const double lineWidth = 0.6;
   static const double horizontalPadding = 9.0;
