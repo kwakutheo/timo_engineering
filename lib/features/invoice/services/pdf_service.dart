@@ -170,14 +170,23 @@ class PdfService {
 
     // ── Row height: fills available space exactly, stays readable ─────────
     // Available = page height − footer − all fixed sections above/below table
-    final fixedH = headerH
-        + gap + bannerH
-        + gap + customerH
-        + gap + generatorH
-        + gap + tableHeaderH // gap before table + table header row
-        + gap + totalsH // gap after table rows + totals box
-        + gapPost + validityH
-        + gapPost + signatureH;
+    final fixedH = headerH +
+        gap +
+        bannerH +
+        gap +
+        customerH +
+        gap +
+        generatorH +
+        gap +
+        tableHeaderH // gap before table + table header row
+        +
+        gap +
+        totalsH // gap after table rows + totals box
+        +
+        gapPost +
+        validityH +
+        gapPost +
+        signatureH;
 
     final availableForRows = (pageHeight - footerH) - fixedH;
     final effectiveRows = itemCount > minRows ? itemCount : minRows;
@@ -1156,7 +1165,8 @@ class PdfService {
 
     return pw.Container(
       width: width,
-      padding: pw.EdgeInsets.symmetric(horizontal: 10, vertical: verticalPadding),
+      padding:
+          pw.EdgeInsets.symmetric(horizontal: 10, vertical: verticalPadding),
       decoration: pw.BoxDecoration(
         color: const PdfColor.fromInt(0xFFFFF8D8),
         border: pw.Border.all(color: _yellow, width: 0.8),
@@ -1263,7 +1273,7 @@ class PdfService {
 
   static pw.Widget _buildFooter(pw.MemoryImage footerImg, double width) {
     // full_footer.png aspect ratio: 2965 / 368 = 8.057
-    final height = width / 8.057;
+    final height = width / 11.057;
 
     return pw.Image(
       footerImg,
