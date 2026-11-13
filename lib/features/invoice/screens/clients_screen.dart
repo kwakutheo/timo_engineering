@@ -22,11 +22,388 @@ class ClientsScreen extends ConsumerStatefulWidget {
 
 class _ClientsScreenState extends ConsumerState<ClientsScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  static const int _pageSize = 40;
+  int _currentPage = 1;
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _goToPage(int page, int totalPages) {
+    final targetPage = page.clamp(1, totalPages);
+    if (targetPage == _currentPage) return;
+    setState(() {
+      _currentPage = targetPage;
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      try {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            0.0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      } catch (_) {}
+    });
+  }
+
+  List<int?> _getPageNumbers(int current, int total) {
+    if (total <= 7) {
+      return List<int?>.generate(total, (i) => i + 1);
+    }
+
+    final pages = <int>{};
+    pages.add(1);
+    pages.add(total);
+
+    for (int p = current - 1; p <= current + 1; p++) {
+      if (p >= 1 && p <= total) {
+        pages.add(p);
+      }
+    }
+
+    if (current <= 3) {
+      pages.add(2);
+      pages.add(3);
+    }
+    if (current >= total - 2) {
+      pages.add(total - 1);
+      pages.add(total - 2);
+    }
+
+    final sorted = pages.toList()..sort();
+    final result = <int?>[];
+
+    for (int i = 0; i < sorted.length; i++) {
+      if (i > 0 && sorted[i] > sorted[i - 1] + 1) {
+        result.add(null);
+      }
+      result.add(sorted[i]);
+    }
+
+    return result;
+  }
+
+  Widget _buildPaginationBar({
+    required bool isMobile,
+    required int totalItems,
+    required int currentPage,
+    required int totalPages,
+    required int startIndex,
+    required int endIndex,
+  }) {
+    final countNoun = totalItems == 1 ? 'client' : 'clients';
+    final String rangeText;
+    if (totalItems == 0) {
+      rangeText = 'No clients found';
+    } else if (totalItems <= _pageSize) {
+      rangeText = 'Showing all $totalItems $countNoun';
+    } else if (startIndex + 1 == endIndex) {
+      rangeText = 'Showing client $endIndex of $totalItems';
+    } else {
+      rangeText =
+          'Showing ${startIndex + 1}–$endIndex of $totalItems $countNoun';
+    }
+
+    if (isMobile) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border:
+              Border.all(color: AppColors.borderGrey.withValues(alpha: 0.6)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.people_outline_rounded,
+                    size: 16, color: AppColors.textGrey),
+                const SizedBox(width: 6),
+                Text(
+                  rangeText,
+                  style: const TextStyle(
+                    color: AppColors.primaryBlack,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12.5,
+                  ),
+                ),
+              ],
+            ),
+            if (totalPages > 1) ...[
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    tooltip: 'First page',
+                    icon: const Icon(Icons.first_page_rounded, size: 22),
+                    color: AppColors.primaryBlack,
+                    disabledColor: AppColors.textGrey.withValues(alpha: 0.35),
+                    onPressed:
+                        currentPage > 1 ? () => _goToPage(1, totalPages) : null,
+                  ),
+                  IconButton(
+                    tooltip: 'Previous page',
+                    icon: const Icon(Icons.chevron_left_rounded, size: 22),
+                    color: AppColors.primaryBlack,
+                    disabledColor: AppColors.textGrey.withValues(alpha: 0.35),
+                    onPressed: currentPage > 1
+                        ? () => _goToPage(currentPage - 1, totalPages)
+                        : null,
+                  ),
+                  const SizedBox(width: 4),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryYellow.withValues(alpha: 0.22),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppColors.primaryYellow.withValues(alpha: 0.9),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Text(
+                      'Page $currentPage of $totalPages',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12.5,
+                        color: AppColors.primaryBlack,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    tooltip: 'Next page',
+                    icon: const Icon(Icons.chevron_right_rounded, size: 22),
+                    color: AppColors.primaryBlack,
+                    disabledColor: AppColors.textGrey.withValues(alpha: 0.35),
+                    onPressed: currentPage < totalPages
+                        ? () => _goToPage(currentPage + 1, totalPages)
+                        : null,
+                  ),
+                  IconButton(
+                    tooltip: 'Last page',
+                    icon: const Icon(Icons.last_page_rounded, size: 22),
+                    color: AppColors.primaryBlack,
+                    disabledColor: AppColors.textGrey.withValues(alpha: 0.35),
+                    onPressed: currentPage < totalPages
+                        ? () => _goToPage(totalPages, totalPages)
+                        : null,
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+
+    // Desktop / Tablet layout
+    final pageNumbers = _getPageNumbers(currentPage, totalPages);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.borderGrey.withValues(alpha: 0.6)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.people_outline_rounded,
+                  size: 18, color: AppColors.textGrey),
+              const SizedBox(width: 8),
+              Text(
+                rangeText,
+                style: const TextStyle(
+                  color: AppColors.primaryBlack,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.scaffoldBg,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Text(
+                  '40 / page',
+                  style: TextStyle(
+                    color: AppColors.textGrey,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (totalPages > 1)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: currentPage > 1
+                      ? () => _goToPage(currentPage - 1, totalPages)
+                      : null,
+                  icon: const Icon(Icons.chevron_left_rounded, size: 18),
+                  label: const Text('Previous'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primaryBlack,
+                    disabledForegroundColor:
+                        AppColors.textGrey.withValues(alpha: 0.35),
+                    side: BorderSide(
+                      color: currentPage > 1
+                          ? AppColors.borderGrey
+                          : AppColors.borderGrey.withValues(alpha: 0.3),
+                    ),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    textStyle: const TextStyle(
+                        fontSize: 12.5, fontWeight: FontWeight.w600),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                for (final p in pageNumbers) ...[
+                  if (p == null)
+                    const SizedBox(
+                      width: 26,
+                      height: 34,
+                      child: Center(
+                        child: Text(
+                          '…',
+                          style: TextStyle(
+                            color: AppColors.textGrey,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    )
+                  else if (p == currentPage)
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 2),
+                      width: 34,
+                      height: 34,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryYellow,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                AppColors.primaryYellow.withValues(alpha: 0.35),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        '$p',
+                        style: const TextStyle(
+                          color: AppColors.primaryBlack,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                        ),
+                      ),
+                    )
+                  else
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      child: InkWell(
+                        onTap: () => _goToPage(p, totalPages),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                                color: AppColors.borderGrey
+                                    .withValues(alpha: 0.6)),
+                          ),
+                          child: Text(
+                            '$p',
+                            style: const TextStyle(
+                              color: AppColors.primaryBlack,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+                const SizedBox(width: 6),
+                OutlinedButton(
+                  onPressed: currentPage < totalPages
+                      ? () => _goToPage(currentPage + 1, totalPages)
+                      : null,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primaryBlack,
+                    disabledForegroundColor:
+                        AppColors.textGrey.withValues(alpha: 0.35),
+                    side: BorderSide(
+                      color: currentPage < totalPages
+                          ? AppColors.borderGrey
+                          : AppColors.borderGrey.withValues(alpha: 0.3),
+                    ),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    textStyle: const TextStyle(
+                        fontSize: 12.5, fontWeight: FontWeight.w600),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Next'),
+                      SizedBox(width: 4),
+                      Icon(Icons.chevron_right_rounded, size: 18),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
   }
 
   void _showSnack(BuildContext context, String msg, {bool isError = false}) {
@@ -314,10 +691,18 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Reset to page 1 whenever the search query changes
+    ref.listen<String>(clientSearchQueryProvider, (previous, next) {
+      if (previous != next && _currentPage != 1) {
+        setState(() {
+          _currentPage = 1;
+        });
+      }
+    });
+
     final filteredAsync = ref.watch(filteredClientsProvider);
     final width = MediaQuery.sizeOf(context).width;
     final isMobile = width < 600;
-    final isDesktop = width >= 1000;
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
@@ -326,6 +711,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
           _buildSliverAppBar(context, isMobile),
         ],
         body: CustomScrollView(
+          controller: _scrollController,
           slivers: [
             // Search Bar & Add Client Button
             SliverToBoxAdapter(
@@ -393,72 +779,101 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
               ),
             ),
 
-            // Client Cards
-            filteredAsync.when(
-              loading: () => const SliverFillRemaining(
-                child: Center(
-                  child:
-                      CircularProgressIndicator(color: AppColors.primaryYellow),
+            // Client Cards & Pagination
+            ...filteredAsync.when<List<Widget>>(
+              loading: () => [
+                const SliverFillRemaining(
+                  child: Center(
+                    child:
+                        CircularProgressIndicator(color: AppColors.primaryYellow),
+                  ),
                 ),
-              ),
-              error: (e, _) => SliverFillRemaining(
-                child: Center(
-                  child: Text('Error loading clients: $e'),
+              ],
+              error: (e, _) => [
+                SliverFillRemaining(
+                  child: Center(
+                    child: Text('Error loading clients: $e'),
+                  ),
                 ),
-              ),
+              ],
               data: (clients) {
                 if (clients.isEmpty) {
-                  return SliverFillRemaining(
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.people_outline_rounded,
-                              size: 56, color: AppColors.textGrey),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'No clients found',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.primaryBlack,
+                  return [
+                    SliverFillRemaining(
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.people_outline_rounded,
+                                size: 56, color: AppColors.textGrey),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'No clients found',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primaryBlack,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 6),
-                          const Text(
-                            'Add a client to save contact information and speed up invoicing.',
-                            style: TextStyle(
-                                fontSize: 13, color: AppColors.textGrey),
-                          ),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: () => _openClientDialog(),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primaryYellow,
-                              foregroundColor: AppColors.primaryBlack,
+                            const SizedBox(height: 6),
+                            const Text(
+                              'Add a client to save contact information and speed up invoicing.',
+                              style: TextStyle(
+                                  fontSize: 13, color: AppColors.textGrey),
                             ),
-                            child: const Text('Add First Client'),
-                          ),
-                        ],
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: () => _openClientDialog(),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryYellow,
+                                foregroundColor: AppColors.primaryBlack,
+                              ),
+                              child: const Text('Add First Client'),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  );
+                  ];
                 }
 
-                final crossAxisCount = isDesktop ? 3 : (isMobile ? 1 : 2);
+                // 4 cards in a row on desktop/wide screens, responsive fallback for tablet/mobile
+                final crossAxisCount = width >= 950
+                    ? 4
+                    : (width >= 700 ? 3 : (isMobile ? 1 : 2));
 
-                return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
-                  sliver: SliverGrid(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: crossAxisCount,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      mainAxisExtent: 180,
-                    ),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final client = clients[index];
+                final totalItems = clients.length;
+                final totalPages =
+                    totalItems == 0 ? 1 : (totalItems / _pageSize).ceil();
+                final currentPage = _currentPage.clamp(1, totalPages);
+
+                if (_currentPage != currentPage) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) {
+                      setState(() => _currentPage = currentPage);
+                    }
+                  });
+                }
+
+                final startIndex = (currentPage - 1) * _pageSize;
+                final endIndex = (startIndex + _pageSize).clamp(0, totalItems);
+                final pageClients = totalItems == 0
+                    ? <Client>[]
+                    : clients.sublist(startIndex, endIndex);
+
+                return [
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                    sliver: SliverGrid(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        mainAxisExtent: 180,
+                      ),
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final client = pageClients[index];
                         return Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
@@ -634,10 +1049,29 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                           ),
                         );
                       },
-                      childCount: clients.length,
+                      childCount: pageClients.length,
                     ),
                   ),
-                );
+                ),
+                SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        isMobile ? 12 : 16,
+                        4,
+                        isMobile ? 12 : 16,
+                        isMobile ? 96 : 88,
+                      ),
+                      child: _buildPaginationBar(
+                        isMobile: isMobile,
+                        totalItems: totalItems,
+                        currentPage: currentPage,
+                        totalPages: totalPages,
+                        startIndex: startIndex,
+                        endIndex: endIndex,
+                      ),
+                    ),
+                  ),
+                ];
               },
             ),
           ],
