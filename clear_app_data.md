@@ -6,9 +6,23 @@ Follow this guide to completely erase all local app traces so you can reinstall 
 
 ---
 
-## Method 1: Fast One-Click Reset (Recommended)
+## Method 1: One-Click Batch File (Easiest - Recommended for Clients)
 
-This method automatically clears all local database files, backups, exports, and sync caches.
+Send `clean_old_app_data.bat` to your client. 
+
+1. Simply **double-click `clean_old_app_data.bat`**.
+2. The script will automatically:
+   - Close any running instance of Timo's Engineering.
+   - Delete all previous SQLite databases, app caches, and temporary files.
+   - Clean stored security PINs and passwords from Windows Credential Manager.
+3. Once you see `[SUCCESS] All old app data has been completely cleared!`, press any key to close the window.
+4. Run the new installer (`timo_setup.exe`) to install the updated app.
+
+---
+
+## Method 2: Fast PowerShell Command
+
+If running commands directly in PowerShell:
 
 1. **Close or uninstall** Timo's Engineering.
 2. Press <kbd>Win</kbd> + <kbd>X</kbd> and choose **Windows Terminal** or **PowerShell**.
@@ -22,7 +36,7 @@ Remove-Item -Recurse -Force "$env:LOCALAPPDATA\Timo Invoice", "$env:LOCALAPPDATA
 
 ---
 
-## Method 2: Manual Removal via File Explorer
+## Method 3: Manual Removal via File Explorer
 
 If you prefer doing it manually without using the terminal:
 
