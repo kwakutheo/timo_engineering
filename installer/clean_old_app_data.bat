@@ -54,7 +54,7 @@ echo ======================================================================
 echo  [SUCCESS] All old app data has been completely cleared!
 echo ======================================================================
 echo.
-echo  You can now run the new installer to install the updated app.
+echo  You can now install the new updated app.
 echo.
 echo  Press any key to close this window...
 pause >nul
