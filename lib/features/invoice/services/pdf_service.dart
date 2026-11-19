@@ -1478,7 +1478,7 @@ class _KeepTogether extends pw.SingleChildWidget {
 /// Body text at fontSize 9.5 is baseline-aligned on the ruled line beneath it, and the
 /// container displays a minimum of [minLines] ruled rows (default 10) even when empty.
 class _RuledLines extends pw.SingleChildWidget {
-  static const int minLines = 6;
+  static const int minLines = 9;
   static const double lineHeight = 15.0;
   static const double fontSize = 9.5;
   // Helvetica height factor in package:pdf is 1.156.

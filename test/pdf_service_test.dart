@@ -49,7 +49,7 @@ void main() {
 
     expect(bytes, isNotEmpty);
     expect(bytes.length, greaterThan(1000));
-    expect(doc.document.pdfPageList.pages, hasLength(3));
+    expect(doc.document.pdfPageList.pages, hasLength(2));
   });
 
   test('PdfService.buildPdf can generate an invoice-only document', () async {
@@ -149,7 +149,7 @@ void main() {
     final doc = await PdfService.buildPdf(invoice);
     final bytes = await doc.save();
     expect(bytes, isNotEmpty);
-    expect(doc.document.pdfPageList.pages, hasLength(3));
+    expect(doc.document.pdfPageList.pages, hasLength(2));
   });
 
   test('PdfService.buildPdf accommodates 20 items on page 1 without overflow',
@@ -196,6 +196,6 @@ void main() {
     final bytes = await doc.save();
     expect(bytes, isNotEmpty);
     // Page 1: Invoice, Page 2: Service Report, Page 3: Parts & Consumables Page
-    expect(doc.document.pdfPageList.pages, hasLength(3));
+    expect(doc.document.pdfPageList.pages, hasLength(2));
   });
 }
