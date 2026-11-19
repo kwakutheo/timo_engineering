@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../data/datasources/sync_service.dart';
-import '../../../data/datasources/update_service.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/screens/change_password_screen.dart';
 import '../../auth/services/auth_service.dart';
@@ -47,7 +46,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       SyncService.instance.sync();
-      UpdateService.instance.checkAndPrompt(context);
     });
   }
 
@@ -91,8 +89,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       );
     } else if (action == 'edit_full_name') {
       await _editFullName(context);
-    } else if (action == 'check_updates') {
-      UpdateService.instance.checkAndPrompt(context, showNoUpdateNotice: true);
     } else if (action == 'lock_now') {
       ref.read(authProvider.notifier).lock();
     }
@@ -463,15 +459,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 leading:
                     Icon(Icons.badge_outlined, color: AppColors.primaryBlack),
                 title: Text('Edit full name'),
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-            const PopupMenuItem(
-              value: 'check_updates',
-              child: ListTile(
-                leading: Icon(Icons.system_update_rounded,
-                    color: AppColors.primaryBlack),
-                title: Text('Check for updates'),
                 contentPadding: EdgeInsets.zero,
               ),
             ),
