@@ -228,8 +228,8 @@ class _ServiceAlertsCardState extends State<ServiceAlertsCard> {
           badgeTextCol = AppColors.primaryBlack;
         } else {
           badgeText = 'In $days days';
-          badgeBg = AppColors.scaffoldBg;
-          badgeTextCol = AppColors.textGrey;
+          badgeBg = Colors.white;
+          badgeTextCol = AppColors.primaryBlack;
         }
 
         return InkWell(
@@ -258,42 +258,21 @@ class _ServiceAlertsCardState extends State<ServiceAlertsCard> {
               ),
             ),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              alert.clientName,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13,
-                                color: AppColors.primaryBlack,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: badgeBg,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              badgeText,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 10.5,
-                                color: badgeTextCol,
-                              ),
-                            ),
-                          ),
-                        ],
+                      Text(
+                        alert.clientName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          color: AppColors.primaryBlack,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
                       Row(
@@ -316,6 +295,29 @@ class _ServiceAlertsCardState extends State<ServiceAlertsCard> {
                         ],
                       ),
                     ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: badgeBg,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: isOverdue
+                          ? AppColors.errorRed.withValues(alpha: 0.3)
+                          : AppColors.borderGrey.withValues(alpha: 0.4),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: Text(
+                    badgeText,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                      color: badgeTextCol,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
