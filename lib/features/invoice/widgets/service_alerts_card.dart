@@ -313,20 +313,6 @@ class _ServiceAlertsCardState extends State<ServiceAlertsCard> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          if (alert.runningHour.isNotEmpty) ...[
-                            const SizedBox(width: 8),
-                            const Icon(Icons.timer_outlined,
-                                size: 13, color: AppColors.textGrey),
-                            const SizedBox(width: 3),
-                            Text(
-                              '${alert.runningHour} hrs',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: AppColors.textGrey,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
                         ],
                       ),
                     ],
