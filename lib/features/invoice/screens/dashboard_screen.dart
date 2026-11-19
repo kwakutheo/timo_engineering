@@ -622,7 +622,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ref.read(navigationIndexProvider.notifier).state = 1;
                 },
                 icon: const Icon(Icons.receipt_long_rounded, size: 18),
-                label: Text('Invoices (${metrics.totalInvoices})'),
+                label: const Text('Invoices'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.primaryBlack,
                   side: BorderSide(
@@ -640,7 +640,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ref.read(navigationIndexProvider.notifier).state = 2;
                 },
                 icon: const Icon(Icons.people_alt_rounded, size: 18),
-                label: Text('Clients (${metrics.uniqueClientsCount})'),
+                label: const Text('Clients'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.primaryBlack,
                   side: BorderSide(

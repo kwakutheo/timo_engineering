@@ -321,7 +321,14 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
     setState(() => _isSaving = true);
     try {
       await ref.read(invoiceFormProvider.notifier).save();
+      await _autoSaveOrUpdateClient(
+        name: clientName,
+        billTo: _billTo.text.trim(),
+        address: address,
+        phone: phone,
+      );
       ref.invalidate(allInvoicesProvider);
+      ref.invalidate(allClientsProvider);
       _lastSavedInvoice = ref.read(invoiceFormProvider);
       unawaited(SyncService.instance.sync());
       if (mounted) {
@@ -337,6 +344,61 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  Future<void> _autoSaveOrUpdateClient({
+    required String name,
+    required String billTo,
+    required String address,
+    required String phone,
+  }) async {
+    if (name.isEmpty) return;
+
+    try {
+      final clientRepo = ref.read(clientRepositoryProvider);
+      final existing = await clientRepo.getByName(name);
+
+      if (existing == null) {
+        final newClient = Client(
+          id: const Uuid().v4(),
+          name: name,
+          billTo: billTo,
+          address: address,
+          phone: phone,
+          createdAt: DateTime.now(),
+        );
+        await clientRepo.save(newClient);
+      } else {
+        bool shouldUpdate = false;
+        String updatedBillTo = existing.billTo;
+        String updatedAddress = existing.address;
+        String updatedPhone = existing.phone;
+
+        if (updatedBillTo.isEmpty && billTo.isNotEmpty) {
+          updatedBillTo = billTo;
+          shouldUpdate = true;
+        }
+        if (updatedAddress.isEmpty && address.isNotEmpty) {
+          updatedAddress = address;
+          shouldUpdate = true;
+        }
+        if (updatedPhone.isEmpty && phone.isNotEmpty) {
+          updatedPhone = phone;
+          shouldUpdate = true;
+        }
+
+        if (shouldUpdate) {
+          await clientRepo.update(existing.copyWith(
+            billTo: updatedBillTo,
+            address: updatedAddress,
+            phone: updatedPhone,
+            updatedAt: DateTime.now(),
+          ));
+        }
+      }
+    } catch (e) {
+      debugPrint('Auto-save client notice: $e');
     }
   }
 

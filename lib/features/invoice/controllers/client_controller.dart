@@ -10,8 +10,10 @@ final clientRepositoryProvider = Provider<ClientRepository>(
 
 // ── All clients list ──────────────────────────────────────────────────────
 
-final allClientsProvider = FutureProvider<List<Client>>((ref) {
-  return ref.watch(clientRepositoryProvider).getAll();
+final allClientsProvider = FutureProvider<List<Client>>((ref) async {
+  final repo = ref.watch(clientRepositoryProvider);
+  await repo.syncFromInvoices();
+  return repo.getAll();
 });
 
 // ── Search query state ────────────────────────────────────────────────────

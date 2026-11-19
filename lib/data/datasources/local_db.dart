@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart';
+import 'package:uuid/uuid.dart';
 import '../models/invoice.dart';
 import '../models/invoice_item.dart';
 import '../models/client.dart';
@@ -358,11 +359,44 @@ class LocalDb {
     final database = await db;
     final maps = await database.query(
       'clients',
-      where: 'name = ? AND (is_deleted = 0 OR is_deleted IS NULL)',
-      whereArgs: [name],
+      where: 'LOWER(TRIM(name)) = LOWER(TRIM(?)) AND (is_deleted = 0 OR is_deleted IS NULL)',
+      whereArgs: [name.trim()],
     );
     if (maps.isEmpty) return null;
     return Client.fromMap(maps.first);
+  }
+
+  /// Automatically ensures any clients recorded on invoices exist in the clients directory.
+  Future<void> syncClientsFromInvoices() async {
+    final database = await db;
+    final invoiceRows = await database.rawQuery('''
+      SELECT DISTINCT client_name, bill_to, address, phone 
+      FROM invoices 
+      WHERE (is_deleted = 0 OR is_deleted IS NULL)
+        AND client_name IS NOT NULL 
+        AND TRIM(client_name) != ''
+      ORDER BY date DESC
+    ''');
+
+    for (final row in invoiceRows) {
+      final name = (row['client_name'] as String?)?.trim() ?? '';
+      if (name.isEmpty) continue;
+
+      final existing = await getClientByName(name);
+      if (existing == null) {
+        final nowIso = DateTime.now().toUtc().toIso8601String();
+        await database.insert('clients', {
+          'id': const Uuid().v4(),
+          'name': name,
+          'bill_to': (row['bill_to'] as String?)?.trim() ?? '',
+          'address': (row['address'] as String?)?.trim() ?? '',
+          'phone': (row['phone'] as String?)?.trim() ?? '',
+          'created_at': nowIso,
+          'updated_at': nowIso,
+          'is_deleted': 0,
+        });
+      }
+    }
   }
 
   // ── Sync Helper Methods ──────────────────────────────────────────────────

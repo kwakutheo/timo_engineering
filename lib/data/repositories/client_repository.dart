@@ -11,4 +11,5 @@ class ClientRepository {
   Future<void> delete(String id) => _db.deleteClient(id);
   Future<List<Client>> getAll() => _db.getAllClients();
   Future<Client?> getByName(String name) => _db.getClientByName(name);
+  Future<void> syncFromInvoices() => _db.syncClientsFromInvoices();
 }
