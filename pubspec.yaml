@@ -37,6 +37,8 @@ dependencies:
   flutter_secure_storage: ^10.0.0
   cryptography: ^2.9.0
   supabase_flutter: ^2.8.0
+  package_info_plus: ^9.0.1
+  open_filex: ^5.0.0
 
 dev_dependencies:
   flutter_test:
